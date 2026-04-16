@@ -14,12 +14,13 @@ function ChannelItem({ channel, active, onSelect }: {
   return (
     <div
       onClick={onSelect}
-      style={active ? { borderLeft: '3px solid rgb(var(--brand-rgb))' } : { borderLeft: '3px solid transparent' }}
-      className={`flex items-center gap-2 py-1.5 rounded-r mx-0 pl-2 pr-2 cursor-pointer transition-all duration-150 select-none
-        ${active
-          ? 'bg-bg-active text-text-normal'
-          : 'text-text-muted hover:bg-bg-hover hover:text-text-normal ml-0'}`}
+      className={`relative flex items-center gap-2 px-2 py-1.5 rounded mx-2 cursor-pointer transition-all duration-150 select-none
+        ${active ? 'bg-bg-active text-text-normal' : 'text-text-muted hover:bg-bg-hover hover:text-text-normal'}`}
     >
+      {/* Discord-style blue left indicator bar */}
+      {active && (
+        <span className="absolute -left-2 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-brand" />
+      )}
       <Icon className="w-4 h-4 flex-shrink-0 opacity-70" />
       <span className="flex-1 text-sm truncate">{channel.name}</span>
     </div>

@@ -48,8 +48,13 @@ export default function ChatPage() {
 
       {/* Smooth slide transition for members panel */}
       <div
-        className="overflow-hidden transition-all duration-200 ease-in-out flex-shrink-0"
-        style={{ width: showMembers && isText ? 240 : 0, opacity: showMembers && isText ? 1 : 0 }}
+        className="transition-all duration-200 ease-in-out flex-shrink-0"
+        style={{
+          width: showMembers && isText ? 241 : 0,
+          opacity: showMembers && isText ? 1 : 0,
+          overflow: 'hidden',
+          borderLeft: showMembers && isText ? '1px solid rgb(var(--separator-rgb) / 0.5)' : 'none',
+        }}
       >
         <MembersPanel />
       </div>

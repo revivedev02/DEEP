@@ -246,7 +246,6 @@
   /* ── Members Panel ── */
   .members-panel {
     @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-y-auto overflow-x-hidden py-4;
-    border-left: 1px solid rgb(var(--separator-rgb) / 0.5);
   }
   .member-section-title {
     @apply px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted;
