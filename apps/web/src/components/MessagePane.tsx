@@ -48,13 +48,18 @@ function AvatarPlaceholder({ name, size = 10 }: { name: string; size?: number })
 
 // ─── Date divider ────────────────────────────────────────────────────────────
 function DateDivider({ label }: { label: string }) {
+  const line = {
+    flex: 1,
+    height: '1px',
+    background: 'rgb(var(--separator-rgb) / 0.5)',
+  } as React.CSSProperties;
   return (
-    <div className="flex items-center gap-3 px-4 my-4 select-none">
-      <div className="flex-1" style={{ height: '1px', background: 'rgb(var(--separator-rgb) / 0.6)' }} />
-      <span className="text-xs font-semibold text-text-muted whitespace-nowrap tracking-wide">
+    <div className="flex items-center gap-3 px-4 my-5 select-none">
+      <div style={line} />
+      <span className="text-xs font-medium text-text-muted whitespace-nowrap tracking-wide">
         {label}
       </span>
-      <div className="flex-1" style={{ height: '1px', background: 'rgb(var(--separator-rgb) / 0.6)' }} />
+      <div style={line} />
     </div>
   );
 }
