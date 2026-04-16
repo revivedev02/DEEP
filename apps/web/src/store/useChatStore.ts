@@ -38,6 +38,7 @@ interface ChatState {
   setLoadingMessages: (v: boolean) => void;
   setTyping:          (displayName: string, typing: boolean) => void;
   setReplyingTo:      (msg: ChatMessage | null) => void;
+  updateUserAvatar:   (userId: string, avatarUrl: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -66,4 +67,12 @@ export const useChatStore = create<ChatState>((set) => ({
         : s.typingUsers.filter(n => n !== displayName),
     })),
   setReplyingTo: (msg) => set({ replyingTo: msg }),
+  updateUserAvatar: (userId, avatarUrl) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.user.id === userId
+          ? { ...m, user: { ...m.user, avatarUrl } }
+          : m
+      ),
+    })),
 }));

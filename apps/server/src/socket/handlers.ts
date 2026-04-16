@@ -88,6 +88,12 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
       }
     });
 
+    // ── avatar:update — broadcast new avatar URL to everyone ─────────────────
+    socket.on('avatar:update', ({ avatarUrl }: { avatarUrl: string }) => {
+      if (!avatarUrl) return;
+      io.emit('user:avatar-updated', { userId, avatarUrl });
+    });
+
     // ── disconnect ────────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       const sockets = onlineUsers.get(userId);

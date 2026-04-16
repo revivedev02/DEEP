@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/useUIStore';
 /** Fetches server name + channels on mount. Sets default active channel. */
 export function useServerData() {
   const { token } = useAuthStore();
-  const { setServerName, setChannels, setLoading } = useServerStore();
+  const { setServerName, setIconUrl, setChannels, setLoading } = useServerStore();
   const { setActiveChannel, activeChannel } = useUIStore();
 
   useEffect(() => {
@@ -17,7 +17,10 @@ export function useServerData() {
     // Fetch settings
     fetch('/api/settings', { headers })
       .then(r => r.json())
-      .then(data => { if (data.serverName) setServerName(data.serverName); })
+      .then(data => {
+        if (data.serverName) setServerName(data.serverName);
+        if (data.iconUrl)    setIconUrl(data.iconUrl);
+      })
       .catch(() => {});
 
     // Fetch channels

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
 import { SkChannelSidebar } from '@/components/Skeleton';
+import { LazyAvatar } from '@/components/LazyAvatar';
 import AvatarUploadModal from '@/components/AvatarUploadModal';
 
 // ── Channel row ─────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ export default function ChannelSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { activeChannel, setActiveChannel, showMembers, toggleMembers } = useUIStore();
-  const { serverName, channels, isLoading } = useServerStore();
+  const { serverName, iconUrl, channels, isLoading } = useServerStore();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -58,6 +59,17 @@ export default function ChannelSidebar() {
           onClick={() => setDropdownOpen(o => !o)}
           className="w-full flex items-center justify-between px-4 py-3 border-b border-separator hover:bg-bg-hover transition-colors duration-150"
         >
+          {/* Server icon */}
+          {isLoading ? (
+            <div className="skeleton w-7 h-7 rounded-lg flex-shrink-0" />
+          ) : iconUrl ? (
+            <img src={iconUrl} alt={serverName} className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center text-white text-xs font-bold flex-shrink-0 select-none">
+              {serverName.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          {/* Server name */}
           {isLoading
             ? <div className="skeleton w-24 h-4" />
             : <span className="font-bold text-text-normal truncate">{serverName}</span>}
@@ -111,20 +123,14 @@ export default function ChannelSidebar() {
 
       {/* ── User footer ── */}
       <div className="px-3 py-2 flex items-center gap-2 border-t border-separator/40 bg-bg-secondary flex-shrink-0">
-        {/* Clickable avatar */}
+        {/* Clickable avatar with LazyAvatar + camera overlay */}
         <div
-          className="relative w-8 h-8 rounded-full overflow-hidden cursor-pointer group flex-shrink-0 select-none"
+          className="relative cursor-pointer group flex-shrink-0"
           onClick={() => setShowAvatarModal(true)}
           title="Change avatar"
         >
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-brand flex items-center justify-center text-white text-sm font-bold">
-              {user?.displayName?.slice(0, 1).toUpperCase()}
-            </div>
-          )}
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={8} />
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             <Camera className="w-3.5 h-3.5 text-white" />
           </div>
         </div>

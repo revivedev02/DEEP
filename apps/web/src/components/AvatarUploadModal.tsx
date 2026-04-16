@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { Upload, X, CheckCircle, Loader2, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { emitAvatarUpdate } from '@/hooks/useSocket';
 
 interface Props { onClose: () => void; }
 
@@ -116,6 +117,7 @@ export default function AvatarUploadModal({ onClose }: Props) {
       if (!saveRes.ok) throw new Error('Failed to save avatar');
       setProgress(100);
       updateAvatar(url);
+      emitAvatarUpdate(url);
       setStatus('done');
       setTimeout(onClose, 1200);
     } catch (e: any) {

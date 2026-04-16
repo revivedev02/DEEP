@@ -9,9 +9,11 @@ export interface Channel {
 
 interface ServerState {
   serverName: string;
+  iconUrl:    string | null;
   channels:   Channel[];
   isLoading:  boolean;
   setServerName: (name: string) => void;
+  setIconUrl:    (url: string | null) => void;
   setChannels:   (channels: Channel[]) => void;
   setLoading:    (v: boolean) => void;
   addChannel:    (ch: Channel) => void;
@@ -21,11 +23,13 @@ interface ServerState {
 
 export const useServerStore = create<ServerState>((set) => ({
   serverName: 'DEEP',
+  iconUrl:    null,
   channels:   [],
   isLoading:  true,
 
   setServerName: (serverName) => set({ serverName }),
-  setLoading:    (v) => set({ isLoading: v }),
+  setIconUrl:    (iconUrl)    => set({ iconUrl }),
+  setLoading:    (v)          => set({ isLoading: v }),
   setChannels: (channels) =>
     set({ channels: [...channels].sort((a, b) => a.position - b.position) }),
 

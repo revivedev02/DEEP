@@ -2,17 +2,22 @@ import { useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
+import { useMembersStore } from '@/store/useMembersStore';
 import { useUIStore } from '@/store/useUIStore';
 
 // ── True singleton — shared across every component that calls useSocket() ────
 let socketInstance: Socket | null = null;
+
+/** Emit avatar update after successful upload — notifies all clients */
+export function emitAvatarUpdate(avatarUrl: string) {
+  socketInstance?.emit('avatar:update', { avatarUrl });
+}
 
 export function useSocket() {
   const token = useAuthStore((s) => s.token);
   const { addMessage, setOnline, setConnected } = useChatStore();
 
   useEffect(() => {
-    // Guard: only create ONE connection for the lifetime of the app session
     if (!token || socketInstance) return;
 
     socketInstance = io('/', {
@@ -29,33 +34,34 @@ export function useSocket() {
       setConnected(false);
     });
 
-    // Only add the message if it belongs to the currently active channel
     socketInstance.on('message:new', (msg: ChatMessage) => {
       const activeChannel = useUIStore.getState().activeChannel;
-      if (msg.channelId === activeChannel) {
-        addMessage(msg);
-      }
+      if (msg.channelId === activeChannel) addMessage(msg);
     });
 
     socketInstance.on('presence:update', ({ userId, online }: { userId: string; online: boolean }) => {
       setOnline(userId, online);
     });
 
-    // typing:update: server already uses socket.to() which excludes the sender,
-    // so self-typing is never received here unless there are multiple sockets.
     socketInstance.on('typing:update', ({ displayName, typing }: { displayName: string; typing: boolean }) => {
       useChatStore.getState().setTyping(displayName, typing);
+    });
+
+    // ── Real-time avatar propagation ─────────────────────────────────────────
+    socketInstance.on('user:avatar-updated', ({ userId, avatarUrl }: { userId: string; avatarUrl: string }) => {
+      // Update all cached messages by this user
+      useChatStore.getState().updateUserAvatar(userId, avatarUrl);
+      // Update member list
+      useMembersStore.getState().updateMemberAvatar(userId, avatarUrl);
     });
 
     return () => {};
   }, [token]);
 
-  /** Join a channel room on the server. Call whenever activeChannel changes. */
   const joinChannel = (channelId: string) => {
     socketInstance?.emit('channel:join', { channelId });
   };
 
-  /** Send a message to a specific channel, optionally as a reply. */
   const sendMessage = (content: string, channelId: string, replyToId?: string) => {
     socketInstance?.emit('message:send', { content, channelId, replyToId });
   };

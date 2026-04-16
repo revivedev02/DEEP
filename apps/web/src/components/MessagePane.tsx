@@ -2,6 +2,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { useMemo, useState, useRef, useCallback } from 'react';
 import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, CornerUpLeft } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { LazyAvatar } from '@/components/LazyAvatar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
@@ -26,35 +27,6 @@ function isSameAuthorWithin5Min(a: ChatMessage, b: ChatMessage): boolean {
   if (a.userId !== b.userId) return false;
   if (b.replyToId) return false; // replies always get a full header
   return Math.abs(new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) < 5 * 60 * 1000;
-}
-
-// ─── Avatar ─────────────────────────────────────────────────────────────────
-const AVATAR_COLORS = [
-  'bg-brand', 'bg-purple-600', 'bg-green-600',
-  'bg-orange-500', 'bg-pink-600', 'bg-cyan-600', 'bg-yellow-600',
-];
-
-function AvatarPlaceholder({ name, avatarUrl, size = 10 }: { name: string; avatarUrl?: string | null; size?: number }) {
-  const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        className={`w-${size} h-${size} rounded-full flex-shrink-0 cursor-pointer select-none object-cover hover:brightness-110 transition-all`}
-      />
-    );
-  }
-  return (
-    <div
-      className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center
-                  text-white font-semibold flex-shrink-0 cursor-pointer select-none
-                  hover:brightness-110 transition-all`}
-      style={{ fontSize: size === 10 ? 16 : 13 }}
-    >
-      {name.slice(0, 1).toUpperCase()}
-    </div>
-  );
 }
 
 // ─── Date divider ────────────────────────────────────────────────────────────
@@ -117,7 +89,7 @@ function Message({
     return (
       <div className="message-group with-avatar group">
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
-        <AvatarPlaceholder name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} />
+        <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
         <div className="message-body">
           <div className="message-header">
             <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
