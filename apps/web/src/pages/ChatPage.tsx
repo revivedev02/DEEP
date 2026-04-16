@@ -46,15 +46,15 @@ export default function ChatPage() {
         )}
       </main>
 
-      {/* Smooth slide transition for members panel */}
+      {/* Thin separator line */}
       <div
-        className="transition-all duration-200 ease-in-out flex-shrink-0"
-        style={{
-          width: showMembers && isText ? 241 : 0,
-          opacity: showMembers && isText ? 1 : 0,
-          overflow: 'hidden',
-          borderLeft: showMembers && isText ? '1px solid rgb(var(--separator-rgb) / 0.5)' : 'none',
-        }}
+        className="w-px flex-shrink-0 bg-separator transition-opacity duration-200"
+        style={{ opacity: showMembers && isText ? 0.5 : 0 }}
+      />
+      {/* Members slide panel — overflow:hidden clips content, NOT the separator above */}
+      <div
+        className="flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden"
+        style={{ width: showMembers && isText ? 240 : 0, opacity: showMembers && isText ? 1 : 0 }}
       >
         <MembersPanel />
       </div>
