@@ -105,7 +105,7 @@ export default function ChannelSidebar() {
       </div>
 
       {/* ── User footer ── */}
-      <div className="px-3 py-2 flex items-center gap-2 border-t border-separator bg-bg-floating">
+      <div className="px-3 py-2 flex items-center gap-2 border-t border-separator/40 bg-bg-secondary flex-shrink-0">
         <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
           {user?.displayName?.slice(0, 1).toUpperCase()}
         </div>

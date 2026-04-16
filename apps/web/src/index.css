@@ -87,7 +87,8 @@
 
   /* ── Channel Sidebar ── */
   .channel-sidebar {
-    @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-hidden;
+    @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-hidden
+           border-r border-separator/40;
   }
   .sidebar-header {
     @apply flex items-center justify-between px-4 h-12 min-h-[48px]
@@ -102,10 +103,11 @@
   .channel-item {
     @apply flex items-center gap-1.5 mx-2 px-2 py-1.5 rounded
            text-sm text-channel-default cursor-pointer select-none
+           border-l-2 border-transparent
            transition-all duration-100 hover:bg-bg-modifier hover:text-channel-hover;
   }
   .channel-item.active {
-    @apply bg-bg-modifier text-channel-active font-medium;
+    @apply bg-bg-modifier text-channel-active font-medium border-l-brand;
   }
   .channel-item .channel-icon {
     @apply w-5 h-5 flex-shrink-0 text-text-muted;
@@ -266,15 +268,15 @@
 
   /* ── Dropdown ── */
   .dropdown-menu {
-    @apply bg-bg-floating border border-separator/60 rounded-md shadow-elevation-high
+    @apply bg-bg-secondary border border-separator/50 rounded-md shadow-elevation-high
            py-1 flex flex-col;
   }
   .dropdown-item {
     @apply flex items-center gap-2.5 px-3 py-2 text-sm text-text-normal
-           hover:bg-bg-modifier cursor-pointer transition-colors duration-100 rounded-sm mx-1;
+           hover:bg-bg-hover cursor-pointer transition-colors duration-100 rounded-sm mx-1;
   }
   .dropdown-divider {
-    @apply h-px bg-separator/60 my-1 mx-2;
+    @apply h-px bg-separator/40 my-1 mx-2;
   }
 
   /* ── Admin Panel ── */
