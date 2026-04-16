@@ -4,8 +4,8 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm@9
 
-# Copy workspace manifests first (better layer caching)
-COPY package.json pnpm-workspace.yaml ./
+# Copy workspace manifests + lockfile first (better layer caching)
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/server/package.json ./apps/server/
 COPY apps/web/package.json    ./apps/web/
 COPY packages/types/package.json ./packages/types/
@@ -17,7 +17,7 @@ COPY apps/server/prisma ./apps/server/prisma
 RUN sed -i 's/provider = "sqlite"/provider = "postgresql"/' apps/server/prisma/schema.prisma
 
 # Install all dependencies (triggers prisma generate with postgresql)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copy all source
 COPY . .
