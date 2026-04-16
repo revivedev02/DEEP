@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // All colors now use CSS variables — theme-aware
+        // Plain CSS var colors (no opacity modifier needed)
         'bg-primary':    'var(--bg-primary)',
         'bg-secondary':  'var(--bg-secondary)',
         'bg-tertiary':   'var(--bg-tertiary)',
@@ -15,13 +15,15 @@ export default {
         'text-normal':   'var(--text-normal)',
         'text-muted':    'var(--text-muted)',
         'text-link':     '#00A8FC',
-        'brand':         'var(--brand)',
-        'brand-hover':   'var(--brand-hover)',
-        'brand-active':  'var(--brand-active)',
+        // RGB-channel vars — support opacity modifiers like /20 /60 /30
+        'brand':        'rgb(var(--brand-rgb) / <alpha-value>)',
+        'brand-hover':  'rgb(var(--brand-hover-rgb) / <alpha-value>)',
+        'brand-active': 'rgb(var(--brand-active-rgb) / <alpha-value>)',
+        'separator':    'rgb(var(--separator-rgb) / <alpha-value>)',
+        // Hardcoded — don't change with theme
         'status-green':  '#23A55A',
         'status-yellow': '#F0B232',
         'status-red':    '#F23F43',
-        'separator':     'var(--separator)',
         'channel-default': 'var(--text-muted)',
         'channel-hover':   'var(--text-normal)',
         'channel-active':  'var(--text-normal)',

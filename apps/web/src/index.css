@@ -16,10 +16,11 @@
     --bg-modifier:  rgba(0,0,0,0.20);
     --text-normal:  #f2f3f5;
     --text-muted:   #949ba4;
-    --brand:        #5865F2;
-    --brand-hover:  #4752C4;
-    --brand-active: #3C45A5;
-    --separator:    #3f4147;
+    /* RGB channels for opacity modifier support */
+    --brand-rgb:        88, 101, 242;
+    --brand-hover-rgb:  71, 82, 196;
+    --brand-active-rgb: 60, 69, 165;
+    --separator-rgb:    63, 65, 71;
   }
 
   /* ── OLED dark theme — pure black ── */
@@ -33,10 +34,11 @@
     --bg-modifier:  rgba(255,255,255,0.03);
     --text-normal:  #ffffff;
     --text-muted:   #888888;
-    --brand:        #7289da;
-    --brand-hover:  #5865F2;
-    --brand-active: #4752C4;
-    --separator:    #1f1f1f;
+    /* RGB channels for opacity modifier support */
+    --brand-rgb:        114, 137, 218;
+    --brand-hover-rgb:  88, 101, 242;
+    --brand-active-rgb: 71, 82, 196;
+    --separator-rgb:    31, 31, 31;
   }
 
   html, body, #root {
@@ -57,7 +59,7 @@
   ::-webkit-scrollbar-thumb { background: var(--bg-floating); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--separator); }
 
-  ::selection { background: var(--brand); color: #fff; }
+  ::selection { background: rgb(var(--brand-rgb)); color: #fff; }
 }
 
 @layer components {
@@ -225,8 +227,10 @@
   }
   .message-input-box {
     @apply flex items-center gap-2 bg-bg-modifier rounded-lg px-4 py-3
-           border border-transparent focus-within:border-brand/30
-           transition-colors duration-150;
+           border border-transparent transition-colors duration-150;
+  }
+  .message-input-box:focus-within {
+    border-color: rgb(var(--brand-rgb) / 0.4);
   }
   .message-input {
     @apply flex-1 bg-transparent text-sm text-text-normal placeholder:text-text-muted
