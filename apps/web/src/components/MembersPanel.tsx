@@ -15,8 +15,17 @@ const AVATAR_COLORS = [
   'bg-orange-500', 'bg-pink-600', 'bg-cyan-600',
 ];
 
-function MemberAvatar({ name }: { name: string }) {
+function MemberAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover flex-shrink-0 select-none"
+      />
+    );
+  }
   return (
     <div
       className={`w-8 h-8 rounded-full ${color} flex items-center justify-center
@@ -54,7 +63,7 @@ export default function MembersPanel() {
           {online.map(m => (
             <div key={m.id} className="member-item">
               <div className="relative">
-                <MemberAvatar name={m.displayName} />
+                <MemberAvatar name={m.displayName} avatarUrl={m.avatarUrl} />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-status-green border-2 border-bg-secondary" />
               </div>
               <div className="flex flex-col min-w-0">
@@ -78,7 +87,7 @@ export default function MembersPanel() {
           {offline.map(m => (
             <div key={m.id} className="member-item opacity-50">
               <div className="relative">
-                <MemberAvatar name={m.displayName} />
+                <MemberAvatar name={m.displayName} avatarUrl={m.avatarUrl} />
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-text-muted border-2 border-bg-secondary" />
               </div>
               <span className="member-name truncate">{m.displayName}</span>

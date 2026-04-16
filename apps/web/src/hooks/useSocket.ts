@@ -1,19 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 
+// ── True singleton — shared across every component that calls useSocket() ────
 let socketInstance: Socket | null = null;
 
 export function useSocket() {
   const token = useAuthStore((s) => s.token);
   const { addMessage, setOnline, setConnected } = useChatStore();
-  const initialized = useRef(false);
 
   useEffect(() => {
-    if (!token || initialized.current) return;
-    initialized.current = true;
+    // Guard: only create ONE connection for the lifetime of the app session
+    if (!token || socketInstance) return;
 
     socketInstance = io('/', {
       auth: { token },
@@ -22,7 +22,7 @@ export function useSocket() {
       reconnectionDelay: 2000,
     });
 
-    socketInstance.on('connect', () => setConnected(true));
+    socketInstance.on('connect',    () => setConnected(true));
     socketInstance.on('disconnect', () => setConnected(false));
     socketInstance.on('connect_error', (err) => {
       console.warn('[socket] connect error:', err.message);
@@ -41,6 +41,8 @@ export function useSocket() {
       setOnline(userId, online);
     });
 
+    // typing:update: server already uses socket.to() which excludes the sender,
+    // so self-typing is never received here unless there are multiple sockets.
     socketInstance.on('typing:update', ({ displayName, typing }: { displayName: string; typing: boolean }) => {
       useChatStore.getState().setTyping(displayName, typing);
     });
@@ -66,7 +68,6 @@ export function useSocket() {
   const disconnectSocket = () => {
     socketInstance?.disconnect();
     socketInstance = null;
-    initialized.current = false;
     setConnected(false);
   };
 

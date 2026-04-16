@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Plus, Copy, Check, Trash2, ChevronLeft, RefreshCw, Search, Hash, Mic, Pencil, Settings, Users } from 'lucide-react';
+import { Shield, Plus, Copy, Check, Trash2, ChevronLeft, RefreshCw, Search, Hash, Mic, Pencil, Settings, Users, Camera, Upload, Loader2, ImageIcon } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
 
@@ -276,11 +276,29 @@ function ChannelsTab() {
 // ── Settings tab ──────────────────────────────────────────────────────────────
 function SettingsTab() {
   const { serverName, setServerName } = useServerStore();
-  const [name, setName] = useState(serverName);
-  const [saved, setSaved] = useState(false);
+  const [name, setName]       = useState(serverName);
+  const [saved, setSaved]     = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Server icon state
+  const [currentIcon, setCurrentIcon]   = useState<string | null>(null);
+  const [iconPreview, setIconPreview]   = useState<string | null>(null);
+  const [iconFile, setIconFile]         = useState<File | null>(null);
+  const [iconStatus, setIconStatus]     = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  const [iconProgress, setIconProgress] = useState(0);
+  const [iconErr, setIconErr]           = useState('');
+  const iconInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => { setName(serverName); }, [serverName]);
+
+  // Load current server icon
+  useEffect(() => {
+    const token = useAuthStore.getState().token;
+    fetch('/api/settings', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.iconUrl) setCurrentIcon(d.iconUrl); })
+      .catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -294,8 +312,62 @@ function SettingsTab() {
     setLoading(false);
   };
 
+  const handleIconFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { setIconErr('Please select an image'); return; }
+    setIconErr(''); setIconFile(f);
+    setIconPreview(URL.createObjectURL(f));
+    setIconStatus('idle');
+  };
+
+  const handleIconUpload = async () => {
+    if (!iconFile) return;
+    const token = useAuthStore.getState().token;
+    setIconStatus('uploading'); setIconProgress(0); setIconErr('');
+    try {
+      const signRes = await fetch('/api/upload/sign-server-icon', { headers: { Authorization: `Bearer ${token}` } });
+      if (!signRes.ok) throw new Error('Failed to get signature');
+      const { signature, timestamp, folder, transformation, api_key, cloud_name } = await signRes.json();
+
+      const fd = new FormData();
+      fd.append('file', iconFile);
+      fd.append('api_key', api_key);
+      fd.append('timestamp', String(timestamp));
+      fd.append('signature', signature);
+      fd.append('folder', folder);
+      fd.append('transformation', transformation);
+
+      const url = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`);
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) setIconProgress(Math.round((e.loaded / e.total) * 90)); };
+        xhr.onload = () => {
+          if (xhr.status === 200) resolve(JSON.parse(xhr.responseText).secure_url);
+          else reject(new Error(JSON.parse(xhr.responseText)?.error?.message ?? `Error ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(fd);
+      });
+
+      setIconProgress(95);
+      const saveRes = await fetch('/api/upload/server-icon', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      if (!saveRes.ok) throw new Error('Failed to save icon');
+      setCurrentIcon(url); setIconProgress(100); setIconStatus('done');
+      setTimeout(() => { setIconStatus('idle'); setIconFile(null); setIconPreview(null); }, 2000);
+    } catch (e: any) {
+      setIconErr(e.message ?? 'Upload failed');
+      setIconStatus('error');
+    }
+  };
+
   return (
     <div className="max-w-md space-y-6">
+      {/* Server Name */}
       <div className="bg-bg-secondary rounded-lg p-5 border border-separator">
         <h3 className="text-sm font-semibold text-text-normal mb-4">Server Name</h3>
         <label className="form-label">Display Name</label>
@@ -305,6 +377,49 @@ function SettingsTab() {
           {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
           {saved ? 'Saved!' : 'Save Changes'}
         </button>
+      </div>
+
+      {/* Server Icon */}
+      <div className="bg-bg-secondary rounded-lg p-5 border border-separator">
+        <h3 className="text-sm font-semibold text-text-normal mb-4">Server Icon</h3>
+        <div className="flex items-center gap-5">
+          <div
+            className="relative w-20 h-20 rounded-2xl overflow-hidden cursor-pointer group ring-2 ring-separator hover:ring-brand transition-all flex-shrink-0"
+            onClick={() => iconInputRef.current?.click()}
+          >
+            {iconPreview || currentIcon ? (
+              <img src={iconPreview ?? currentIcon!} alt="Server icon" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-brand/20 flex items-center justify-center text-brand/60 text-3xl font-bold select-none">
+                {serverName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera className="w-5 h-5 text-white" />
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-2">
+            <p className="text-xs text-text-muted">Recommended: 256×256px or larger<br />JPG, PNG, WebP · Max 10 MB</p>
+            <input ref={iconInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconFile} />
+            {iconStatus === 'uploading' && (
+              <div className="w-full bg-bg-modifier rounded-full h-1.5">
+                <div className="h-full bg-brand rounded-full transition-all duration-300" style={{ width: `${iconProgress}%` }} />
+              </div>
+            )}
+            {iconErr && <p className="text-xs text-status-red">{iconErr}</p>}
+            <button
+              onClick={handleIconUpload}
+              disabled={!iconFile || iconStatus === 'uploading' || iconStatus === 'done'}
+              className="btn-primary btn-sm flex items-center gap-1.5"
+            >
+              {iconStatus === 'uploading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {iconStatus === 'done'      && <Check className="w-3.5 h-3.5" />}
+              {(iconStatus === 'idle' || iconStatus === 'error') && <Upload className="w-3.5 h-3.5" />}
+              {iconStatus === 'uploading' ? `${iconProgress}%` : iconStatus === 'done' ? 'Saved!' : 'Upload Icon'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
