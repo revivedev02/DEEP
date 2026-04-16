@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #313338;
+    color: #F2F3F5;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #111214; }
+
+  ::selection { background: #5865F2; color: #fff; }
+}
+
+@layer components {
+  /* ── Layout shells ── */
+  .layout-root {
+    @apply flex h-full w-full overflow-hidden;
+  }
+
+  /* ── Server Rail ── */
+  .server-rail {
+    @apply flex flex-col items-center gap-2 py-3 w-[72px] min-w-[72px]
+           bg-bg-tertiary overflow-y-auto overflow-x-hidden;
+  }
+  .rail-icon {
+    @apply flex items-center justify-center w-12 h-12 rounded-[24px]
+           cursor-pointer select-none transition-all duration-200 ease-out
+           bg-bg-primary text-text-normal hover:rounded-[16px] hover:bg-brand;
+  }
+  .rail-icon.active {
+    @apply rounded-[16px] bg-brand;
+  }
+  .rail-separator {
+    @apply w-8 h-px bg-separator my-1;
+  }
+
+  /* ── Channel Sidebar ── */
+  .channel-sidebar {
+    @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-hidden;
+  }
+  .sidebar-header {
+    @apply flex items-center justify-between px-4 h-12 min-h-[48px]
+           border-b border-separator shadow-elevation-low cursor-pointer
+           hover:bg-bg-modifier transition-colors duration-150 select-none;
+  }
+  .sidebar-section-title {
+    @apply flex items-center gap-1 px-4 mt-4 mb-1
+           text-xs font-semibold uppercase tracking-wider text-text-muted
+           hover:text-text-normal cursor-pointer transition-colors duration-150;
+  }
+  .channel-item {
+    @apply flex items-center gap-1.5 mx-2 px-2 py-1.5 rounded
+           text-sm text-channel-default cursor-pointer select-none
+           transition-all duration-100 hover:bg-bg-modifier hover:text-channel-hover;
+  }
+  .channel-item.active {
+    @apply bg-bg-modifier text-channel-active font-medium;
+  }
+  .channel-item .channel-icon {
+    @apply w-5 h-5 flex-shrink-0 text-text-muted;
+  }
+  .channel-item.active .channel-icon {
+    @apply text-channel-active;
+  }
+
+  /* ── User Panel (bottom of sidebar) ── */
+  .user-panel {
+    @apply flex items-center gap-2 px-2 py-2 mt-auto bg-bg-floating
+           hover:bg-bg-modifier transition-colors duration-150 cursor-pointer;
+  }
+  .avatar {
+    @apply relative flex-shrink-0;
+  }
+  .avatar img, .avatar-placeholder {
+    @apply w-8 h-8 rounded-full object-cover;
+  }
+  .avatar-placeholder {
+    @apply flex items-center justify-center bg-brand text-white text-sm font-semibold w-8 h-8 rounded-full;
+  }
+  .status-dot {
+    @apply absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-floating;
+  }
+  .status-dot.online  { @apply bg-status-green; }
+  .status-dot.offline { @apply bg-text-muted; }
+
+  /* ── Main Content ── */
+  .main-content {
+    @apply flex flex-col flex-1 bg-bg-primary overflow-hidden;
+  }
+  .channel-header {
+    @apply flex items-center gap-2 px-4 h-12 min-h-[48px]
+           border-b border-separator shadow-elevation-low;
+  }
+  .channel-header-name {
+    @apply text-base font-semibold text-text-normal;
+  }
+  .channel-header-topic {
+    @apply hidden md:flex items-center gap-1 text-sm text-text-muted
+           pl-3 ml-2 border-l border-separator truncate;
+  }
+
+  /* ── Messages ── */
+  .messages-container {
+    @apply flex-1 overflow-y-auto overflow-x-hidden px-0 py-4 flex flex-col;
+  }
+  .message-group {
+    @apply flex gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded;
+  }
+  .message-group.with-avatar {
+    @apply mt-4 py-1;
+  }
+  .message-avatar {
+    @apply w-10 h-10 rounded-full flex-shrink-0 object-cover cursor-pointer;
+  }
+  .message-avatar-placeholder {
+    @apply w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center
+           bg-brand text-white text-sm font-semibold cursor-pointer select-none;
+  }
+  .message-body {
+    @apply flex flex-col flex-1 min-w-0;
+  }
+  .message-header {
+    @apply flex items-baseline gap-2;
+  }
+  .message-author {
+    @apply text-sm font-semibold text-text-normal cursor-pointer hover:underline;
+  }
+  .message-author.admin {
+    @apply text-brand;
+  }
+  .message-timestamp {
+    @apply text-2xs text-text-muted;
+  }
+  .message-content {
+    @apply text-sm text-text-normal leading-relaxed break-words;
+  }
+  .message-content-continuation {
+    @apply text-sm text-text-normal leading-relaxed break-words pl-14;
+  }
+  .continuation-timestamp {
+    @apply hidden text-2xs text-text-muted w-10 flex-shrink-0 text-right leading-5
+           group-hover:inline-block select-none cursor-default;
+  }
+
+  /* ── Message Input ── */
+  .message-input-wrapper {
+    @apply px-4 pb-6 pt-2;
+  }
+  .message-input-box {
+    @apply flex items-center gap-2 bg-bg-modifier rounded-lg px-4 py-3
+           border border-transparent focus-within:border-brand/30
+           transition-colors duration-150;
+  }
+  .message-input {
+    @apply flex-1 bg-transparent text-sm text-text-normal placeholder:text-text-muted
+           outline-none resize-none min-h-[22px] max-h-[220px] leading-relaxed;
+  }
+  .input-action-btn {
+    @apply flex items-center justify-center w-8 h-8 rounded text-text-muted
+           hover:text-interactive-hover transition-colors duration-150 cursor-pointer flex-shrink-0;
+  }
+
+  /* ── Members Panel ── */
+  .members-panel {
+    @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-y-auto overflow-x-hidden py-4;
+  }
+  .member-section-title {
+    @apply px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted;
+  }
+  .member-item {
+    @apply flex items-center gap-3 mx-2 px-2 py-1.5 rounded cursor-pointer
+           hover:bg-bg-modifier transition-colors duration-100;
+  }
+  .member-name {
+    @apply text-sm text-interactive-normal hover:text-interactive-hover;
+  }
+
+  /* ── Voice Coming Soon ── */
+  .coming-soon-pane {
+    @apply flex flex-col items-center justify-center flex-1 gap-6 select-none;
+  }
+  .coming-soon-icon-ring {
+    @apply relative flex items-center justify-center w-32 h-32;
+  }
+
+  /* ── Admin Panel ── */
+  .admin-table {
+    @apply w-full text-sm text-left border-collapse;
+  }
+  .admin-table th {
+    @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted
+           border-b border-separator;
+  }
+  .admin-table td {
+    @apply px-4 py-3 text-text-normal border-b border-separator/50;
+  }
+  .admin-table tr:hover td {
+    @apply bg-bg-modifier;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded
+           text-sm font-medium transition-all duration-150 select-none cursor-pointer
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-hover active:bg-brand-active;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-text-muted hover:bg-bg-modifier hover:text-text-normal;
+  }
+  .btn-danger {
+    @apply btn bg-status-red/20 text-status-red hover:bg-status-red hover:text-white;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/70
+           animate-fade-in backdrop-blur-sm;
+  }
+  .modal-box {
+    @apply bg-bg-secondary rounded-lg shadow-elevation-high w-full max-w-md mx-4
+           animate-slide-up;
+  }
+  .modal-header {
+    @apply px-6 pt-6 pb-4 border-b border-separator;
+  }
+  .modal-body {
+    @apply px-6 py-4;
+  }
+  .modal-footer {
+    @apply px-6 pb-6 pt-4 flex justify-end gap-3;
+  }
+
+  /* ── Form ── */
+  .form-label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5;
+  }
+  .form-input {
+    @apply w-full px-3 py-2 rounded bg-bg-tertiary text-sm text-text-normal
+           placeholder:text-text-muted border border-separator
+           focus:outline-none focus:border-brand transition-colors duration-150;
+  }
+  .form-hint {
+    @apply text-xs text-text-muted mt-1;
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-bg-floating rounded
+           shadow-elevation-high pointer-events-none whitespace-nowrap
+           opacity-0 group-hover:opacity-100 transition-opacity duration-150;
+  }
+
+  /* ── Login Page ── */
+  .login-bg {
+    @apply min-h-full flex items-center justify-center
+           bg-gradient-to-br from-bg-tertiary via-bg-secondary to-bg-primary;
+  }
+  .login-card {
+    @apply bg-bg-secondary rounded-xl shadow-elevation-high w-full max-w-md mx-4 p-8
+           animate-slide-up border border-separator/30;
+  }
+
+  /* ── Scrollbar utilities ── */
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand to-blue-400 bg-clip-text text-transparent;
+  }
+  .glow-brand {
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.4);
+  }
+  .shine {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    background-size: 200% 100%;
+    animation: shine 2s infinite;
+  }
+  @keyframes shine {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+}

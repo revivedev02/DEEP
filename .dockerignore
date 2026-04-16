@@ -1,0 +1,22 @@
+node_modules/
+.turbo/
+
+# Build outputs
+apps/web/dist/
+apps/server/dist/
+
+# Local DB & secrets
+apps/server/prisma/dev.db
+apps/server/prisma/dev.db-journal
+apps/server/.env
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
