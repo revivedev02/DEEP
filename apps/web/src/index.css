@@ -88,7 +88,7 @@
   /* ── Channel Sidebar ── */
   .channel-sidebar {
     @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-hidden;
-    border-right: 1px solid rgb(var(--separator-rgb) / 0.2);
+    border-right: 1px solid rgb(var(--separator-rgb) / 0.3);
   }
   .sidebar-header {
     @apply flex items-center justify-between px-4 h-12 min-h-[48px]
@@ -246,7 +246,7 @@
   /* ── Members Panel ── */
   .members-panel {
     @apply flex flex-col w-60 min-w-[240px] bg-bg-secondary overflow-y-auto overflow-x-hidden py-4;
-    border-left: 1px solid rgb(var(--separator-rgb) / 0.2);
+    border-left: 1px solid rgb(var(--separator-rgb) / 0.5);
   }
   .member-section-title {
     @apply px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted;
