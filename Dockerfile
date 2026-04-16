@@ -37,4 +37,4 @@ RUN pnpm --filter @pdl/web build
 EXPOSE 3000
 
 # Run DB migration then start server
-CMD ["sh", "-c", "cd /app/apps/server && pnpm exec prisma db push && node --import tsx/esm /app/apps/server/src/index.ts"]
+CMD ["sh", "-c", "cd /app/apps/server && pnpm exec prisma db push && node --import tsx/esm /app/apps/server/prisma/seed.ts && node --import tsx/esm /app/apps/server/src/index.ts"]
