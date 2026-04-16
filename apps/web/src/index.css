@@ -16,11 +16,11 @@
     --bg-modifier:  rgba(0,0,0,0.20);
     --text-normal:  #f2f3f5;
     --text-muted:   #949ba4;
-    /* RGB channels for opacity modifier support */
-    --brand-rgb:        88, 101, 242;
-    --brand-hover-rgb:  71, 82, 196;
-    --brand-active-rgb: 60, 69, 165;
-    --separator-rgb:    63, 65, 71;
+    /* Space-separated RGB channels — required for CSS4 rgb(var() / alpha) syntax */
+    --brand-rgb:        88 101 242;
+    --brand-hover-rgb:  71 82 196;
+    --brand-active-rgb: 60 69 165;
+    --separator-rgb:    63 65 71;
   }
 
   /* ── OLED dark theme — pure black ── */
@@ -34,11 +34,11 @@
     --bg-modifier:  rgba(255,255,255,0.03);
     --text-normal:  #ffffff;
     --text-muted:   #888888;
-    /* RGB channels for opacity modifier support */
-    --brand-rgb:        114, 137, 218;
-    --brand-hover-rgb:  88, 101, 242;
-    --brand-active-rgb: 71, 82, 196;
-    --separator-rgb:    31, 31, 31;
+    /* Space-separated RGB channels — required for CSS4 rgb(var() / alpha) syntax */
+    --brand-rgb:        114 137 218;
+    --brand-hover-rgb:  88 101 242;
+    --brand-active-rgb: 71 82 196;
+    --separator-rgb:    31 31 31;
   }
 
   html, body, #root {
