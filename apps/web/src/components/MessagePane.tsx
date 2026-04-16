@@ -5,6 +5,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { useUIStore } from '@/store/useUIStore';
+import { useServerStore } from '@/store/useServerStore';
+import { SkMessageList } from '@/components/Skeleton';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function formatTimestamp(iso: string): string {
@@ -201,10 +203,14 @@ interface Props {
 }
 
 export default function MessagePane({ onSendMessage }: Props) {
-  const { messages, isConnected } = useChatStore();
+  const { messages, isConnected, isLoadingMessages } = useChatStore();
   const { user } = useAuthStore();
-  const { toggleMembers, showMembers } = useUIStore();
+  const { toggleMembers, showMembers, activeChannel } = useUIStore();
+  const { channels } = useServerStore();
   const scrollRef = useScrollToBottom<HTMLDivElement>([messages.length]);
+
+  const activeChannelObj = channels.find(c => c.id === activeChannel);
+  const channelName = activeChannelObj?.name ?? 'general';
 
   // Group messages by date + consecutive author
   type Group = { dateLabel: string | null; msg: ChatMessage; isFirst: boolean };
@@ -233,7 +239,7 @@ export default function MessagePane({ onSendMessage }: Props) {
       {/* Channel header */}
       <div className="channel-header">
         <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
-        <span className="channel-header-name">general</span>
+        <span className="channel-header-name">{channelName}</span>
         <div className="channel-header-topic">
           <span>General chat for the crew</span>
         </div>
@@ -253,17 +259,23 @@ export default function MessagePane({ onSendMessage }: Props) {
 
       {/* Messages */}
       <div ref={scrollRef} className="messages-container scrollbar-thin">
-        <WelcomeBanner />
-        {groups.map(({ dateLabel, msg, isFirst }) => (
-          <div key={msg.id}>
-            {dateLabel && <DateDivider label={dateLabel} />}
-            <Message msg={msg} isFirst={isFirst} currentUserId={user?.id ?? ''} />
-          </div>
-        ))}
+        {isLoadingMessages ? (
+          <SkMessageList />
+        ) : (
+          <>
+            <WelcomeBanner />
+            {groups.map(({ dateLabel, msg, isFirst }) => (
+              <div key={msg.id}>
+                {dateLabel && <DateDivider label={dateLabel} />}
+                <Message msg={msg} isFirst={isFirst} currentUserId={user?.id ?? ''} />
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {/* Input */}
-      <MessageInput onSend={onSendMessage} channelName="general" />
+      <MessageInput onSend={onSendMessage} channelName={channelName} />
     </div>
   );
 }

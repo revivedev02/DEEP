@@ -9,6 +9,8 @@ import { registerAuthRoutes, addAuthDecorator } from './routes/auth.js';
 import { registerMessageRoutes } from './routes/messages.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerMemberRoutes } from './routes/members.js';
+import { registerSettingsRoutes } from './routes/settings.js';
+import { registerChannelRoutes } from './routes/channels.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { prisma } from './lib/prisma.js';
 
@@ -42,6 +44,8 @@ await registerAuthRoutes(app);
 await registerMessageRoutes(app);
 await registerAdminRoutes(app);
 await registerMemberRoutes(app);
+await registerSettingsRoutes(app);
+await registerChannelRoutes(app);
 
 // SPA fallback (prod)
 if (IS_PROD) {
@@ -81,6 +85,23 @@ try {
   } else {
     console.log(`✅  Admin exists — login ID: ${adminShortId}`);
   }
+  // Seed default channels
+  const channelCount = await prisma.channel.count();
+  if (channelCount === 0) {
+    await prisma.channel.createMany({
+      data: [
+        { id: 'text-main',    name: 'general', type: 'text',  position: 0 },
+        { id: 'voice-lounge', name: 'lounge',  type: 'voice', position: 1 },
+      ],
+    });
+    console.log('✅  Default channels seeded.');
+  }
+  // Seed server settings
+  await prisma.serverSettings.upsert({
+    where:  { id: 'main' },
+    update: {},
+    create: { id: 'main', serverName: 'DEEP' },
+  });
 } catch (e) {
   console.error('⚠️  Seed error:', e);
 }

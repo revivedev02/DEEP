@@ -28,3 +28,17 @@ model Message {
 
   @@index([channelId, createdAt])
 }
+
+model Channel {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("text")
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ServerSettings {
+  id         String   @id @default("main")
+  serverName String   @default("DEEP")
+  updatedAt  DateTime @updatedAt
+}

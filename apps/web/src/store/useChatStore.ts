@@ -16,31 +16,33 @@ export interface ChatMessage {
 }
 
 interface ChatState {
-  messages: ChatMessage[];
-  onlineUsers: Set<string>;
-  isConnected: boolean;
-  addMessage: (msg: ChatMessage) => void;
-  setMessages: (msgs: ChatMessage[]) => void;
-  setOnline: (userId: string, online: boolean) => void;
-  setConnected: (v: boolean) => void;
+  messages:          ChatMessage[];
+  onlineUsers:       Set<string>;
+  isConnected:       boolean;
+  isLoadingMessages: boolean;
+  addMessage:    (msg: ChatMessage) => void;
+  setMessages:   (msgs: ChatMessage[]) => void;
+  setOnline:     (userId: string, online: boolean) => void;
+  setConnected:  (v: boolean) => void;
   clearMessages: () => void;
+  setLoadingMessages: (v: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
-  messages: [],
-  onlineUsers: new Set(),
-  isConnected: false,
+  messages:          [],
+  onlineUsers:       new Set(),
+  isConnected:       false,
+  isLoadingMessages: true,   // starts true until first fetch resolves
   addMessage: (msg) =>
-    set((s) => ({
-      messages: [...s.messages, msg].slice(-500), // keep last 500
-    })),
-  setMessages: (msgs) => set({ messages: msgs }),
+    set((s) => ({ messages: [...s.messages, msg].slice(-500) })),
+  setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false }),
   setOnline: (userId, online) =>
     set((s) => {
       const next = new Set(s.onlineUsers);
       online ? next.add(userId) : next.delete(userId);
       return { onlineUsers: next };
     }),
-  setConnected: (v) => set({ isConnected: v }),
-  clearMessages: () => set({ messages: [] }),
+  setConnected:      (v) => set({ isConnected: v }),
+  clearMessages:     ()  => set({ messages: [] }),
+  setLoadingMessages:(v) => set({ isLoadingMessages: v }),
 }));
