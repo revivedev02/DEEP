@@ -1,12 +1,13 @@
 import { format, isToday, isYesterday } from 'date-fns';
-import { useMemo, useState, useRef, useEffect } from 'react';
-import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search } from 'lucide-react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
 import { SkMessageList } from '@/components/Skeleton';
+import { useThemeStore } from '@/store/useThemeStore';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function formatTimestamp(iso: string): string {
@@ -58,15 +59,26 @@ function DateDivider({ label }: { label: string }) {
 
 // ─── Single message ──────────────────────────────────────────────────────────
 function Message({
-  msg,
-  isFirst,
-  currentUserId,
+  msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin, onDelete,
 }: {
-  msg: ChatMessage;
-  isFirst: boolean;
-  currentUserId: string;
+  msg: ChatMessage; isFirst: boolean; currentUserId: string; isAdmin: boolean;
+  onDelete: (id: string) => void;
 }) {
   const isMe = msg.userId === currentUserId;
+  const canDelete = isMe || currentUserIsAdmin;
+
+  const ActionBar = () => (
+    <div className="message-actions">
+      <button className="message-action-btn" title="Copy" onClick={() => navigator.clipboard.writeText(msg.content)}>
+        <Copy className="w-3.5 h-3.5" />
+      </button>
+      {canDelete && (
+        <button className="message-action-btn hover:!text-status-red" title="Delete" onClick={() => onDelete(msg.id)}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
 
   if (isFirst) {
     return (
@@ -76,48 +88,40 @@ function Message({
           <div className="message-header">
             <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
               {msg.user.displayName}
-              {msg.user.isAdmin && (
-                <span className="ml-1.5 text-2xs bg-brand/20 text-brand px-1.5 py-0.5 rounded font-medium">
-                  ADMIN
-                </span>
-              )}
-              {isMe && (
-                <span className="ml-1.5 text-2xs bg-bg-modifier text-text-muted px-1.5 py-0.5 rounded font-medium">
-                  YOU
-                </span>
-              )}
+              {msg.user.isAdmin && <span className="ml-1.5 text-2xs bg-brand/20 text-brand px-1.5 py-0.5 rounded font-medium">ADMIN</span>}
+              {isMe && <span className="ml-1.5 text-2xs bg-bg-modifier text-text-muted px-1.5 py-0.5 rounded font-medium">YOU</span>}
             </span>
             <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
           </div>
           <p className="message-content">{msg.content}</p>
         </div>
+        <ActionBar />
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded group">
+    <div className="flex items-start gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded group message-group">
       <div className="w-10 flex-shrink-0 flex justify-center pt-1">
-        <span className="hidden group-hover:inline text-2xs text-text-muted leading-5">
-          {shortTime(msg.createdAt)}
-        </span>
+        <span className="hidden group-hover:inline text-2xs text-text-muted leading-5">{shortTime(msg.createdAt)}</span>
       </div>
       <p className="message-content flex-1">{msg.content}</p>
+      <ActionBar />
     </div>
   );
 }
 
-// ─── Welcome banner ──────────────────────────────────────────────────────────
-function WelcomeBanner() {
+// ─── Welcome / empty state ───────────────────────────────────────────────────
+function WelcomeBanner({ channelName }: { channelName: string }) {
   return (
-    <div className="px-4 mb-4">
+    <div className="px-4 mb-6 pt-8">
       <div className="flex items-center justify-center w-16 h-16 rounded-full bg-brand/20 mb-4">
         <Hash className="w-8 h-8 text-brand" />
       </div>
-      <h2 className="text-2xl font-bold text-text-normal mb-1">Welcome to #general!</h2>
-      <p className="text-text-muted text-sm">
-        This is the beginning of the <span className="text-text-normal font-medium">#general</span> channel.
-        Only your crew can see this.
+      <h2 className="text-2xl font-bold text-text-normal mb-1">Welcome to #{channelName}!</h2>
+      <p className="text-text-muted text-sm max-w-md">
+        This is the very beginning of <span className="text-text-normal font-medium">#{channelName}</span>.
+        Send a message to get the conversation started. Only your crew can see this.
       </p>
     </div>
   );
@@ -127,17 +131,16 @@ function WelcomeBanner() {
 interface InputProps {
   onSend: (content: string) => void;
   channelName: string;
+  onTyping: (v: boolean) => void;
 }
 
-function MessageInput({ onSend, channelName }: InputProps) {
+function MessageInput({ onSend, channelName, onTyping }: InputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
   };
 
   const submit = () => {
@@ -145,9 +148,8 @@ function MessageInput({ onSend, channelName }: InputProps) {
     if (!trimmed) return;
     onSend(trimmed);
     setValue('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    onTyping(false);
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -156,6 +158,10 @@ function MessageInput({ onSend, channelName }: InputProps) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
+    // Typing indicator
+    onTyping(true);
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => onTyping(false), 3000);
   };
 
   return (
@@ -200,17 +206,32 @@ function MessageInput({ onSend, channelName }: InputProps) {
 // ─── Main export ─────────────────────────────────────────────────────────────
 interface Props {
   onSendMessage: (content: string) => void;
+  onTyping: (v: boolean) => void;
 }
 
-export default function MessagePane({ onSendMessage }: Props) {
-  const { messages, isConnected, isLoadingMessages } = useChatStore();
+export default function MessagePane({ onSendMessage, onTyping }: Props) {
+  const { messages, isConnected, isLoadingMessages, typingUsers } = useChatStore();
   const { user } = useAuthStore();
   const { toggleMembers, showMembers, activeChannel } = useUIStore();
   const { channels } = useServerStore();
+  const { theme, toggleTheme } = useThemeStore();
   const scrollRef = useScrollToBottom<HTMLDivElement>([messages.length]);
+  const { token } = useAuthStore();
 
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const channelName = activeChannelObj?.name ?? 'general';
+
+  const handleDeleteMessage = useCallback(async (id: string) => {
+    if (!confirm('Delete this message?')) return;
+    await fetch(`/api/messages/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    // Optimistic removal from store
+    useChatStore.getState().setMessages(
+      useChatStore.getState().messages.filter(m => m.id !== id)
+    );
+  }, [token]);
 
   // Group messages by date + consecutive author
   type Group = { dateLabel: string | null; msg: ChatMessage; isFirst: boolean };
@@ -251,6 +272,9 @@ export default function MessagePane({ onSendMessage }: Props) {
           <button className="input-action-btn" title="Notifications (coming soon)"><Bell className="w-5 h-5" /></button>
           <button className="input-action-btn" title="Pins (coming soon)"><Pin className="w-5 h-5" /></button>
           <button className="input-action-btn" title="Search (coming soon)"><Search className="w-5 h-5" /></button>
+          <button onClick={toggleTheme} className="input-action-btn" title={`Switch to ${theme === 'light' ? 'OLED' : 'Light'} theme`}>
+            {theme === 'oled' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
           <button onClick={toggleMembers} className={`input-action-btn ${showMembers ? 'text-text-normal' : ''}`} title="Toggle members">
             <Users className="w-5 h-5" />
           </button>
@@ -263,19 +287,38 @@ export default function MessagePane({ onSendMessage }: Props) {
           <SkMessageList />
         ) : (
           <>
-            <WelcomeBanner />
+            <WelcomeBanner channelName={channelName} />
             {groups.map(({ dateLabel, msg, isFirst }) => (
               <div key={msg.id}>
                 {dateLabel && <DateDivider label={dateLabel} />}
-                <Message msg={msg} isFirst={isFirst} currentUserId={user?.id ?? ''} />
+                <Message msg={msg} isFirst={isFirst} currentUserId={user?.id ?? ''}
+                  isAdmin={user?.isAdmin ?? false} onDelete={handleDeleteMessage} />
               </div>
             ))}
           </>
         )}
       </div>
 
+      {/* Typing indicator */}
+      <div className="typing-indicator">
+        {typingUsers.length > 0 && (
+          <>
+            <div className="typing-dots">
+              <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+            </div>
+            <span>
+              {typingUsers.length === 1
+                ? <><strong>{typingUsers[0]}</strong> is typing…</>
+                : typingUsers.length === 2
+                ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
+                : <><strong>Several people</strong> are typing…</>}
+            </span>
+          </>
+        )}
+      </div>
+
       {/* Input */}
-      <MessageInput onSend={onSendMessage} channelName={channelName} />
+      <MessageInput onSend={onSendMessage} channelName={channelName} onTyping={onTyping} />
     </div>
   );
 }

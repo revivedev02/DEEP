@@ -14,7 +14,7 @@ export default function ChatPage() {
   const { activeChannel, showMembers } = useUIStore();
   const { channels } = useServerStore();
   const { user } = useAuthStore();
-  const { sendMessage } = useSocket();
+  const { sendMessage, sendTyping } = useSocket();
 
   useValidateToken();  // clears stale/demo tokens
   useMessages();       // fetch message history
@@ -42,7 +42,7 @@ export default function ChatPage() {
         ) : isVoice ? (
           <VoicePane />
         ) : (
-          <MessagePane onSendMessage={handleSendMessage} />
+          <MessagePane onSendMessage={handleSendMessage} onTyping={sendTyping} />
         )}
       </main>
 

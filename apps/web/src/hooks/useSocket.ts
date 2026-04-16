@@ -38,12 +38,20 @@ export function useSocket() {
       setOnline(userId, online);
     });
 
+    socketInstance.on('typing:update', ({ displayName, typing }: { displayName: string; typing: boolean }) => {
+      useChatStore.getState().setTyping(displayName, typing);
+    });
+
     // Cleanup only on unmount (keep socket alive between re-renders)
     return () => {};
   }, [token]);
 
   const sendMessage = (content: string) => {
     socketInstance?.emit('message:send', { content });
+  };
+
+  const sendTyping = (typing: boolean) => {
+    socketInstance?.emit('typing', { typing });
   };
 
   const disconnectSocket = () => {
@@ -53,5 +61,5 @@ export function useSocket() {
     setConnected(false);
   };
 
-  return { sendMessage, disconnectSocket };
+  return { sendMessage, sendTyping, disconnectSocket };
 }

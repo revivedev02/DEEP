@@ -20,9 +20,10 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
       const token = socket.handshake.auth?.token as string | undefined;
       if (!token) return next(new Error('No token'));
 
-      const payload = app.jwt.verify(token) as { sub: string; isAdmin: boolean };
-      (socket as any).userId  = payload.sub;
-      (socket as any).isAdmin = payload.isAdmin;
+      const payload = app.jwt.verify(token) as { sub: string; displayName: string; isAdmin: boolean };
+      (socket as any).userId      = payload.sub;
+      (socket as any).displayName = (payload as any).displayName ?? 'Someone';
+      (socket as any).isAdmin     = payload.isAdmin;
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -30,7 +31,8 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
   });
 
   io.on('connection', async (socket) => {
-    const userId  = (socket as any).userId  as string;
+    const userId      = (socket as any).userId      as string;
+    const displayName = (socket as any).displayName as string;
 
     // Track presence
     if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
@@ -64,6 +66,24 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
         io.to(CHANNEL_ID).emit('message:new', message);
       } catch (err) {
         app.log.error(err, 'Failed to save message');
+      }
+    });
+
+    // ── typing ───────────────────────────────────────────────────────────────
+    const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+    socket.on('typing', ({ typing }: { typing: boolean }) => {
+      // Broadcast to everyone else in the channel
+      socket.to(CHANNEL_ID).emit('typing:update', { displayName, typing });
+
+      // Auto-clear after 4s in case 'stop' is missed
+      if (typing) {
+        clearTimeout(typingTimers.get(userId));
+        typingTimers.set(userId, setTimeout(() => {
+          socket.to(CHANNEL_ID).emit('typing:update', { displayName, typing: false });
+        }, 4000));
+      } else {
+        clearTimeout(typingTimers.get(userId));
       }
     });
 
