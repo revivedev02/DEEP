@@ -46,9 +46,13 @@ export default function ChatPage() {
         )}
       </main>
 
-      {showMembers && isText && (
+      {/* Smooth slide transition for members panel */}
+      <div
+        className="overflow-hidden transition-all duration-200 ease-in-out flex-shrink-0"
+        style={{ width: showMembers && isText ? 240 : 0, opacity: showMembers && isText ? 1 : 0 }}
+      >
         <MembersPanel />
-      )}
+      </div>
     </div>
   );
 }

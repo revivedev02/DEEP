@@ -197,6 +197,19 @@
     @apply relative flex items-center justify-center w-32 h-32;
   }
 
+  /* ── Dropdown ── */
+  .dropdown-menu {
+    @apply bg-bg-floating border border-separator/60 rounded-md shadow-elevation-high
+           py-1 flex flex-col;
+  }
+  .dropdown-item {
+    @apply flex items-center gap-2.5 px-3 py-2 text-sm text-text-normal
+           hover:bg-bg-modifier cursor-pointer transition-colors duration-100 rounded-sm mx-1;
+  }
+  .dropdown-divider {
+    @apply h-px bg-separator/60 my-1 mx-2;
+  }
+
   /* ── Admin Panel ── */
   .admin-table {
     @apply w-full text-sm text-left border-collapse;
