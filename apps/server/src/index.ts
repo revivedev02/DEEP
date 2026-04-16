@@ -10,6 +10,7 @@ import { registerMessageRoutes } from './routes/messages.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerMemberRoutes } from './routes/members.js';
 import { setupSocketHandlers } from './socket/handlers.js';
+import { prisma } from './lib/prisma.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -62,3 +63,24 @@ setupSocketHandlers(io, app);
 // ── Listen ───────────────────────────────────────────────────────────────────
 await app.listen({ port: PORT, host: HOST });
 console.log(`\n🚀  DEEP server running on http://localhost:${PORT}\n`);
+
+// ── Seed admin user (idempotent) ─────────────────────────────────────────────
+try {
+  const adminShortId = process.env.ADMIN_SHORTID ?? 'admin_init';
+  const exists = await prisma.user.findUnique({ where: { shortId: adminShortId } });
+  if (!exists) {
+    await prisma.user.create({
+      data: {
+        shortId:     adminShortId,
+        displayName: 'Admin',
+        username:    'admin',
+        isAdmin:     true,
+      },
+    });
+    console.log(`✅  Admin seeded — login ID: ${adminShortId}`);
+  } else {
+    console.log(`✅  Admin exists — login ID: ${adminShortId}`);
+  }
+} catch (e) {
+  console.error('⚠️  Seed error:', e);
+}
