@@ -355,6 +355,26 @@
     @apply px-6 pb-6 pt-4 flex justify-end gap-3;
   }
 
+  /* ── Delete Confirm Modal ── */
+  .delete-modal {
+    @apply bg-bg-secondary rounded-xl shadow-elevation-high w-full max-w-sm mx-4
+           border border-separator/30;
+  }
+  .delete-modal-header {
+    @apply flex items-center justify-between px-5 pt-5 pb-4
+           border-b border-separator/30;
+  }
+  .delete-modal-body {
+    @apply px-5 py-4;
+  }
+  .delete-modal-preview {
+    @apply bg-bg-primary rounded-lg px-3 py-2.5 border border-separator/40;
+  }
+  .delete-modal-footer {
+    @apply flex items-center justify-between px-5 pb-5 pt-3
+           border-t border-separator/20;
+  }
+
   /* ── Form ── */
   .form-label {
     @apply block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5;

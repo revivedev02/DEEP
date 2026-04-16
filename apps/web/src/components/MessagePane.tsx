@@ -1,6 +1,7 @@
 import { format, isToday, isYesterday } from 'date-fns';
 import { useMemo, useState, useRef, useCallback } from 'react';
 import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, CornerUpLeft } from 'lucide-react';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
@@ -247,8 +248,11 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const channelName = activeChannelObj?.name ?? 'general';
 
-  const handleDeleteMessage = useCallback(async (id: string) => {
-    if (!confirm('Delete this message?')) return;
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
+  const SKIP_KEY = 'deep:deleteNoConfirm';
+
+  const doDelete = useCallback(async (id: string) => {
     await fetch(`/api/messages/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
@@ -257,6 +261,24 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
       useChatStore.getState().messages.filter(m => m.id !== id)
     );
   }, [token]);
+
+  const handleDeleteMessage = useCallback((id: string) => {
+    // Skip modal if user checked "don't ask again"
+    if (localStorage.getItem(SKIP_KEY) === 'true') {
+      doDelete(id);
+      return;
+    }
+    const msg = useChatStore.getState().messages.find(m => m.id === id);
+    if (msg) setDeleteTarget(msg);
+  }, [doDelete]);
+
+  const handleModalConfirm = useCallback((dontAskAgain: boolean) => {
+    if (!deleteTarget) return;
+    if (dontAskAgain) localStorage.setItem(SKIP_KEY, 'true');
+    doDelete(deleteTarget.id);
+    setDeleteTarget(null);
+  }, [deleteTarget, doDelete]);
+
 
   const handleReply = useCallback((msg: ChatMessage) => {
     setReplyingTo(msg);
@@ -366,6 +388,16 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
 
       {/* Input */}
       <MessageInput onSend={onSendMessage} channelName={channelName} onTyping={onTyping} onCancelReply={() => setReplyingTo(null)} />
+
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          authorName={deleteTarget.user.displayName}
+          preview={deleteTarget.content}
+          onConfirm={handleModalConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }
