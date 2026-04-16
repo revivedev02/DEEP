@@ -5,7 +5,6 @@ import { uploadImage } from '../lib/cloudinary.js';
 export async function registerUploadRoutes(app: FastifyInstance) {
 
   // ── POST /api/upload/avatar ───────────────────────────────────────────────
-  // Upload current user's avatar to Cloudinary, save URL in DB + return it
   app.post(
     '/api/upload/avatar',
     { preHandler: [app.authenticate] },
@@ -15,23 +14,23 @@ export async function registerUploadRoutes(app: FastifyInstance) {
       const data = await req.file();
       if (!data) return reply.code(400).send({ error: 'No file uploaded' });
 
-      // Size guard — 8MB max
       const chunks: Buffer[] = [];
       for await (const chunk of data.file) chunks.push(chunk);
       const buffer = Buffer.concat(chunks);
       if (buffer.length > 8 * 1024 * 1024)
         return reply.code(413).send({ error: 'File too large (max 8 MB)' });
 
-      // Upload to Cloudinary — folder: deep/avatars, publicId: userId (overwrites previous)
-      const avatarUrl = await uploadImage(buffer, 'deep/avatars', payload.sub);
-
-      // Save to DB
-      await prisma.user.update({
-        where: { id: payload.sub },
-        data:  { avatarUrl },
-      });
-
-      return reply.send({ avatarUrl });
+      try {
+        const avatarUrl = await uploadImage(buffer, 'deep/avatars', payload.sub);
+        await prisma.user.update({ where: { id: payload.sub }, data: { avatarUrl } });
+        return reply.send({ avatarUrl });
+      } catch (err: any) {
+        app.log.error(err, 'Cloudinary upload failed');
+        return reply.code(500).send({
+          error: 'Upload failed',
+          detail: err?.message ?? String(err),
+        });
+      }
     },
   );
 
