@@ -2,22 +2,21 @@ import { useRef, useState } from 'react';
 import { Upload, X, Camera, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
-interface Props {
-  onClose: () => void;
-}
+interface Props { onClose: () => void; }
 
 export default function AvatarUploadModal({ onClose }: Props) {
   const { user, token, updateAvatar } = useAuthStore();
-  const [preview, setPreview] = useState<string | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
-  const [errMsg, setErrMsg] = useState('');
+  const [preview, setPreview]   = useState<string | null>(null);
+  const [file, setFile]         = useState<File | null>(null);
+  const [status, setStatus]     = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  const [errMsg, setErrMsg]     = useState('');
+  const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 8 * 1024 * 1024) { setErrMsg('File too large (max 8 MB)'); return; }
+    if (f.size > 10 * 1024 * 1024) { setErrMsg('File too large (max 10 MB)'); return; }
     if (!f.type.startsWith('image/')) { setErrMsg('Please select an image file'); return; }
     setErrMsg('');
     setFile(f);
@@ -28,17 +27,58 @@ export default function AvatarUploadModal({ onClose }: Props) {
   const handleUpload = async () => {
     if (!file || !token) return;
     setStatus('uploading');
+    setProgress(0);
+    setErrMsg('');
+
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload/avatar', {
-        method: 'POST',
+      // 1. Get signed upload params from our server
+      const signRes = await fetch('/api/upload/sign', {
         headers: { Authorization: `Bearer ${token}` },
-        body: fd,
       });
-      if (!res.ok) throw new Error(await res.text());
-      const { avatarUrl } = await res.json();
-      updateAvatar(avatarUrl);
+      if (!signRes.ok) throw new Error('Failed to get upload signature');
+      const { signature, timestamp, folder, transformation, api_key, cloud_name } = await signRes.json();
+
+      // 2. Upload directly to Cloudinary from the browser
+      const fd = new FormData();
+      fd.append('file',           file);
+      fd.append('api_key',        api_key);
+      fd.append('timestamp',      String(timestamp));
+      fd.append('signature',      signature);
+      fd.append('folder',         folder);
+      fd.append('transformation', transformation);
+
+      // XHR for progress tracking
+      const url = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 90));
+        };
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            resolve(data.secure_url);
+          } else {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err?.error?.message ?? `Cloudinary ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(fd);
+      });
+
+      setProgress(95);
+
+      // 3. Save URL to our server
+      const saveRes = await fetch('/api/upload/avatar', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      if (!saveRes.ok) throw new Error('Failed to save avatar URL');
+
+      setProgress(100);
+      updateAvatar(url);
       setStatus('done');
       setTimeout(onClose, 1200);
     } catch (e: any) {
@@ -70,17 +110,12 @@ export default function AvatarUploadModal({ onClose }: Props) {
             onClick={() => inputRef.current?.click()}
           >
             {preview || user?.avatarUrl ? (
-              <img
-                src={preview ?? user?.avatarUrl}
-                alt="Avatar preview"
-                className="w-full h-full object-cover"
-              />
+              <img src={preview ?? user?.avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-brand flex items-center justify-center text-white text-3xl font-bold">
                 {initials}
               </div>
             )}
-            {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
               <Camera className="w-6 h-6 text-white" />
             </div>
@@ -88,16 +123,20 @@ export default function AvatarUploadModal({ onClose }: Props) {
 
           <p className="text-xs text-text-muted text-center">
             Click the avatar to select an image<br />
-            <span className="text-text-muted/70">JPG, PNG, GIF, WebP · Max 8 MB</span>
+            <span className="text-text-muted/70">JPG, PNG, GIF, WebP · Max 10 MB</span>
           </p>
 
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
+          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+
+          {/* Upload progress bar */}
+          {status === 'uploading' && (
+            <div className="w-full bg-bg-modifier rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-brand transition-all duration-300 rounded-full"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
 
           {errMsg && (
             <p className="text-xs text-status-red bg-status-red/10 px-3 py-1.5 rounded w-full text-center">
@@ -116,8 +155,8 @@ export default function AvatarUploadModal({ onClose }: Props) {
           >
             {status === 'uploading' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             {status === 'done'      && <CheckCircle className="w-3.5 h-3.5" />}
-            {status === 'idle'      && <Upload className="w-3.5 h-3.5" />}
-            {status === 'uploading' ? 'Uploading…' : status === 'done' ? 'Done!' : 'Upload'}
+            {status === 'idle' || status === 'error' ? <Upload className="w-3.5 h-3.5" /> : null}
+            {status === 'uploading' ? `${progress}%` : status === 'done' ? 'Done!' : 'Upload'}
           </button>
         </div>
       </div>

@@ -6,12 +6,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET ?? '',
 });
 
+// Log missing credentials at startup so Railway logs show the issue clearly
+const missing = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']
+  .filter(k => !process.env[k]);
+if (missing.length) console.warn(`⚠️  Cloudinary: missing env vars: ${missing.join(', ')}`);
+
 /**
- * Upload a buffer to Cloudinary and return the secure URL.
- * @param buffer  - Raw file buffer
- * @param folder  - Cloudinary folder ('avatars' | 'server')
- * @param publicId - Optional fixed public_id (for overwriting)
- * @param options  - Extra transform options
+ * Upload a buffer to Cloudinary via stream and return the secure URL.
  */
 export async function uploadImage(
   buffer: Buffer,
@@ -19,16 +20,22 @@ export async function uploadImage(
   publicId?: string,
   options?: Record<string, unknown>,
 ): Promise<string> {
-  const dataUri = `data:image/webp;base64,${buffer.toString('base64')}`;
-
-  const result = await cloudinary.uploader.upload(dataUri, {
-    folder,
-    public_id:       publicId,
-    overwrite:       true,
-    resource_type:   'image',
-    transformation:  [{ width: 256, height: 256, crop: 'fill', gravity: 'face', format: 'webp', quality: 'auto' }],
-    ...options,
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        public_id:      publicId,
+        overwrite:      true,
+        resource_type:  'image',
+        transformation: [{ width: 256, height: 256, crop: 'fill', gravity: 'face', format: 'webp', quality: 'auto:best' }],
+        ...options,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error('No result from Cloudinary'));
+        resolve(result.secure_url);
+      },
+    );
+    uploadStream.end(buffer);
   });
-
-  return result.secure_url;
 }
