@@ -210,8 +210,8 @@
 
   /* ── Typing indicator ── */
   .typing-indicator {
-    @apply flex items-center gap-2 px-4 py-1.5 text-xs text-text-muted select-none;
-    min-height: 24px;
+    @apply flex items-center gap-2 px-4 py-1 text-xs text-text-muted select-none;
+    min-height: 20px;
   }
   .typing-dots {
     @apply flex items-center gap-0.5;
@@ -248,7 +248,7 @@
 
   /* ── Message Input ── */
   .message-input-wrapper {
-    @apply px-4 pb-6 pt-2;
+    @apply px-4 pb-2 pt-2;
   }
   .message-input-box {
     @apply flex items-center gap-2 bg-bg-modifier rounded-lg px-4 py-3

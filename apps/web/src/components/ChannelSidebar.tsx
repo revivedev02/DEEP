@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, LogOut, Hash, Mic, ChevronRight } from 'lucide-react';
+import { ChevronDown, Shield, LogOut, Hash, Mic, ChevronRight, Camera } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
 import { SkChannelSidebar } from '@/components/Skeleton';
+import AvatarUploadModal from '@/components/AvatarUploadModal';
 
 // ── Channel row ─────────────────────────────────────────────────────────────
 function ChannelItem({ channel, active, onSelect }: {
@@ -43,6 +44,7 @@ export default function ChannelSidebar() {
   const { serverName, channels, isLoading } = useServerStore();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const isAdmin = user?.isAdmin ?? false;
 
   const textChannels  = channels.filter(c => c.type === 'text');
@@ -109,14 +111,33 @@ export default function ChannelSidebar() {
 
       {/* ── User footer ── */}
       <div className="px-3 py-2 flex items-center gap-2 border-t border-separator/40 bg-bg-secondary flex-shrink-0">
-        <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
-          {user?.displayName?.slice(0, 1).toUpperCase()}
+        {/* Clickable avatar */}
+        <div
+          className="relative w-8 h-8 rounded-full overflow-hidden cursor-pointer group flex-shrink-0 select-none"
+          onClick={() => setShowAvatarModal(true)}
+          title="Change avatar"
+        >
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-brand flex items-center justify-center text-white text-sm font-bold">
+              {user?.displayName?.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <Camera className="w-3.5 h-3.5 text-white" />
+          </div>
         </div>
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-sm font-medium text-text-normal truncate">{user?.displayName}</span>
           <span className="text-xs text-text-muted truncate">#{user?.username}</span>
         </div>
       </div>
+
+      {/* Avatar upload modal */}
+      {showAvatarModal && (
+        <AvatarUploadModal onClose={() => setShowAvatarModal(false)} />
+      )}
     </aside>
   );
 }

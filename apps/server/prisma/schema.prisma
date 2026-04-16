@@ -43,5 +43,6 @@ model Channel {
 model ServerSettings {
   id         String   @id @default("main")
   serverName String   @default("DEEP")
+  iconUrl    String?
   updatedAt  DateTime @updatedAt
 }

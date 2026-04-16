@@ -34,8 +34,17 @@ const AVATAR_COLORS = [
   'bg-orange-500', 'bg-pink-600', 'bg-cyan-600', 'bg-yellow-600',
 ];
 
-function AvatarPlaceholder({ name, size = 10 }: { name: string; size?: number }) {
+function AvatarPlaceholder({ name, avatarUrl, size = 10 }: { name: string; avatarUrl?: string | null; size?: number }) {
   const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className={`w-${size} h-${size} rounded-full flex-shrink-0 cursor-pointer select-none object-cover hover:brightness-110 transition-all`}
+      />
+    );
+  }
   return (
     <div
       className={`w-${size} h-${size} rounded-full ${color} flex items-center justify-center
@@ -108,7 +117,7 @@ function Message({
     return (
       <div className="message-group with-avatar group">
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
-        <AvatarPlaceholder name={msg.user.displayName} />
+        <AvatarPlaceholder name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} />
         <div className="message-body">
           <div className="message-header">
             <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>

@@ -11,8 +11,10 @@ import { registerAdminRoutes } from './routes/admin.js';
 import { registerMemberRoutes } from './routes/members.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerChannelRoutes } from './routes/channels.js';
+import { registerUploadRoutes } from './routes/upload.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { prisma } from './lib/prisma.js';
+import multipart from '@fastify/multipart';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +32,9 @@ await app.register(jwt, {
 });
 addAuthDecorator(app);
 
+// Multipart (file uploads)
+await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024 } });
+
 // Serve built React app in production
 if (IS_PROD) {
   const webDist = resolve(__dirname, '../../../apps/web/dist');
@@ -46,6 +51,7 @@ await registerAdminRoutes(app);
 await registerMemberRoutes(app);
 await registerSettingsRoutes(app);
 await registerChannelRoutes(app);
+await registerUploadRoutes(app);
 
 // SPA fallback (prod)
 if (IS_PROD) {

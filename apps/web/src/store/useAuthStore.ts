@@ -13,9 +13,10 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  login: (token: string, user: AuthUser) => void;
-  logout: () => void;
+  login:        (token: string, user: AuthUser) => void;
+  logout:       () => void;
   isAuthenticated: () => boolean;
+  updateAvatar: (avatarUrl: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +27,8 @@ export const useAuthStore = create<AuthState>()(
       login: (token, user) => set({ token, user }),
       logout: () => set({ token: null, user: null }),
       isAuthenticated: () => !!get().token && !!get().user,
+      updateAvatar: (avatarUrl) =>
+        set((s) => s.user ? { user: { ...s.user, avatarUrl } } : {}),
     }),
     { name: 'pdl-auth' }
   )
