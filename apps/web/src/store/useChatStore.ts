@@ -1,18 +1,26 @@
 import { create } from 'zustand';
 
+export interface ReplyUser {
+  id: string;
+  displayName: string;
+  username: string;
+  avatarUrl?: string;
+  isAdmin: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
   userId: string;
   channelId: string;
   createdAt: string;
-  user: {
+  replyToId?: string | null;
+  replyTo?: {
     id: string;
-    displayName: string;
-    username: string;
-    avatarUrl?: string;
-    isAdmin: boolean;
-  };
+    content: string;
+    user: ReplyUser;
+  } | null;
+  user: ReplyUser;
 }
 
 interface ChatState {
@@ -20,7 +28,8 @@ interface ChatState {
   onlineUsers:        Set<string>;
   isConnected:        boolean;
   isLoadingMessages:  boolean;
-  typingUsers:        string[];   // displayNames currently typing
+  typingUsers:        string[];
+  replyingTo:         ChatMessage | null;   // message currently being replied to
   addMessage:         (msg: ChatMessage) => void;
   setMessages:        (msgs: ChatMessage[]) => void;
   setOnline:          (userId: string, online: boolean) => void;
@@ -28,6 +37,7 @@ interface ChatState {
   clearMessages:      () => void;
   setLoadingMessages: (v: boolean) => void;
   setTyping:          (displayName: string, typing: boolean) => void;
+  setReplyingTo:      (msg: ChatMessage | null) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -36,6 +46,7 @@ export const useChatStore = create<ChatState>((set) => ({
   isConnected:       false,
   isLoadingMessages: true,
   typingUsers:       [],
+  replyingTo:        null,
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg].slice(-500) })),
   setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false }),
@@ -54,4 +65,5 @@ export const useChatStore = create<ChatState>((set) => ({
         ? [...s.typingUsers.filter(n => n !== displayName), displayName]
         : s.typingUsers.filter(n => n !== displayName),
     })),
+  setReplyingTo: (msg) => set({ replyingTo: msg }),
 }));

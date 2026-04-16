@@ -19,12 +19,15 @@ model User {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  channelId String   @default("text-main")
+  id          String    @id @default(cuid())
+  content     String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  channelId   String    @default("text-main")
+  replyToId   String?
+  replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies     Message[] @relation("MessageReplies")
 
   @@index([channelId, createdAt])
 }

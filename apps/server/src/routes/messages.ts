@@ -1,28 +1,38 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 
-const CHANNEL_ID = 'text-main';
+// Shared include for message queries — always pull replyTo with user
+export const messageInclude = {
+  user: {
+    select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
+  },
+  replyTo: {
+    include: {
+      user: { select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true } },
+    },
+  },
+} as const;
 
 export async function registerMessageRoutes(app: FastifyInstance) {
 
-  // GET /api/messages?limit=50&before=<messageId>
-  app.get<{ Querystring: { limit?: string; before?: string } }>(
+  // GET /api/messages?channelId=xxx&limit=50&before=<messageId>
+  app.get<{ Querystring: { channelId: string; limit?: string; before?: string } }>(
     '/api/messages',
     { preHandler: [app.authenticate] },
     async (req, reply) => {
-      const limit  = Math.min(Number(req.query.limit ?? 50), 100);
-      const before = req.query.before;
+      const { channelId, before } = req.query;
+      if (!channelId) return reply.code(400).send({ error: 'channelId is required' });
+
+      const limit = Math.min(Number(req.query.limit ?? 50), 100);
 
       const messages = await prisma.message.findMany({
-        where:   {
-          channelId: CHANNEL_ID,
-          ...(before ? { createdAt: { lt: new Date((await prisma.message.findUnique({ where: { id: before } }))?.createdAt ?? new Date()) } } : {}),
+        where: {
+          channelId,
+          ...(before
+            ? { createdAt: { lt: new Date((await prisma.message.findUnique({ where: { id: before } }))?.createdAt ?? new Date()) } }
+            : {}),
         },
-        include: {
-          user: {
-            select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
-          },
-        },
+        include: messageInclude,
         orderBy: { createdAt: 'asc' },
         take:    limit,
       });
@@ -31,7 +41,7 @@ export async function registerMessageRoutes(app: FastifyInstance) {
     }
   );
 
-  // DELETE /api/messages/:id  — own message or admin only
+  // DELETE /api/messages/:id — own message or admin only
   app.delete<{ Params: { id: string } }>(
     '/api/messages/:id',
     { preHandler: [app.authenticate] },

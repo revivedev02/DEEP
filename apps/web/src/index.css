@@ -223,6 +223,29 @@
   .typing-dot:nth-child(2) { animation-delay: 0.2s; }
   .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
+  /* ── Reply Preview (above a replied-to message) ── */
+  .reply-preview {
+    @apply flex items-center gap-1.5 ml-14 mb-0.5 text-xs text-text-muted
+           cursor-default select-none;
+    border-left: 2px solid rgb(var(--separator-rgb) / 0.6);
+    padding-left: 6px;
+  }
+  .reply-preview-author {
+    @apply font-semibold text-text-normal text-xs flex-shrink-0 hover:underline cursor-pointer;
+  }
+  .reply-preview-content {
+    @apply truncate max-w-[300px] text-xs;
+  }
+
+  /* ── Reply Banner (above input, "Replying to X") ── */
+  .reply-banner {
+    @apply flex items-center gap-2 px-4 py-1.5 bg-bg-modifier
+           border-t border-separator/30 text-sm text-text-muted;
+  }
+  .reply-banner-text {
+    @apply flex items-center gap-1 truncate flex-1 text-xs;
+  }
+
   /* ── Message Input ── */
   .message-input-wrapper {
     @apply px-4 pb-6 pt-2;

@@ -1,6 +1,6 @@
 import { format, isToday, isYesterday } from 'date-fns';
-import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun } from 'lucide-react';
+import { useMemo, useState, useRef, useCallback } from 'react';
+import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, CornerUpLeft } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
@@ -23,6 +23,7 @@ function shortTime(iso: string): string {
 
 function isSameAuthorWithin5Min(a: ChatMessage, b: ChatMessage): boolean {
   if (a.userId !== b.userId) return false;
+  if (b.replyToId) return false; // replies always get a full header
   return Math.abs(new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) < 5 * 60 * 1000;
 }
 
@@ -64,18 +65,33 @@ function DateDivider({ label }: { label: string }) {
   );
 }
 
+// ─── Reply preview (shown above a message that is a reply) ──────────────────
+function ReplyPreview({ replyTo }: { replyTo: NonNullable<ChatMessage['replyTo']> }) {
+  return (
+    <div className="reply-preview">
+      <CornerUpLeft className="w-3 h-3 flex-shrink-0 opacity-60" />
+      <span className="reply-preview-author">{replyTo.user.displayName}</span>
+      <span className="reply-preview-content">{replyTo.content}</span>
+    </div>
+  );
+}
+
 // ─── Single message ──────────────────────────────────────────────────────────
 function Message({
-  msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin, onDelete,
+  msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin, onDelete, onReply,
 }: {
   msg: ChatMessage; isFirst: boolean; currentUserId: string; isAdmin: boolean;
   onDelete: (id: string) => void;
+  onReply:  (msg: ChatMessage) => void;
 }) {
   const isMe = msg.userId === currentUserId;
   const canDelete = isMe || currentUserIsAdmin;
 
   const ActionBar = () => (
     <div className="message-actions">
+      <button className="message-action-btn" title="Reply" onClick={() => onReply(msg)}>
+        <Reply className="w-3.5 h-3.5" />
+      </button>
       <button className="message-action-btn" title="Copy" onClick={() => navigator.clipboard.writeText(msg.content)}>
         <Copy className="w-3.5 h-3.5" />
       </button>
@@ -90,6 +106,7 @@ function Message({
   if (isFirst) {
     return (
       <div className="message-group with-avatar group">
+        {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
         <AvatarPlaceholder name={msg.user.displayName} />
         <div className="message-body">
           <div className="message-header">
@@ -139,15 +156,17 @@ interface InputProps {
   onSend: (content: string) => void;
   channelName: string;
   onTyping: (v: boolean) => void;
+  onCancelReply: () => void;
 }
 
-function MessageInput({ onSend, channelName, onTyping }: InputProps) {
+function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    if (e.key === 'Escape') { onCancelReply(); }
   };
 
   const submit = () => {
@@ -217,7 +236,7 @@ interface Props {
 }
 
 export default function MessagePane({ onSendMessage, onTyping }: Props) {
-  const { messages, isConnected, isLoadingMessages, typingUsers } = useChatStore();
+  const { messages, isConnected, isLoadingMessages, typingUsers, replyingTo, setReplyingTo } = useChatStore();
   const { user } = useAuthStore();
   const { toggleMembers, showMembers, activeChannel } = useUIStore();
   const { channels } = useServerStore();
@@ -234,11 +253,14 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
-    // Optimistic removal from store
     useChatStore.getState().setMessages(
       useChatStore.getState().messages.filter(m => m.id !== id)
     );
   }, [token]);
+
+  const handleReply = useCallback((msg: ChatMessage) => {
+    setReplyingTo(msg);
+  }, [setReplyingTo]);
 
   // Group messages by date + consecutive author
   type Group = { dateLabel: string | null; msg: ChatMessage; isFirst: boolean };
@@ -299,7 +321,7 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
               <div key={msg.id}>
                 {dateLabel && <DateDivider label={dateLabel} />}
                 <Message msg={msg} isFirst={isFirst} currentUserId={user?.id ?? ''}
-                  isAdmin={user?.isAdmin ?? false} onDelete={handleDeleteMessage} />
+                  isAdmin={user?.isAdmin ?? false} onDelete={handleDeleteMessage} onReply={handleReply} />
               </div>
             ))}
           </>
@@ -324,8 +346,26 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
         )}
       </div>
 
+      {/* Reply banner */}
+      {replyingTo && (
+        <div className="reply-banner">
+          <Reply className="w-4 h-4 text-brand flex-shrink-0" />
+          <span className="reply-banner-text">
+            Replying to <strong className="text-text-normal">{replyingTo.user.displayName}</strong>
+            <span className="ml-2 text-text-muted truncate max-w-xs inline-block align-bottom">{replyingTo.content}</span>
+          </span>
+          <button
+            className="ml-auto p-1 rounded hover:bg-bg-modifier text-text-muted hover:text-text-normal transition-colors"
+            onClick={() => setReplyingTo(null)}
+            title="Cancel reply (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Input */}
-      <MessageInput onSend={onSendMessage} channelName={channelName} onTyping={onTyping} />
+      <MessageInput onSend={onSendMessage} channelName={channelName} onTyping={onTyping} onCancelReply={() => setReplyingTo(null)} />
     </div>
   );
 }

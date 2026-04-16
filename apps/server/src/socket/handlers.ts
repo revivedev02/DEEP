@@ -2,24 +2,22 @@ import type { Server } from 'socket.io';
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
+import { messageInclude } from '../routes/messages.js';
 
-const CHANNEL_ID = 'text-main';
-
-// userId -> Set of socketIds (a user can have multiple tabs)
 const onlineUsers = new Map<string, Set<string>>();
 
 const sendSchema = z.object({
-  content: z.string().min(1).max(4000),
+  content:   z.string().min(1).max(4000),
+  channelId: z.string().min(1),
+  replyToId: z.string().optional(),
 });
 
 export function setupSocketHandlers(io: Server, app: FastifyInstance) {
 
-  // ── Middleware: verify JWT ─────────────────────────────────────────────────
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token as string | undefined;
       if (!token) return next(new Error('No token'));
-
       const payload = app.jwt.verify(token) as { sub: string; displayName: string; isAdmin: boolean };
       (socket as any).userId      = payload.sub;
       (socket as any).displayName = (payload as any).displayName ?? 'Someone';
@@ -34,36 +32,40 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
     const userId      = (socket as any).userId      as string;
     const displayName = (socket as any).displayName as string;
 
-    // Track presence
     if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
     onlineUsers.get(userId)!.add(socket.id);
-
-    // Join channel room
-    socket.join(CHANNEL_ID);
-
-    // Broadcast online
     io.emit('presence:update', { userId, online: true });
 
-    // ── message:send ──────────────────────────────────────────────────────────
+    // ── channel:join — move socket into channel-specific room ────────────────
+    socket.on('channel:join', ({ channelId }: { channelId: string }) => {
+      const rooms = Array.from(socket.rooms).filter(r => r.startsWith('channel:'));
+      for (const room of rooms) socket.leave(room);
+      socket.join(`channel:${channelId}`);
+      (socket as any).activeChannelId = channelId;
+    });
+
+    // ── message:send ─────────────────────────────────────────────────────────
     socket.on('message:send', async (data: unknown) => {
       const parsed = sendSchema.safeParse(data);
       if (!parsed.success) return;
 
+      const { content, channelId, replyToId } = parsed.data;
+
+      const channel = await prisma.channel.findUnique({ where: { id: channelId } });
+      if (!channel) return;
+
+      // Validate replyToId belongs to same channel
+      if (replyToId) {
+        const parent = await prisma.message.findUnique({ where: { id: replyToId } });
+        if (!parent || parent.channelId !== channelId) return;
+      }
+
       try {
         const message = await prisma.message.create({
-          data: {
-            content:   parsed.data.content,
-            userId,
-            channelId: CHANNEL_ID,
-          },
-          include: {
-            user: {
-              select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
-            },
-          },
+          data: { content, userId, channelId, replyToId: replyToId ?? null },
+          include: messageInclude,
         });
-
-        io.to(CHANNEL_ID).emit('message:new', message);
+        io.to(`channel:${channelId}`).emit('message:new', message);
       } catch (err) {
         app.log.error(err, 'Failed to save message');
       }
@@ -72,15 +74,14 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
     // ── typing ───────────────────────────────────────────────────────────────
     const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-    socket.on('typing', ({ typing }: { typing: boolean }) => {
-      // Broadcast to everyone else in the channel
-      socket.to(CHANNEL_ID).emit('typing:update', { displayName, typing });
-
-      // Auto-clear after 4s in case 'stop' is missed
+    socket.on('typing', ({ typing, channelId }: { typing: boolean; channelId?: string }) => {
+      const room = channelId ? `channel:${channelId}` : `channel:${(socket as any).activeChannelId}`;
+      if (!room || room === 'channel:undefined') return;
+      socket.to(room).emit('typing:update', { displayName, typing });
       if (typing) {
         clearTimeout(typingTimers.get(userId));
         typingTimers.set(userId, setTimeout(() => {
-          socket.to(CHANNEL_ID).emit('typing:update', { displayName, typing: false });
+          socket.to(room).emit('typing:update', { displayName, typing: false });
         }, 4000));
       } else {
         clearTimeout(typingTimers.get(userId));
