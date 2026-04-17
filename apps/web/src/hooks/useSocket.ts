@@ -49,10 +49,13 @@ export function useSocket() {
 
     // ── Real-time avatar propagation ─────────────────────────────────────────
     socketInstance.on('user:avatar-updated', ({ userId, avatarUrl }: { userId: string; avatarUrl: string }) => {
-      // Update all cached messages by this user
       useChatStore.getState().updateUserAvatar(userId, avatarUrl);
-      // Update member list
       useMembersStore.getState().updateMemberAvatar(userId, avatarUrl);
+    });
+
+    // ── Real-time pin/unpin ───────────────────────────────────────────────────
+    socketInstance.on('message:pinned', ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
+      useChatStore.getState().applyPinToggle(messageId, pinned);
     });
 
     return () => {};

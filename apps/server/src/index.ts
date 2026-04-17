@@ -68,6 +68,9 @@ const io = new Server(app.server, {
   transports: ['websocket', 'polling'],
 });
 
+// Attach io to app so route handlers can emit events
+(app as any).io = io;
+
 setupSocketHandlers(io, app);
 
 // ── Listen ───────────────────────────────────────────────────────────────────

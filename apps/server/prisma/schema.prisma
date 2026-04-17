@@ -25,11 +25,13 @@ model Message {
   user        User      @relation(fields: [userId], references: [id])
   createdAt   DateTime  @default(now())
   channelId   String    @default("text-main")
+  pinned      Boolean   @default(false)
   replyToId   String?
   replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies     Message[] @relation("MessageReplies")
 
   @@index([channelId, createdAt])
+  @@index([channelId, pinned])
 }
 
 model Channel {

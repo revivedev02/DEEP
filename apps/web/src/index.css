@@ -154,10 +154,14 @@
 
   /* ── Messages ── */
   .messages-container {
-    @apply flex-1 overflow-y-auto overflow-x-hidden px-0 py-4 flex flex-col;
+    /* overflow-y: scroll keeps scrollbar always visible, preventing layout shifts on hover */
+    @apply flex-1 overflow-x-hidden px-0 py-4 flex flex-col;
+    overflow-y: scroll;
   }
   .message-group {
     @apply flex gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded relative;
+    /* contain: layout prevents repaints from propagating to sibling rows */
+    contain: layout;
   }
   .message-group.with-avatar {
     @apply mt-4 py-1 flex-col gap-0.5;
@@ -294,6 +298,51 @@
     @apply bg-bg-hover;
   }
 
+  /* ── Clickable links inside messages ── */
+  .msg-link {
+    @apply text-brand underline-offset-2 hover:underline cursor-pointer;
+    word-break: break-all;
+  }
+
+  /* ── Message Search overlay ── */
+  .search-bar {
+    @apply flex items-center gap-2 px-4 py-2 bg-bg-secondary border-b border-separator/40;
+    animation: slide-down 150ms ease;
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .search-results {
+    @apply absolute left-0 right-0 bg-bg-secondary border border-separator/50
+           rounded-b-lg shadow-elevation-high overflow-y-auto z-40
+           max-h-72 divide-y divide-separator/20;
+  }
+  .search-result-item {
+    @apply flex items-start gap-3 px-4 py-3 cursor-pointer
+           hover:bg-bg-hover transition-colors duration-75 select-none;
+  }
+  .search-highlight {
+    @apply bg-brand/30 text-brand rounded px-0.5;
+  }
+
+  /* ── Pinned messages panel ── */
+  .pins-panel {
+    @apply flex flex-col border-l border-separator/40 bg-bg-secondary overflow-hidden;
+    width: 320px;
+    flex-shrink: 0;
+  }
+  .pins-panel-header {
+    @apply flex items-center justify-between px-4 py-3
+           border-b border-separator/40 flex-shrink-0;
+  }
+  .pin-item {
+    @apply flex flex-col gap-1.5 px-4 py-3 border-b border-separator/20
+           hover:bg-bg-hover transition-colors duration-75;
+  }
+  .pin-item-header {
+    @apply flex items-center gap-2;
+  }
   /* ── Message Input ── */
   .message-input-wrapper {
     @apply px-4 pb-2 pt-2;
