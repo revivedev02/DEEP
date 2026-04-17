@@ -30,9 +30,22 @@ model Message {
   replyToId   String?
   replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies     Message[] @relation("MessageReplies")
+  reactions   Reaction[]
 
   @@index([channelId, createdAt])
   @@index([channelId, pinned])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }
 
 model Channel {

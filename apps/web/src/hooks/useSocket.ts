@@ -63,6 +63,11 @@ export function useSocket() {
       useChatStore.getState().applyEdit(messageId, content, editedAt);
     });
 
+    // ── Real-time emoji reactions ─────────────────────────────────────────────
+    socketInstance.on('message:reaction', ({ messageId, reactions }: { messageId: string; reactions: { emoji: string; userId: string }[] }) => {
+      useChatStore.getState().applyReaction(messageId, reactions);
+    });
+
     return () => {};
   }, [token]);
 

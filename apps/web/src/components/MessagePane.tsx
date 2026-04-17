@@ -1,13 +1,13 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell,
-  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil,
+  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil, SmilePlus,
 } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import PinnedPanel from '@/components/PinnedPanel';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useChatStore, type ChatMessage } from '@/store/useChatStore';
+import { useChatStore, type ChatMessage, type RawReaction } from '@/store/useChatStore';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { useUIStore } from '@/store/useUIStore';
@@ -136,50 +136,95 @@ function ReplyPreview({ replyTo }: { replyTo: NonNullable<ChatMessage['replyTo']
   );
 }
 
+// ─── Reaction helpers ─────────────────────────────────────────────────────────
+function groupReactions(reactions: RawReaction[], currentUserId: string) {
+  const map = new Map<string, { count: number; hasMe: boolean }>();
+  for (const r of reactions) {
+    const cur = map.get(r.emoji) ?? { count: 0, hasMe: false };
+    map.set(r.emoji, { count: cur.count + 1, hasMe: cur.hasMe || r.userId === currentUserId });
+  }
+  return Array.from(map.entries()).map(([emoji, { count, hasMe }]) => ({ emoji, count, hasMe }));
+}
+
+// ─── Reaction bar ─────────────────────────────────────────────────────────────
+function ReactionBar({ reactions = [], currentUserId, onReact, onOpenPicker }: {
+  reactions?: RawReaction[];
+  currentUserId: string;
+  onReact: (emoji: string) => void;
+  onOpenPicker: () => void;
+}) {
+  const grouped = groupReactions(reactions, currentUserId);
+  if (grouped.length === 0) return (
+    // Only show + when there are no reactions (space is reserved when there are some)
+    <div className="reaction-bar hidden group-hover:flex">
+      <button className="reaction-add-btn" title="Add reaction" onClick={onOpenPicker}>
+        <SmilePlus className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+  return (
+    <div className="reaction-bar">
+      {grouped.map(({ emoji, count, hasMe }) => (
+        <button
+          key={emoji}
+          className={`reaction-pill ${hasMe ? 'reacted' : ''}`}
+          title={hasMe ? 'Remove reaction' : 'Add reaction'}
+          onClick={() => onReact(emoji)}
+        >
+          <span>{emoji}</span>
+          <span className="reaction-count">{count}</span>
+        </button>
+      ))}
+      <button className="reaction-add-btn" title="Add reaction" onClick={onOpenPicker}>
+        <SmilePlus className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
 // ─── Single message ───────────────────────────────────────────────────────────
 function Message({
   msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin,
   onDelete, onReply, onPin, onStartEdit, editingId, onSaveEdit, onCancelEdit,
+  onReact, reactingMsgId, onOpenReactionPicker, onCloseReactionPicker,
 }: {
   msg: ChatMessage; isFirst: boolean; currentUserId: string; isAdmin: boolean;
   onDelete: (id: string) => void;
   onReply:  (msg: ChatMessage) => void;
   onPin:    (msg: ChatMessage) => void;
-  onStartEdit: (id: string) => void;
-  editingId:   string | null;
-  onSaveEdit:  (id: string, content: string) => void;
+  onStartEdit:  (id: string) => void;
+  editingId:    string | null;
+  onSaveEdit:   (id: string, content: string) => void;
   onCancelEdit: () => void;
+  onReact:      (msgId: string, emoji: string) => void;
+  reactingMsgId:         string | null;
+  onOpenReactionPicker:  (msgId: string) => void;
+  onCloseReactionPicker: () => void;
 }) {
-  const isMe      = msg.userId === currentUserId;
-  const canDelete = isMe || currentUserIsAdmin;
-  const isEditing = editingId === msg.id;
+  const isMe           = msg.userId === currentUserId;
+  const canDelete      = isMe || currentUserIsAdmin;
+  const isEditing      = editingId === msg.id;
+  const pickerOpen     = reactingMsgId === msg.id;
 
-  // ── Inline edit textarea state ───────────────────────────────────────────
   const [editValue, setEditValue] = useState(msg.content);
-  const editRef = useRef<HTMLTextAreaElement>(null);
+  const editRef    = useRef<HTMLTextAreaElement>(null);
+  const pickerRef  = useRef<HTMLDivElement>(null);
 
-  // Sync editValue when editing starts
-  useCallback(() => {
-    if (isEditing) {
-      setEditValue(msg.content);
-      setTimeout(() => {
-        if (editRef.current) {
-          editRef.current.focus();
-          editRef.current.style.height = 'auto';
-          editRef.current.style.height = `${editRef.current.scrollHeight}px`;
-          // Move cursor to end
-          editRef.current.setSelectionRange(editRef.current.value.length, editRef.current.value.length);
-        }
-      }, 10);
-    }
-  }, [isEditing]);
+  // Close reaction picker on outside click
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const h = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) onCloseReactionPicker();
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [pickerOpen, onCloseReactionPicker]);
 
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const trimmed = editValue.trim();
-      if (trimmed && trimmed !== msg.content) onSaveEdit(msg.id, trimmed);
-      else onCancelEdit();
+      const t = editValue.trim();
+      if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit();
     }
     if (e.key === 'Escape') { e.preventDefault(); onCancelEdit(); }
   };
@@ -193,53 +238,87 @@ function Message({
   const EditBox = () => (
     <div className="mt-1 pr-4">
       <textarea
-        ref={editRef}
-        value={editValue}
-        onChange={handleEditInput}
-        onKeyDown={handleEditKeyDown}
-        autoFocus
-        className="message-edit-textarea w-full"
-        rows={1}
+        ref={editRef} value={editValue} onChange={handleEditInput}
+        onKeyDown={handleEditKeyDown} autoFocus
+        className="message-edit-textarea w-full" rows={1}
       />
       <p className="message-edit-hint">
-        <span className="text-brand cursor-pointer hover:underline" onClick={() => { const t = editValue.trim(); if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit(); }}>save</span>
+        <span className="text-brand cursor-pointer hover:underline"
+          onClick={() => { const t = editValue.trim(); if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit(); }}>
+          save
+        </span>
         &nbsp;—&nbsp;
         <span className="cursor-pointer hover:underline" onClick={onCancelEdit}>esc to cancel</span>
       </p>
     </div>
   );
 
-  const EditedLabel = () =>
-    msg.editedAt ? <span className="message-edited-label">(edited)</span> : null;
+  const EditedLabel = () => msg.editedAt ? <span className="message-edited-label">(edited)</span> : null;
+
+  // Floating reaction picker
+  const ReactionPickerFloat = () => pickerOpen ? (
+    <div ref={pickerRef} className="absolute z-50 shadow-elevation-high rounded-xl overflow-hidden"
+      style={{ bottom: '110%', right: 0 }}>
+      <EmojiPicker
+        data={emojiData}
+        onEmojiSelect={(e: { native: string }) => { onReact(msg.id, e.native); onCloseReactionPicker(); }}
+        theme={useThemeStore.getState().theme === 'oled' ? 'dark' : 'light'}
+        previewPosition="none" skinTonePosition="none"
+        maxFrequentRows={1} set="native"
+        perLine={8}
+      />
+    </div>
+  ) : null;
 
   const ActionBar = () => (
     <div className="message-actions">
+      {/* Reaction button */}
+      <div className="relative">
+        <button
+          className={`message-action-btn ${pickerOpen ? 'text-brand' : ''}`}
+          title="React" onClick={() => pickerOpen ? onCloseReactionPicker() : onOpenReactionPicker(msg.id)}
+        >
+          <SmilePlus className="w-3.5 h-3.5" />
+        </button>
+        <ReactionPickerFloat />
+      </div>
       <button className="message-action-btn" title="Reply" onClick={() => onReply(msg)}>
         <Reply className="w-3.5 h-3.5" />
       </button>
       {isMe && (
-        <button className="message-action-btn" title="Edit message" onClick={() => { setEditValue(msg.content); onStartEdit(msg.id); }}>
+        <button className="message-action-btn" title="Edit message"
+          onClick={() => { setEditValue(msg.content); onStartEdit(msg.id); }}>
           <Pencil className="w-3.5 h-3.5" />
         </button>
       )}
       {currentUserIsAdmin && (
         <button
           className={`message-action-btn ${msg.pinned ? 'text-brand' : ''}`}
-          title={msg.pinned ? 'Unpin message' : 'Pin message'}
-          onClick={() => onPin(msg)}
+          title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => onPin(msg)}
         >
           <Pin className="w-3.5 h-3.5" />
         </button>
       )}
-      <button className="message-action-btn" title="Copy" onClick={() => navigator.clipboard.writeText(msg.content)}>
+      <button className="message-action-btn" title="Copy"
+        onClick={() => navigator.clipboard.writeText(msg.content)}>
         <Copy className="w-3.5 h-3.5" />
       </button>
       {canDelete && (
-        <button className="message-action-btn hover:!text-status-red" title="Delete" onClick={() => onDelete(msg.id)}>
+        <button className="message-action-btn hover:!text-status-red" title="Delete"
+          onClick={() => onDelete(msg.id)}>
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
+  );
+
+  const reactions = (
+    <ReactionBar
+      reactions={msg.reactions}
+      currentUserId={currentUserId}
+      onReact={(emoji) => onReact(msg.id, emoji)}
+      onOpenPicker={() => onOpenReactionPicker(msg.id)}
+    />
   );
 
   if (isFirst) {
@@ -264,6 +343,7 @@ function Message({
                 <EditedLabel />
               </p>
             )}
+            {reactions}
           </div>
         </div>
         <ActionBar />
@@ -283,6 +363,7 @@ function Message({
             <EditedLabel />
           </p>
         )}
+        {reactions}
       </div>
       <ActionBar />
     </div>
@@ -637,8 +718,8 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
 
     try {
       const res = await fetch(`/api/messages/${msg.id}/pin`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('pin failed');
 
@@ -665,7 +746,6 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
   const handleSaveEdit = useCallback(async (id: string, content: string) => {
     if (!token) return;
     setEditingId(null);
-    // Optimistic: update in store immediately
     useChatStore.getState().applyEdit(id, content, new Date().toISOString());
     try {
       await fetch(`/api/messages/${id}`, {
@@ -673,10 +753,34 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
-    } catch {
-      // If PATCH fails, the socket event won't arrive — keep optimistic value
-    }
+    } catch { /* keep optimistic */ }
   }, [token]);
+
+  // ── Emoji reactions ────────────────────────────────────────────────────────
+  const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
+  const handleOpenReactionPicker  = useCallback((id: string) => setReactingMsgId(id), []);
+  const handleCloseReactionPicker = useCallback(() => setReactingMsgId(null), []);
+
+  const handleReact = useCallback(async (msgId: string, emoji: string) => {
+    if (!token) return;
+    // Optimistic toggle
+    const current = useChatStore.getState().messages.find(m => m.id === msgId);
+    if (current) {
+      const userId = user?.id ?? '';
+      const already = current.reactions?.some(r => r.emoji === emoji && r.userId === userId);
+      const next = already
+        ? (current.reactions ?? []).filter(r => !(r.emoji === emoji && r.userId === userId))
+        : [...(current.reactions ?? []), { emoji, userId }];
+      useChatStore.getState().applyReaction(msgId, next);
+    }
+    try {
+      await fetch(`/api/messages/${msgId}/reactions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji }),
+      });
+    } catch { /* socket event will correct any drift */ }
+  }, [token, user?.id]);
 
   // Group messages by date + consecutive author
   type Group = { dateLabel: string | null; msg: ChatMessage; isFirst: boolean };
@@ -775,6 +879,10 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
                     onStartEdit={handleStartEdit}
                     onSaveEdit={handleSaveEdit}
                     onCancelEdit={handleCancelEdit}
+                    onReact={handleReact}
+                    reactingMsgId={reactingMsgId}
+                    onOpenReactionPicker={handleOpenReactionPicker}
+                    onCloseReactionPicker={handleCloseReactionPicker}
                   />
                 </div>
               ))}

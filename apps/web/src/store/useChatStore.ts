@@ -8,6 +8,11 @@ export interface ReplyUser {
   isAdmin: boolean;
 }
 
+export interface RawReaction {
+  emoji: string;
+  userId: string;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
@@ -16,6 +21,7 @@ export interface ChatMessage {
   createdAt: string;
   editedAt?: string | null;
   pinned?: boolean;
+  reactions?: RawReaction[];
   replyToId?: string | null;
   replyTo?: {
     id: string;
@@ -40,6 +46,7 @@ interface ChatState {
   setPinnedMessages:  (msgs: ChatMessage[]) => void;
   applyPinToggle:     (messageId: string, pinned: boolean) => void;
   applyEdit:          (messageId: string, content: string, editedAt: string) => void;
+  applyReaction:      (messageId: string, reactions: RawReaction[]) => void;
   setOnline:          (userId: string, online: boolean) => void;
   setConnected:       (v: boolean) => void;
   clearMessages:      () => void;
@@ -93,6 +100,13 @@ export const useChatStore = create<ChatState>((set) => ({
     set((s) => ({
       messages: s.messages.map((m) =>
         m.id === messageId ? { ...m, content, editedAt } : m
+      ),
+    })),
+
+  applyReaction: (messageId, reactions) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === messageId ? { ...m, reactions } : m
       ),
     })),
 

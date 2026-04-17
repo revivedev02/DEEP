@@ -44,8 +44,8 @@ export default function PinnedPanel({ onClose, channelName }: Props) {
   const handleUnpin = async (messageId: string) => {
     if (!token) return;
     await fetch(`/api/messages/${messageId}/pin`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
     });
     // Optimistic: applyPinToggle will also be called via socket event
     useChatStore.getState().applyPinToggle(messageId, false);

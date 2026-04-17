@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
 
-// Shared include for message queries — always pull replyTo with user
+// Shared include for message queries — always pull replyTo, user, and reactions
 export const messageInclude = {
   user: {
     select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
@@ -10,6 +10,9 @@ export const messageInclude = {
     include: {
       user: { select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true } },
     },
+  },
+  reactions: {
+    select: { emoji: true, userId: true },
   },
 } as const;
 
@@ -59,8 +62,8 @@ export async function registerMessageRoutes(app: FastifyInstance) {
     }
   );
 
-  // PATCH /api/messages/:id/pin — toggle pinned (admin only)
-  app.patch<{ Params: { id: string } }>(
+  // POST /api/messages/:id/pin — toggle pinned (admin only)
+  app.post<{ Params: { id: string } }>(
     '/api/messages/:id/pin',
     { preHandler: [app.authenticate] },
     async (req, reply) => {
@@ -76,7 +79,6 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         include: messageInclude,
       });
 
-      // Broadcast pin/unpin to all clients in the channel
       (app as any).io?.to(updated.channelId).emit('message:pinned', {
         messageId: updated.id,
         channelId: updated.channelId,
@@ -85,6 +87,47 @@ export async function registerMessageRoutes(app: FastifyInstance) {
       });
 
       return reply.send(updated);
+    }
+  );
+
+  // POST /api/messages/:id/reactions — toggle a reaction (add if absent, remove if present)
+  app.post<{ Params: { id: string }; Body: { emoji: string } }>(
+    '/api/messages/:id/reactions',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const payload = req.user as { sub: string; isAdmin: boolean };
+      const { emoji } = req.body as { emoji?: string };
+      if (!emoji?.trim()) return reply.code(400).send({ error: 'emoji is required' });
+
+      const msg = await prisma.message.findUnique({ where: { id: req.params.id } });
+      if (!msg) return reply.code(404).send({ error: 'Not found' });
+
+      // Toggle: delete if exists, create if absent
+      const existing = await prisma.reaction.findUnique({
+        where: { messageId_userId_emoji: { messageId: req.params.id, userId: payload.sub, emoji } },
+      });
+
+      if (existing) {
+        await prisma.reaction.delete({ where: { id: existing.id } });
+      } else {
+        await prisma.reaction.create({
+          data: { emoji, userId: payload.sub, messageId: req.params.id },
+        });
+      }
+
+      // Return updated reaction list for this message
+      const reactions = await prisma.reaction.findMany({
+        where:  { messageId: req.params.id },
+        select: { emoji: true, userId: true },
+      });
+
+      // Broadcast to channel
+      (app as any).io?.to(msg.channelId).emit('message:reaction', {
+        messageId: req.params.id,
+        reactions,
+      });
+
+      return reply.send({ reactions });
     }
   );
 
@@ -109,7 +152,6 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         include: messageInclude,
       });
 
-      // Broadcast to everyone in the channel
       (app as any).io?.to(updated.channelId).emit('message:edited', {
         messageId: updated.id,
         content:   updated.content,
