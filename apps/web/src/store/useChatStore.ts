@@ -45,6 +45,7 @@ interface ChatState {
 
   addMessage:         (msg: ChatMessage) => void;
   setMessages:        (msgs: ChatMessage[]) => void;
+  clearMessages:      () => void;
   prependMessages:    (msgs: ChatMessage[]) => void;
   setPinnedMessages:  (msgs: ChatMessage[]) => void;
   applyPinToggle:     (messageId: string, pinned: boolean) => void;
@@ -81,6 +82,9 @@ export const useChatStore = create<ChatState>((set) => ({
     set((s) => ({ messages: [...s.messages, msg] })),
 
   setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false, loadError: null, hasMore: msgs.length >= 50 }),
+
+  // Clears the list AND keeps isLoadingMessages:true — use before starting a fresh fetch
+  clearMessages: () => set({ messages: [], isLoadingMessages: true, loadError: null, hasMore: true }),
 
   prependMessages: (msgs) =>
     set((s) => ({
@@ -132,7 +136,6 @@ export const useChatStore = create<ChatState>((set) => ({
     }),
 
   setConnected:      (v) => set({ isConnected: v }),
-  clearMessages:     ()  => set({ messages: [], loadError: null, pinnedMessages: [], hasMore: true }),
   setLoadingMessages:(v) => set({ isLoadingMessages: v }),
   setLoadingOlder:   (v) => set({ isLoadingOlder: v }),
   setHasMore:        (v) => set({ hasMore: v }),

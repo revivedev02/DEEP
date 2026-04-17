@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/useUIStore';
 /** Fetches messages for the active channel. Re-fetches when channel switches. */
 export function useMessages() {
   const { token } = useAuthStore();
-  const { setMessages, setLoadingMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
+  const { setMessages, clearMessages, setLoadingMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
   const retryTick = useChatStore(s => s.retryTick);
   const { activeChannel } = useUIStore();
 
@@ -14,9 +14,9 @@ export function useMessages() {
   useEffect(() => {
     if (!token || !activeChannel) return;
 
-    setLoadingMessages(true);
+    // clearMessages keeps isLoadingMessages:true while wiping the old list
+    clearMessages();
     setLoadError(null);
-    setMessages([]);
 
     fetch(`/api/messages?channelId=${encodeURIComponent(activeChannel)}&limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
