@@ -230,12 +230,18 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Members panel — on canvas, same family as sidebar */}
-          {membersVisible && (
-            <div style={{ width: 220, flexShrink: 0, overflow: 'hidden', animation: 'members-slide-in 180ms ease both' }}>
-              <MembersPanel />
-            </div>
-          )}
+          {/* Members panel — always mounted, width animates smoothly */}
+          <div
+            style={{
+              width: membersVisible ? 220 : 0,
+              flexShrink: 0,
+              overflow: 'hidden',
+              transition: 'width 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease',
+              opacity: membersVisible ? 1 : 0,
+            }}
+          >
+            <MembersPanel />
+          </div>
 
         </div>
       </div>
