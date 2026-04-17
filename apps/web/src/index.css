@@ -5,8 +5,9 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Light theme (default) — Discord-style dark ── */
-  :root {
+  /* ── Dark theme (default) — Discord-style dark ── */
+  :root,
+  [data-theme="dark"] {
     --bg-primary:   #313338;
     --bg-secondary: #2b2d31;
     --bg-tertiary:  #1e1f22;
@@ -16,11 +17,33 @@
     --bg-modifier:  rgba(0,0,0,0.20);
     --text-normal:  #f2f3f5;
     --text-muted:   #949ba4;
-    /* Space-separated RGB channels — required for CSS4 rgb(var() / alpha) syntax */
     --brand-rgb:        88 101 242;
     --brand-hover-rgb:  71 82 196;
     --brand-active-rgb: 60 69 165;
     --separator-rgb:    63 65 71;
+    --shadow-elevation: 0 8px 16px rgba(0,0,0,0.48);
+    --shadow-low:       0 1px 0 rgba(4,4,5,0.2), 0 1.5px 0 rgba(6,6,7,0.05), 0 2px 0 rgba(4,4,5,0.05);
+    color-scheme: dark;
+  }
+
+  /* ── Light theme — true white Discord-style ── */
+  [data-theme="light"] {
+    --bg-primary:   #ffffff;
+    --bg-secondary: #f2f3f5;
+    --bg-tertiary:  #e3e5e8;
+    --bg-floating:  #ffffff;
+    --bg-hover:     #ebedef;
+    --bg-active:    #e1e2e4;
+    --bg-modifier:  rgba(0,0,0,0.04);
+    --text-normal:  #313338;
+    --text-muted:   #5c5e66;
+    --brand-rgb:        88 101 242;
+    --brand-hover-rgb:  71 82 196;
+    --brand-active-rgb: 60 69 165;
+    --separator-rgb:    220 221 222;
+    --shadow-elevation: 0 8px 16px rgba(0,0,0,0.12);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.08), 0 1.5px 0 rgba(0,0,0,0.04);
+    color-scheme: light;
   }
 
   /* ── OLED dark theme — pure black ── */
@@ -34,11 +57,13 @@
     --bg-modifier:  rgba(255,255,255,0.03);
     --text-normal:  #ffffff;
     --text-muted:   #888888;
-    /* Space-separated RGB channels — required for CSS4 rgb(var() / alpha) syntax */
     --brand-rgb:        114 137 218;
     --brand-hover-rgb:  88 101 242;
     --brand-active-rgb: 71 82 196;
     --separator-rgb:    31 31 31;
+    --shadow-elevation: 0 8px 16px rgba(0,0,0,0.72);
+    --shadow-low:       0 1px 0 rgba(4,4,5,0.4);
+    color-scheme: dark;
   }
 
   html, body, #root {
@@ -57,7 +82,7 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--bg-floating); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--separator); }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--separator-rgb)); }
 
   ::selection { background: rgb(var(--brand-rgb)); color: #fff; }
 }

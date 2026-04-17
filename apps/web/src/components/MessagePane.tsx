@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell,
-  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil, SmilePlus,
+  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil, SmilePlus, Monitor,
 } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import PinnedPanel from '@/components/PinnedPanel';
@@ -622,7 +622,7 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
           <EmojiPicker
             data={emojiData}
             onEmojiSelect={insertEmoji}
-            theme={useThemeStore.getState().theme === 'oled' ? 'dark' : 'light'}
+            theme={useThemeStore.getState().theme === 'light' ? 'light' : 'dark'}
             previewPosition="none"
             skinTonePosition="none"
             maxFrequentRows={2}
@@ -673,7 +673,7 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
   const { user } = useAuthStore();
   const { toggleMembers, showMembers, activeChannel } = useUIStore();
   const { channels } = useServerStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, cycleTheme } = useThemeStore();
   const scrollRef = useScrollToBottom<HTMLDivElement>([messages.length]);
   const { token } = useAuthStore();
 
@@ -828,8 +828,9 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
             >
               <Search className="w-5 h-5" />
             </button>
-            <button onClick={toggleTheme} className="input-action-btn" title={`Switch to ${theme === 'light' ? 'OLED' : 'Light'} theme`}>
-              {theme === 'oled' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <button onClick={cycleTheme} className="input-action-btn"
+              title={`Theme: ${theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'OLED'} — click to switch`}>
+              {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
             </button>
             <button onClick={toggleMembers} className={`input-action-btn ${showMembers ? 'text-text-normal' : ''}`} title="Toggle members">
               <Users className="w-5 h-5" />
