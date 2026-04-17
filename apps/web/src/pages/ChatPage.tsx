@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import {
-  Hash, Users, Bell, Pin, Search, Moon, Sun, Monitor, X, MessageSquare,
+  Hash, Users, Bell, Pin, Search, Moon, Sun, Monitor, X,
 } from 'lucide-react';
 import ChannelSidebar from '@/components/ChannelSidebar';
 import MessagePane from '@/components/MessagePane';
@@ -23,8 +23,6 @@ import { useThemeStore } from '@/store/useThemeStore';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { scrollToMessage } from '@/components/messageUtils';
 
-type MobileTab = 'channels' | 'chat' | 'members';
-
 export default function ChatPage() {
   const { activeChannel, showMembers, toggleMembers, activeDmConversation } = useUIStore();
   const { channels } = useServerStore();
@@ -34,12 +32,9 @@ export default function ChatPage() {
   const { theme, cycleTheme } = useThemeStore();
   const { messages, isConnected } = useChatStore();
 
-  // Header state
-  const [showSearch, setShowSearch] = useState(false);
-  const [showPinned, setShowPinned] = useState(false);
-
-  // Mobile tab state
-  const [mobileTab, setMobileTab] = useState<MobileTab>('channels');
+  // Header panel states (lifted to canvas level)
+  const [showSearch, setShowSearch]   = useState(false);
+  const [showPinned, setShowPinned]   = useState(false);
 
   useValidateToken();
   const { loadOlderMessages } = useMessages();
@@ -55,17 +50,12 @@ export default function ChatPage() {
   const activeDmConv = useDMStore(s => s.conversations.find(c => c.id === activeDmConversation));
   const channelName  = activeChannelObj?.name ?? 'general';
 
-  // Auto-switch to chat tab when channel or DM selected (mobile)
-  useEffect(() => {
-    if (activeChannel || activeDmConversation) setMobileTab('chat');
-  }, [activeChannel, activeDmConversation]);
-
   // Join channel socket room
   useEffect(() => {
     if (!isDMOpen && activeChannel) joinChannel(activeChannel);
   }, [activeChannel, isDMOpen]);
 
-  // DM conversation load
+  // When a DM conversation is selected
   useEffect(() => {
     if (!isDMOpen || !activeDmConversation || !token) return;
     joinDMRoom(activeDmConversation);
@@ -103,210 +93,158 @@ export default function ChatPage() {
       .catch(() => useDMStore.getState().setLoadingOlder(false));
   }, [token, activeDmConversation]);
 
-  // ── Shared header bar ──────────────────────────────────────────────────────
-  const headerBar = showHeader && (
-    <div className="canvas-header">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        {isDMOpen ? (
-          <>
-            <LazyAvatar
-              name={activeDmConv?.partner.displayName ?? '?'}
-              avatarUrl={activeDmConv?.partner.avatarUrl}
-              size={7}
-            />
-            <div className="flex flex-col leading-tight min-w-0">
-              <span className="text-sm font-semibold text-text-normal truncate">
-                {activeDmConv?.partner.displayName ?? 'Unknown'}
-              </span>
-              <span className="text-xs text-text-muted truncate">
-                @{activeDmConv?.partner.username}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <Hash className="w-4 h-4 text-text-muted flex-shrink-0" />
-            <span className="text-sm font-semibold text-text-normal truncate">{channelName}</span>
-            <div className="hidden sm:flex items-center gap-1.5 ml-1">
-              <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-status-green' : 'bg-text-muted'}`} />
-              <span className="text-xs text-text-muted">{isConnected ? 'live' : 'offline'}</span>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="flex items-center gap-0.5 flex-shrink-0">
-        <button className="canvas-icon-btn" title="Notifications (coming soon)">
-          <Bell className="w-4 h-4" />
-        </button>
-        {!isDMOpen && (
-          <button
-            onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
-            className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
-            title="Pinned messages"
-          >
-            <Pin className="w-4 h-4" />
-          </button>
-        )}
-        <button
-          onClick={() => { setShowSearch(s => !s); setShowPinned(false); }}
-          className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
-          title="Search"
-        >
-          <Search className="w-4 h-4" />
-        </button>
-        <button onClick={cycleTheme} className="canvas-icon-btn" title="Theme">
-          {theme === 'dark' ? <Moon className="w-4 h-4" />
-           : theme === 'light' ? <Sun className="w-4 h-4" />
-           : <Monitor className="w-4 h-4" />}
-        </button>
-        {/* Members toggle — desktop only (mobile uses tab bar) */}
-        <button
-          onClick={toggleMembers}
-          className={`canvas-icon-btn hidden-mobile ${membersVisible ? 'active' : ''}`}
-          title="Toggle members"
-        >
-          <Users className="w-4 h-4" />
-        </button>
-        {isDMOpen && (
-          <button
-            onClick={() => useUIStore.getState().setActiveDmConversation(null)}
-            className="canvas-icon-btn ml-1"
-            title="Close DM"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  // ── Chat content ───────────────────────────────────────────────────────────
-  const chatContent = (
-    <div className="chat-card">
-      <div className="main-content">
-        {isDMOpen ? (
-          <DMPane
-            conversationId={activeDmConversation!}
-            partner={activeDmConv?.partner ?? null}
-            onSend={handleSendDM}
-            onTyping={handleDMTyping}
-            onLoadOlder={handleLoadOlderDM}
-            showPinnedPanel={showPinned}
-            onClosePinned={() => setShowPinned(false)}
-          />
-        ) : activeChannel === '' ? (
-          <WelcomePane />
-        ) : isVoice ? (
-          <VoicePane />
-        ) : (
-          <MessagePane
-            onSendMessage={handleSendMessage}
-            onTyping={sendTyping}
-            onLoadOlder={loadOlderMessages}
-            showPinnedPanel={showPinned}
-            onClosePinned={() => setShowPinned(false)}
-          />
-        )}
-      </div>
-    </div>
-  );
-
   return (
-    <>
-      {/* ── DESKTOP LAYOUT ─────────────────────────────────────────────────── */}
-      <div className="layout-root desktop-layout">
-        <ChannelSidebar />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, overflow: 'hidden' }}>
-          {headerBar}
-          {showSearch && showHeader && (
-            <div style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
-              <SearchBar
-                messages={messages as any}
-                currentUserId={user?.id ?? ''}
-                onClose={() => setShowSearch(false)}
-                onJump={scrollToMessage}
-              />
-            </div>
-          )}
-          <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
-            {chatContent}
-            <div
-              style={{
-                width: membersVisible ? 220 : 0,
-                flexShrink: 0,
-                overflow: 'hidden',
-                transition: 'width 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease',
-                opacity: membersVisible ? 1 : 0,
-              }}
-            >
-              <MembersPanel />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="layout-root">
 
-      {/* ── MOBILE LAYOUT ──────────────────────────────────────────────────── */}
-      <div className="mobile-layout">
-        {/* Header — always on top */}
+      {/* ── Channel Sidebar — on canvas ── */}
+      <ChannelSidebar />
+
+      {/* ── Center column: header bar (canvas) + card + search ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+
+        {/* ── Canvas-level header bar — only when channel/DM is open ── */}
         {showHeader && (
-          <div className="mobile-header">
-            {headerBar}
-            {showSearch && (
-              <SearchBar
-                messages={messages as any}
-                currentUserId={user?.id ?? ''}
-                onClose={() => setShowSearch(false)}
-                onJump={scrollToMessage}
-              />
-            )}
+          <div className="canvas-header">
+            {/* Left: channel/DM identity */}
+            <div className="flex items-center gap-2 min-w-0">
+              {isDMOpen ? (
+                <>
+                  <LazyAvatar
+                    name={activeDmConv?.partner.displayName ?? '?'}
+                    avatarUrl={activeDmConv?.partner.avatarUrl}
+                    size={7}
+                  />
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="text-sm font-semibold text-text-normal truncate">
+                      {activeDmConv?.partner.displayName ?? 'Unknown'}
+                    </span>
+                    <span className="text-xs text-text-muted truncate">
+                      @{activeDmConv?.partner.username}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
+                  <span className="text-base font-semibold text-text-normal truncate">{channelName}</span>
+                  {/* Live indicator */}
+                  <div className="flex items-center gap-1.5 ml-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-status-green' : 'bg-text-muted'}`} />
+                    <span className="text-xs text-text-muted">{isConnected ? 'live' : 'offline'}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Right: action icons */}
+            <div className="flex items-center gap-0.5 ml-auto">
+              <button className="canvas-icon-btn" title="Notifications (coming soon)">
+                <Bell className="w-4 h-4" />
+              </button>
+              {!isDMOpen && (
+                <button
+                  onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
+                  className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
+                  title="Pinned messages"
+                >
+                  <Pin className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={() => { setShowSearch(s => !s); setShowPinned(false); }}
+                className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
+                title="Search messages"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              <button
+                onClick={cycleTheme}
+                className="canvas-icon-btn"
+                title={`Theme: ${theme} — click to switch`}
+              >
+                {theme === 'dark'  ? <Moon className="w-4 h-4" />
+                 : theme === 'light' ? <Sun className="w-4 h-4" />
+                 : <Monitor className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={toggleMembers}
+                className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
+                title="Toggle members"
+              >
+                <Users className="w-4 h-4" />
+              </button>
+              {isDMOpen && (
+                <button
+                  onClick={() => useUIStore.getState().setActiveDmConversation(null)}
+                  className="canvas-icon-btn ml-1"
+                  title="Close DM"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Panel content */}
-        <div className="mobile-panel">
-          {mobileTab === 'channels' && (
-            <div className="mobile-panel-inner">
-              <ChannelSidebar />
-            </div>
-          )}
-          {mobileTab === 'chat' && (
-            <div className="mobile-panel-inner">
-              {chatContent}
-            </div>
-          )}
-          {mobileTab === 'members' && (
-            <div className="mobile-panel-inner">
-              <MembersPanel />
-            </div>
-          )}
-        </div>
+        {/* ── Search bar (on canvas, below header) ── */}
+        {showSearch && showHeader && (
+          <div style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+            <SearchBar
+              messages={messages as any}
+              currentUserId={user?.id ?? ''}
+              onClose={() => setShowSearch(false)}
+              onJump={scrollToMessage}
+            />
+          </div>
+        )}
 
-        {/* Bottom tab bar */}
-        <nav className="mobile-tab-bar">
-          <button
-            className={`mobile-tab ${mobileTab === 'channels' ? 'active' : ''}`}
-            onClick={() => setMobileTab('channels')}
+        {/* ── Card + Members row ── */}
+        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+
+          {/* Chat card */}
+          <div className="chat-card">
+            <div className="main-content">
+              {isDMOpen ? (
+                <DMPane
+                  conversationId={activeDmConversation!}
+                  partner={activeDmConv?.partner ?? null}
+                  onSend={handleSendDM}
+                  onTyping={handleDMTyping}
+                  onLoadOlder={handleLoadOlderDM}
+                  showPinnedPanel={showPinned}
+                  onClosePinned={() => setShowPinned(false)}
+                />
+              ) : activeChannel === '' ? (
+                <WelcomePane />
+              ) : isVoice ? (
+                <VoicePane />
+              ) : (
+                <MessagePane
+                  onSendMessage={handleSendMessage}
+                  onTyping={sendTyping}
+                  onLoadOlder={loadOlderMessages}
+                  showPinnedPanel={showPinned}
+                  onClosePinned={() => setShowPinned(false)}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Members panel — always mounted, width animates smoothly */}
+          <div
+            style={{
+              width: membersVisible ? 220 : 0,
+              flexShrink: 0,
+              overflow: 'hidden',
+              transition: 'width 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease',
+              opacity: membersVisible ? 1 : 0,
+            }}
           >
-            <Hash className="w-5 h-5" />
-            <span>Channels</span>
-          </button>
-          <button
-            className={`mobile-tab ${mobileTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setMobileTab('chat')}
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span>Chat</span>
-          </button>
-          <button
-            className={`mobile-tab ${mobileTab === 'members' ? 'active' : ''}`}
-            onClick={() => setMobileTab('members')}
-          >
-            <Users className="w-5 h-5" />
-            <span>Members</span>
-          </button>
-        </nav>
+            <MembersPanel />
+          </div>
+
+        </div>
       </div>
-    </>
+    </div>
   );
 }
