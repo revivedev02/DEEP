@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const COLORS = [
   'bg-brand', 'bg-purple-600', 'bg-green-600',
@@ -19,7 +19,15 @@ interface LazyAvatarProps {
  * - Falls back gracefully to a colored letter avatar on error or no URL
  */
 export function LazyAvatar({ name, avatarUrl, size = 8, shape = 'circle', className = '' }: LazyAvatarProps) {
-  const [imgState, setImgState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [imgState, setImgState] = useState<'loading' | 'loaded' | 'error'>(
+    avatarUrl ? 'loading' : 'error'
+  );
+
+  // Reset skeleton state whenever the URL changes (e.g. real-time avatar update)
+  useEffect(() => {
+    if (avatarUrl) setImgState('loading');
+  }, [avatarUrl]);
+
   const color  = COLORS[name.charCodeAt(0) % COLORS.length];
   const radius = shape === 'circle' ? 'rounded-full' : 'rounded-lg';
   const dim    = `w-${size} h-${size}`;

@@ -52,7 +52,8 @@ function scrollToMessage(id: string) {
 
 // ─── Mention renderer ─────────────────────────────────────────────────────────
 function MentionText({ content, currentUserId }: { content: string; currentUserId: string }) {
-  const { members } = useMembersStore.getState();
+  // Use hook (not getState) so mentions reactively update when members load
+  const { members } = useMembersStore();
   const parts = content.split(/(@everyone|@[\w.]+)/g);
   return (
     <>

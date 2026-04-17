@@ -233,8 +233,8 @@
     width: 36px;
     height: 14px;
     flex-shrink: 0;
-    border-top: 2px solid rgb(var(--separator-rgb) / 0.6);
-    border-left: 2px solid rgb(var(--separator-rgb) / 0.6);
+    border-top: 2px solid rgb(var(--separator-rgb) / 0.85);
+    border-left: 2px solid rgb(var(--separator-rgb) / 0.85);
     border-top-left-radius: 8px;
     margin-right: 2px;
   }

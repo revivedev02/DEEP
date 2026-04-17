@@ -7,7 +7,7 @@ import { useUIStore } from '@/store/useUIStore';
 export function useServerData() {
   const { token } = useAuthStore();
   const { setServerName, setIconUrl, setChannels, setLoading } = useServerStore();
-  const { setActiveChannel, activeChannel } = useUIStore();
+  const { setActiveChannel } = useUIStore();
 
   useEffect(() => {
     if (!token) return;
@@ -23,13 +23,14 @@ export function useServerData() {
       })
       .catch(() => {});
 
-    // Fetch channels
+    // Fetch channels — read activeChannel from store at call time to avoid stale closure
     fetch('/api/channels', { headers })
       .then(r => r.json())
       .then(data => {
         setLoading(false);
         if (!Array.isArray(data) || data.length === 0) return;
         setChannels(data);
+        const { activeChannel } = useUIStore.getState();
         if (!activeChannel) {
           const first = data.find((c: any) => c.type === 'text');
           if (first) setActiveChannel(first.id);
@@ -38,3 +39,4 @@ export function useServerData() {
       .catch(() => setLoading(false));
   }, [token]);
 }
+
