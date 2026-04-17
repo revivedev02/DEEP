@@ -160,7 +160,7 @@
     @apply flex gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded relative;
   }
   .message-group.with-avatar {
-    @apply mt-4 py-1;
+    @apply mt-4 py-1 flex-col gap-0.5;
   }
   /* Message hover action bar */
   .message-actions {
@@ -223,18 +223,26 @@
   .typing-dot:nth-child(2) { animation-delay: 0.2s; }
   .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-  /* ── Reply Preview (above a replied-to message) ── */
-  .reply-preview {
-    @apply flex items-center gap-1.5 ml-14 mb-0.5 text-xs text-text-muted
-           cursor-default select-none;
+  /* ── Reply Preview (Discord-style, above replied message) ── */
+  .reply-wrapper {
+    @apply flex items-center gap-1.5 text-xs text-text-muted
+           cursor-pointer select-none transition-colors hover:text-text-normal;
+    padding-left: 16px; /* aligns with message-group px-4 */
+  }
+  .reply-connector {
+    width: 36px;
+    height: 14px;
+    flex-shrink: 0;
+    border-top: 2px solid rgb(var(--separator-rgb) / 0.6);
     border-left: 2px solid rgb(var(--separator-rgb) / 0.6);
-    padding-left: 6px;
+    border-top-left-radius: 8px;
+    margin-right: 2px;
   }
-  .reply-preview-author {
-    @apply font-semibold text-text-normal text-xs flex-shrink-0 hover:underline cursor-pointer;
+  .reply-author {
+    @apply text-text-normal font-medium hover:underline cursor-pointer flex-shrink-0;
   }
-  .reply-preview-content {
-    @apply truncate max-w-[300px] text-xs;
+  .reply-text {
+    @apply truncate max-w-xs opacity-70;
   }
 
   /* ── Reply Banner (above input, "Replying to X") ── */

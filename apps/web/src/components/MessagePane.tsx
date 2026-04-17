@@ -1,4 +1,3 @@
-import { format, isToday, isYesterday } from 'date-fns';
 import { useMemo, useState, useRef, useCallback } from 'react';
 import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, CornerUpLeft } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -11,17 +10,39 @@ import { useServerStore } from '@/store/useServerStore';
 import { SkMessageList } from '@/components/Skeleton';
 import { useThemeStore } from '@/store/useThemeStore';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── IST timestamp helpers ──────────────────────────────────────────────────
+const IST = 'Asia/Kolkata';
+
+const timeFmt   = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: IST });
+const fullFmt   = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: IST });
+const dateParts = new Intl.DateTimeFormat('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: IST });
+
+/** Get yyyy-mm-dd string in IST for a given date */
+function istDateKey(d: Date): string {
+  const parts = dateParts.formatToParts(d);
+  const y = parts.find(p => p.type === 'year')!.value;
+  const m = parts.find(p => p.type === 'month')!.value;
+  const dd = parts.find(p => p.type === 'day')!.value;
+  return `${y}-${m}-${dd}`;
+}
+
+function isTodayIST(d: Date): boolean { return istDateKey(d) === istDateKey(new Date()); }
+function isYesterdayIST(d: Date): boolean {
+  const y = new Date(Date.now() - 86400000);
+  return istDateKey(d) === istDateKey(y);
+}
+
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
-  if (isToday(d))     return `Today at ${format(d, 'h:mm a')}`;
-  if (isYesterday(d)) return `Yesterday at ${format(d, 'h:mm a')}`;
-  return format(d, 'MM/dd/yyyy h:mm a');
+  if (isTodayIST(d))     return `Today at ${timeFmt.format(d)}`;
+  if (isYesterdayIST(d)) return `Yesterday at ${timeFmt.format(d)}`;
+  return fullFmt.format(d);
 }
 
 function shortTime(iso: string): string {
-  return format(new Date(iso), 'h:mm a');
+  return timeFmt.format(new Date(iso));
 }
+
 
 function isSameAuthorWithin5Min(a: ChatMessage, b: ChatMessage): boolean {
   if (a.userId !== b.userId) return false;
@@ -47,13 +68,21 @@ function DateDivider({ label }: { label: string }) {
   );
 }
 
-// ─── Reply preview (shown above a message that is a reply) ──────────────────
+// ─── Reply preview — Discord style ──────────────────────────────────────────
 function ReplyPreview({ replyTo }: { replyTo: NonNullable<ChatMessage['replyTo']> }) {
   return (
-    <div className="reply-preview">
-      <CornerUpLeft className="w-3 h-3 flex-shrink-0 opacity-60" />
-      <span className="reply-preview-author">{replyTo.user.displayName}</span>
-      <span className="reply-preview-content">{replyTo.content}</span>
+    <div className="reply-wrapper">
+      {/* L-shaped connector: top + left borders with rounded top-left corner */}
+      <div className="reply-connector" />
+      {/* Mini avatar of the person being replied to */}
+      <LazyAvatar
+        name={replyTo.user.displayName}
+        avatarUrl={replyTo.user.avatarUrl}
+        size={4}
+        className="flex-shrink-0"
+      />
+      <span className="reply-author">@{replyTo.user.displayName}</span>
+      <span className="reply-text">{replyTo.content}</span>
     </div>
   );
 }
@@ -87,19 +116,23 @@ function Message({
 
   if (isFirst) {
     return (
+      // flex-col so ReplyPreview stacks above the avatar+body row
       <div className="message-group with-avatar group">
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
-        <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
-        <div className="message-body">
-          <div className="message-header">
-            <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
-              {msg.user.displayName}
-              {msg.user.isAdmin && <span className="ml-1.5 text-2xs bg-brand/20 text-brand px-1.5 py-0.5 rounded font-medium">ADMIN</span>}
-              {isMe && <span className="ml-1.5 text-2xs bg-bg-modifier text-text-muted px-1.5 py-0.5 rounded font-medium">YOU</span>}
-            </span>
-            <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
+        {/* Avatar + body in a horizontal sub-row */}
+        <div className="flex items-start gap-4">
+          <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
+          <div className="message-body">
+            <div className="message-header">
+              <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
+                {msg.user.displayName}
+                {msg.user.isAdmin && <span className="ml-1.5 text-2xs bg-brand/20 text-brand px-1.5 py-0.5 rounded font-medium">ADMIN</span>}
+                {isMe && <span className="ml-1.5 text-2xs bg-bg-modifier text-text-muted px-1.5 py-0.5 rounded font-medium">YOU</span>}
+              </span>
+              <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
+            </div>
+            <p className="message-content">{msg.content}</p>
           </div>
-          <p className="message-content">{msg.content}</p>
         </div>
         <ActionBar />
       </div>
