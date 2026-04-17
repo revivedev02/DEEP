@@ -51,7 +51,7 @@ export default function MembersPanel() {
   const { onlineUsers } = useChatStore();
   const { token, user: me } = useAuthStore();
   const { members, setMembers } = useMembersStore();
-  const { setSidebarMode, setActiveDmConversation } = useUIStore();
+  const { setActiveDmConversation } = useUIStore();
 
   useEffect(() => {
     if (!token) return;
@@ -75,13 +75,10 @@ export default function MembersPanel() {
       });
       if (!res.ok) return;
       const conv = await res.json();
-      // Upsert into DM store
       useDMStore.getState().upsertConversation(conv);
-      // Switch sidebar to DMs tab and select the conversation
-      setSidebarMode('dms');
       setActiveDmConversation(conv.id);
     } catch {}
-  }, [token, setSidebarMode, setActiveDmConversation]);
+  }, [token, setActiveDmConversation]);
 
   return (
     <aside className="members-panel animate-fade-in">
