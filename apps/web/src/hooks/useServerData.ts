@@ -23,18 +23,14 @@ export function useServerData() {
       })
       .catch(() => {});
 
-    // Fetch channels — read activeChannel from store at call time to avoid stale closure
+    // Fetch channels
     fetch('/api/channels', { headers })
       .then(r => r.json())
       .then(data => {
         setLoading(false);
         if (!Array.isArray(data) || data.length === 0) return;
         setChannels(data);
-        const { activeChannel } = useUIStore.getState();
-        if (!activeChannel) {
-          const first = data.find((c: any) => c.type === 'text');
-          if (first) setActiveChannel(first.id);
-        }
+        // Don't auto-select — let WelcomePane show until user clicks a channel
       })
       .catch(() => setLoading(false));
   }, [token]);
