@@ -3,10 +3,13 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 
+/** Minimum time (ms) the skeleton should stay visible so it doesn't flash. */
+const MIN_SKELETON_MS = 400;
+
 /** Fetches messages for the active channel. Re-fetches when channel switches. */
 export function useMessages() {
   const { token } = useAuthStore();
-  const { setMessages, clearMessages, setLoadingMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
+  const { setMessages, clearMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
   const retryTick = useChatStore(s => s.retryTick);
   const { activeChannel } = useUIStore();
 
@@ -14,9 +17,11 @@ export function useMessages() {
   useEffect(() => {
     if (!token || !activeChannel) return;
 
-    // clearMessages keeps isLoadingMessages:true while wiping the old list
+    // Show skeleton immediately
     clearMessages();
     setLoadError(null);
+
+    const start = Date.now();
 
     fetch(`/api/messages?channelId=${encodeURIComponent(activeChannel)}&limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -25,7 +30,12 @@ export function useMessages() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then(msgs => setMessages(Array.isArray(msgs) ? msgs : []))
+      .then(msgs => {
+        // Ensure skeleton is visible for at least MIN_SKELETON_MS
+        const elapsed = Date.now() - start;
+        const remaining = Math.max(0, MIN_SKELETON_MS - elapsed);
+        setTimeout(() => setMessages(Array.isArray(msgs) ? msgs : []), remaining);
+      })
       .catch((err: Error) => setLoadError(
         navigator.onLine ? 'Failed to load messages.' : 'You are offline.'
       ));
