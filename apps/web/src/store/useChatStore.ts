@@ -14,6 +14,7 @@ export interface ChatMessage {
   userId: string;
   channelId: string;
   createdAt: string;
+  editedAt?: string | null;
   pinned?: boolean;
   replyToId?: string | null;
   replyTo?: {
@@ -38,6 +39,7 @@ interface ChatState {
   setMessages:        (msgs: ChatMessage[]) => void;
   setPinnedMessages:  (msgs: ChatMessage[]) => void;
   applyPinToggle:     (messageId: string, pinned: boolean) => void;
+  applyEdit:          (messageId: string, content: string, editedAt: string) => void;
   setOnline:          (userId: string, online: boolean) => void;
   setConnected:       (v: boolean) => void;
   clearMessages:      () => void;
@@ -68,21 +70,30 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setPinnedMessages: (msgs) => set({ pinnedMessages: msgs }),
 
-  // Called when a message:pinned socket event arrives or after PATCH succeeds
+  // Called by socket event or after PATCH — only updates pinned flag on messages list.
+  // pinnedMessages is refreshed separately by handlePin after the server confirms.
   applyPinToggle: (messageId, pinned) =>
+    set((s) => {
+      const foundMsg = s.messages.find((m) => m.id === messageId);
+      return {
+        messages: s.messages.map((m) =>
+          m.id === messageId ? { ...m, pinned } : m
+        ),
+        pinnedMessages: pinned
+          ? s.pinnedMessages.some((m) => m.id === messageId)
+            ? s.pinnedMessages.map((m) => m.id === messageId ? { ...m, pinned: true } : m)
+            : foundMsg
+              ? [...s.pinnedMessages, { ...foundMsg, pinned: true }]
+              : s.pinnedMessages // message not in cache — skip, handlePin will re-fetch
+          : s.pinnedMessages.filter((m) => m.id !== messageId),
+      };
+    }),
+
+  applyEdit: (messageId, content, editedAt) =>
     set((s) => ({
       messages: s.messages.map((m) =>
-        m.id === messageId ? { ...m, pinned } : m
+        m.id === messageId ? { ...m, content, editedAt } : m
       ),
-      pinnedMessages: pinned
-        ? // add if not already present
-          s.pinnedMessages.some((m) => m.id === messageId)
-            ? s.pinnedMessages
-            : [
-                ...s.pinnedMessages,
-                { ...s.messages.find((m) => m.id === messageId)!, pinned: true },
-              ]
-        : s.pinnedMessages.filter((m) => m.id !== messageId),
     })),
 
   setOnline: (userId, online) =>

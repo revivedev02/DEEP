@@ -88,6 +88,38 @@ export async function registerMessageRoutes(app: FastifyInstance) {
     }
   );
 
+  // PATCH /api/messages/:id — edit content (own message or admin)
+  app.patch<{ Params: { id: string }; Body: { content: string } }>(
+    '/api/messages/:id',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const payload = req.user as { sub: string; isAdmin: boolean };
+      const { content } = req.body as { content?: string };
+
+      if (!content?.trim()) return reply.code(400).send({ error: 'Content is required' });
+
+      const msg = await prisma.message.findUnique({ where: { id: req.params.id } });
+      if (!msg) return reply.code(404).send({ error: 'Not found' });
+      if (msg.userId !== payload.sub && !payload.isAdmin)
+        return reply.code(403).send({ error: 'Forbidden' });
+
+      const updated = await prisma.message.update({
+        where: { id: req.params.id },
+        data:  { content: content.trim(), editedAt: new Date() },
+        include: messageInclude,
+      });
+
+      // Broadcast to everyone in the channel
+      (app as any).io?.to(updated.channelId).emit('message:edited', {
+        messageId: updated.id,
+        content:   updated.content,
+        editedAt:  updated.editedAt,
+      });
+
+      return reply.send(updated);
+    }
+  );
+
   // DELETE /api/messages/:id — own message or admin only
   app.delete<{ Params: { id: string } }>(
     '/api/messages/:id',

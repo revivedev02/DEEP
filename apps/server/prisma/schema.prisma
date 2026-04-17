@@ -26,6 +26,7 @@ model Message {
   createdAt   DateTime  @default(now())
   channelId   String    @default("text-main")
   pinned      Boolean   @default(false)
+  editedAt    DateTime?
   replyToId   String?
   replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies     Message[] @relation("MessageReplies")

@@ -58,6 +58,11 @@ export function useSocket() {
       useChatStore.getState().applyPinToggle(messageId, pinned);
     });
 
+    // ── Real-time message edit ────────────────────────────────────────────────
+    socketInstance.on('message:edited', ({ messageId, content, editedAt }: { messageId: string; content: string; editedAt: string }) => {
+      useChatStore.getState().applyEdit(messageId, content, editedAt);
+    });
+
     return () => {};
   }, [token]);
 

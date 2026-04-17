@@ -1,7 +1,7 @@
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell,
-  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff,
+  Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil,
 } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import PinnedPanel from '@/components/PinnedPanel';
@@ -14,6 +14,9 @@ import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
 import { SkMessageList } from '@/components/Skeleton';
 import { useThemeStore } from '@/store/useThemeStore';
+// @ts-ignore — emoji-mart has no bundled types for the React wrapper
+import EmojiPicker from '@emoji-mart/react';
+import emojiData from '@emoji-mart/data';
 
 // ─── IST timestamp helpers ────────────────────────────────────────────────────
 const IST = 'Asia/Kolkata';
@@ -135,21 +138,90 @@ function ReplyPreview({ replyTo }: { replyTo: NonNullable<ChatMessage['replyTo']
 
 // ─── Single message ───────────────────────────────────────────────────────────
 function Message({
-  msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin, onDelete, onReply, onPin,
+  msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin,
+  onDelete, onReply, onPin, onStartEdit, editingId, onSaveEdit, onCancelEdit,
 }: {
   msg: ChatMessage; isFirst: boolean; currentUserId: string; isAdmin: boolean;
   onDelete: (id: string) => void;
   onReply:  (msg: ChatMessage) => void;
   onPin:    (msg: ChatMessage) => void;
+  onStartEdit: (id: string) => void;
+  editingId:   string | null;
+  onSaveEdit:  (id: string, content: string) => void;
+  onCancelEdit: () => void;
 }) {
   const isMe      = msg.userId === currentUserId;
   const canDelete = isMe || currentUserIsAdmin;
+  const isEditing = editingId === msg.id;
+
+  // ── Inline edit textarea state ───────────────────────────────────────────
+  const [editValue, setEditValue] = useState(msg.content);
+  const editRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync editValue when editing starts
+  useCallback(() => {
+    if (isEditing) {
+      setEditValue(msg.content);
+      setTimeout(() => {
+        if (editRef.current) {
+          editRef.current.focus();
+          editRef.current.style.height = 'auto';
+          editRef.current.style.height = `${editRef.current.scrollHeight}px`;
+          // Move cursor to end
+          editRef.current.setSelectionRange(editRef.current.value.length, editRef.current.value.length);
+        }
+      }, 10);
+    }
+  }, [isEditing]);
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const trimmed = editValue.trim();
+      if (trimmed && trimmed !== msg.content) onSaveEdit(msg.id, trimmed);
+      else onCancelEdit();
+    }
+    if (e.key === 'Escape') { e.preventDefault(); onCancelEdit(); }
+  };
+
+  const handleEditInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditValue(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  };
+
+  const EditBox = () => (
+    <div className="mt-1 pr-4">
+      <textarea
+        ref={editRef}
+        value={editValue}
+        onChange={handleEditInput}
+        onKeyDown={handleEditKeyDown}
+        autoFocus
+        className="message-edit-textarea w-full"
+        rows={1}
+      />
+      <p className="message-edit-hint">
+        <span className="text-brand cursor-pointer hover:underline" onClick={() => { const t = editValue.trim(); if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit(); }}>save</span>
+        &nbsp;—&nbsp;
+        <span className="cursor-pointer hover:underline" onClick={onCancelEdit}>esc to cancel</span>
+      </p>
+    </div>
+  );
+
+  const EditedLabel = () =>
+    msg.editedAt ? <span className="message-edited-label">(edited)</span> : null;
 
   const ActionBar = () => (
     <div className="message-actions">
       <button className="message-action-btn" title="Reply" onClick={() => onReply(msg)}>
         <Reply className="w-3.5 h-3.5" />
       </button>
+      {isMe && (
+        <button className="message-action-btn" title="Edit message" onClick={() => { setEditValue(msg.content); onStartEdit(msg.id); }}>
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      )}
       {currentUserIsAdmin && (
         <button
           className={`message-action-btn ${msg.pinned ? 'text-brand' : ''}`}
@@ -176,7 +248,7 @@ function Message({
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
         <div className="flex items-start gap-4">
           <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
-          <div className="message-body">
+          <div className="message-body flex-1 min-w-0">
             <div className="message-header">
               <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
                 {msg.user.displayName}
@@ -186,9 +258,12 @@ function Message({
               <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
               {msg.pinned && <Pin className="w-3 h-3 text-brand ml-1 flex-shrink-0" title="Pinned" />}
             </div>
-            <p className="message-content">
-              <MessageContent content={msg.content} currentUserId={currentUserId} />
-            </p>
+            {isEditing ? <EditBox /> : (
+              <p className="message-content">
+                <MessageContent content={msg.content} currentUserId={currentUserId} />
+                <EditedLabel />
+              </p>
+            )}
           </div>
         </div>
         <ActionBar />
@@ -201,9 +276,14 @@ function Message({
       <div className="w-10 flex-shrink-0 flex justify-center pt-1">
         <span className="hidden group-hover:inline text-2xs text-text-muted leading-5">{shortTime(msg.createdAt)}</span>
       </div>
-      <p className="message-content flex-1">
-        <MessageContent content={msg.content} currentUserId={currentUserId} />
-      </p>
+      <div className="flex-1 min-w-0">
+        {isEditing ? <EditBox /> : (
+          <p className="message-content">
+            <MessageContent content={msg.content} currentUserId={currentUserId} />
+            <EditedLabel />
+          </p>
+        )}
+      </div>
       <ActionBar />
     </div>
   );
@@ -395,8 +475,46 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
     typingTimer.current = setTimeout(() => onTyping(false), 3000);
   };
 
+  // ── Emoji picker ────────────────────────────────────────────────────────────
+  const [showEmoji, setShowEmoji] = useState(false);
+  const emojiRef = useRef<HTMLDivElement>(null);
+
+  // Close picker on outside click
+  useEffect(() => {
+    if (!showEmoji) return;
+    const handler = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmoji(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmoji]);
+
+  const insertEmoji = (emoji: { native: string }) => {
+    const ta = textareaRef.current;
+    if (!ta) {
+      setValue(v => v + emoji.native);
+      return;
+    }
+    const start  = ta.selectionStart;
+    const end    = ta.selectionEnd;
+    const before = value.slice(0, start);
+    const after  = value.slice(end);
+    const newVal = before + emoji.native + after;
+    setValue(newVal);
+    setTimeout(() => {
+      ta.focus();
+      const pos = start + emoji.native.length;
+      ta.setSelectionRange(pos, pos);
+      ta.style.height = 'auto';
+      ta.style.height = `${ta.scrollHeight}px`;
+    }, 0);
+  };
+
   return (
     <div className="message-input-wrapper relative">
+      {/* Mention autocomplete */}
       {mentionQuery !== null && suggestions.length > 0 && (
         <div className="mention-dropdown">
           <div className="px-3 py-1.5 text-2xs text-text-muted font-semibold uppercase tracking-wider border-b border-separator/30">
@@ -417,6 +535,22 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
           ))}
         </div>
       )}
+
+      {/* Emoji picker */}
+      {showEmoji && (
+        <div ref={emojiRef} className="absolute bottom-full right-4 mb-2 z-50 shadow-elevation-high rounded-xl overflow-hidden">
+          <EmojiPicker
+            data={emojiData}
+            onEmojiSelect={insertEmoji}
+            theme={useThemeStore.getState().theme === 'oled' ? 'dark' : 'light'}
+            previewPosition="none"
+            skinTonePosition="none"
+            maxFrequentRows={2}
+            set="native"
+          />
+        </div>
+      )}
+
       <div className="message-input-box">
         <button className="input-action-btn" title="Attach (coming soon)"><PlusCircle className="w-5 h-5" /></button>
         <textarea
@@ -426,9 +560,20 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
         <div className="flex items-center gap-1">
           <button className="input-action-btn" title="Gift (coming soon)"><Gift className="w-4 h-4" /></button>
           <button className="input-action-btn" title="Sticker (coming soon)"><Sticker className="w-4 h-4" /></button>
-          <button className="input-action-btn" title="Emoji (coming soon)"><Smile className="w-4 h-4" /></button>
-          <button onClick={submit} disabled={!value.trim()}
-            className={`input-action-btn transition-colors ${value.trim() ? 'text-brand hover:text-brand-hover' : ''}`} title="Send">
+          {/* Emoji toggle button */}
+          <button
+            className={`input-action-btn transition-colors ${showEmoji ? 'text-brand' : ''}`}
+            title="Emoji"
+            onClick={() => setShowEmoji(v => !v)}
+          >
+            <Smile className="w-4 h-4" />
+          </button>
+          {/* Send — always brand blue */}
+          <button
+            onClick={submit}
+            className="input-action-btn text-brand hover:opacity-80 transition-opacity"
+            title="Send"
+          >
             <Send className="w-4 h-4" />
           </button>
         </div>
@@ -483,19 +628,54 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
 
   const handleReply = useCallback((msg: ChatMessage) => setReplyingTo(msg), [setReplyingTo]);
 
-  // Pin/unpin handler
   const handlePin = useCallback(async (msg: ChatMessage) => {
     if (!token) return;
     const newPinned = !msg.pinned;
-    // Optimistic update
+
+    // Optimistic: flip the pin indicator in the message list immediately
     useChatStore.getState().applyPinToggle(msg.id, newPinned);
-    await fetch(`/api/messages/${msg.id}/pin`, {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    }).catch(() => {
-      // Revert on failure
+
+    try {
+      const res = await fetch(`/api/messages/${msg.id}/pin`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('pin failed');
+
+      // Always re-fetch the full pinned list so PinnedPanel is guaranteed correct
+      const channel = useUIStore.getState().activeChannel;
+      if (channel) {
+        const pinned = await fetch(`/api/messages/pinned?channelId=${encodeURIComponent(channel)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then(r => r.json()).catch(() => null);
+        if (Array.isArray(pinned)) useChatStore.getState().setPinnedMessages(pinned);
+      }
+    } catch {
+      // Revert optimistic update on failure
       useChatStore.getState().applyPinToggle(msg.id, !newPinned);
-    });
+    }
+  }, [token]);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleStartEdit = useCallback((id: string) => setEditingId(id), []);
+  const handleCancelEdit = useCallback(() => setEditingId(null), []);
+
+  const handleSaveEdit = useCallback(async (id: string, content: string) => {
+    if (!token) return;
+    setEditingId(null);
+    // Optimistic: update in store immediately
+    useChatStore.getState().applyEdit(id, content, new Date().toISOString());
+    try {
+      await fetch(`/api/messages/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+    } catch {
+      // If PATCH fails, the socket event won't arrive — keep optimistic value
+    }
   }, [token]);
 
   // Group messages by date + consecutive author
@@ -591,6 +771,10 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
                     onDelete={handleDeleteMessage}
                     onReply={handleReply}
                     onPin={handlePin}
+                    editingId={editingId}
+                    onStartEdit={handleStartEdit}
+                    onSaveEdit={handleSaveEdit}
+                    onCancelEdit={handleCancelEdit}
                   />
                 </div>
               ))}

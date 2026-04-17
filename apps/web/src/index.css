@@ -399,6 +399,21 @@
     @apply h-px bg-separator/40 my-1 mx-2;
   }
 
+  /* ── Inline message edit ── */
+  .message-edit-textarea {
+    @apply w-full bg-bg-modifier text-text-normal text-sm rounded-lg px-3 py-2
+           outline-none resize-none leading-relaxed border border-brand/50
+           focus:border-brand transition-colors;
+    min-height: 42px;
+    max-height: 300px;
+  }
+  .message-edit-hint {
+    @apply text-xs text-text-muted mt-1 select-none;
+  }
+  .message-edited-label {
+    @apply text-2xs text-text-muted ml-1 italic select-none;
+  }
+
   /* ── Admin Panel ── */
   .admin-table {
     @apply w-full text-sm text-left border-collapse;
