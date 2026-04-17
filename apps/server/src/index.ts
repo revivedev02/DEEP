@@ -13,6 +13,7 @@ import { registerMemberRoutes } from './routes/members.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerChannelRoutes } from './routes/channels.js';
 import { registerUploadRoutes } from './routes/upload.js';
+import { registerDMRoutes } from './routes/dm.js';
 import { setupSocketHandlers } from './socket/handlers.js';
 import { prisma } from './lib/prisma.js';
 import multipart from '@fastify/multipart';
@@ -65,6 +66,7 @@ await registerMemberRoutes(app);
 await registerSettingsRoutes(app);
 await registerChannelRoutes(app);
 await registerUploadRoutes(app);
+await registerDMRoutes(app);
 
 // SPA fallback (prod)
 if (IS_PROD) {

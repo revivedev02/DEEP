@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useUIStore } from '@/store/useUIStore';
+import { setDMSocket } from '@/hooks/useDMSocket';
 
 // ── True singleton — shared across every component that calls useSocket() ────
 let socketInstance: Socket | null = null;
@@ -26,6 +27,7 @@ export function useSocket() {
       reconnectionAttempts: 10,
       reconnectionDelay: 2000,
     });
+    setDMSocket(socketInstance);
 
     socketInstance.on('connect',    () => setConnected(true));
     socketInstance.on('disconnect', () => setConnected(false));

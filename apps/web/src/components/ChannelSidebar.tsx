@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, LogOut, Hash, Mic, ChevronRight, Camera } from 'lucide-react';
+import { ChevronDown, Shield, LogOut, Hash, Mic, ChevronRight, Camera, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useUIStore } from '@/store/useUIStore';
+import { useUIStore, type SidebarMode } from '@/store/useUIStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
+import { useDMStore, type DMConversation } from '@/store/useDMStore';
 import { SkChannelSidebar } from '@/components/Skeleton';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import AvatarUploadModal from '@/components/AvatarUploadModal';
+import { DMList } from '@/components/DMList';
 
 // ── Channel row ─────────────────────────────────────────────────────────────
 function ChannelItem({ channel, active, onSelect }: {
@@ -37,11 +39,36 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
+// ── Segmented control ─────────────────────────────────────────────────────────
+function ModeToggle({ mode, onChange }: { mode: SidebarMode; onChange: (m: SidebarMode) => void }) {
+  return (
+    <div className="flex mx-3 my-2 bg-bg-primary rounded-lg p-0.5 gap-0.5">
+      {(['channels', 'dms'] as SidebarMode[]).map(m => (
+        <button
+          key={m}
+          onClick={() => onChange(m)}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 ${
+            mode === m
+              ? 'bg-bg-active text-text-normal shadow-sm'
+              : 'text-text-muted hover:text-text-normal'
+          }`}
+        >
+          {m === 'channels' ? <Hash className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
+          {m === 'channels' ? 'Channels' : 'DMs'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function ChannelSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { activeChannel, setActiveChannel, showMembers, toggleMembers } = useUIStore();
+  const {
+    activeChannel, setActiveChannel, showMembers, toggleMembers,
+    sidebarMode, setSidebarMode, activeDmConversation, setActiveDmConversation,
+  } = useUIStore();
   const { serverName, iconUrl, channels, isLoading } = useServerStore();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -50,6 +77,10 @@ export default function ChannelSidebar() {
 
   const textChannels  = channels.filter(c => c.type === 'text');
   const voiceChannels = channels.filter(c => c.type === 'voice');
+
+  const handleSelectDM = (conv: DMConversation) => {
+    setActiveDmConversation(conv.id);
+  };
 
   return (
     <aside className="channel-sidebar flex flex-col h-full">
@@ -69,7 +100,6 @@ export default function ChannelSidebar() {
               {serverName.slice(0, 1).toUpperCase()}
             </div>
           )}
-          {/* Server name */}
           {isLoading
             ? <div className="skeleton w-24 h-4" />
             : <span className="font-bold text-text-normal truncate">{serverName}</span>}
@@ -101,29 +131,35 @@ export default function ChannelSidebar() {
         )}
       </div>
 
-      {/* ── Channel list ── */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
-        {isLoading ? (
-          <SkChannelSidebar />
-        ) : (
-          <>
-            <SectionHeader label="Text Channels" />
-            {textChannels.map(ch => (
-              <ChannelItem key={ch.id} channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
-            ))}
+      {/* ── Mode toggle ── */}
+      <ModeToggle mode={sidebarMode} onChange={setSidebarMode} />
 
-            <div className="mt-4" />
-            <SectionHeader label="Voice Channels" />
-            {voiceChannels.map(ch => (
-              <ChannelItem key={ch.id} channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
-            ))}
-          </>
+      {/* ── Content ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
+        {sidebarMode === 'channels' ? (
+          isLoading ? (
+            <SkChannelSidebar />
+          ) : (
+            <>
+              <SectionHeader label="Text Channels" />
+              {textChannels.map(ch => (
+                <ChannelItem key={ch.id} channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
+              ))}
+
+              <div className="mt-4" />
+              <SectionHeader label="Voice Channels" />
+              {voiceChannels.map(ch => (
+                <ChannelItem key={ch.id} channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
+              ))}
+            </>
+          )
+        ) : (
+          <DMList activeDmId={activeDmConversation} onSelectDM={handleSelectDM} />
         )}
       </div>
 
       {/* ── User footer ── */}
       <div className="px-3 py-2 flex items-center gap-2 border-t border-separator/40 bg-bg-secondary flex-shrink-0">
-        {/* Clickable avatar with LazyAvatar + camera overlay */}
         <div
           className="relative cursor-pointer group flex-shrink-0"
           onClick={() => setShowAvatarModal(true)}
