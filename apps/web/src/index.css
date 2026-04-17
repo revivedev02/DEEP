@@ -599,10 +599,26 @@
     100% { background-position: -200% 0; }
   }
   .skeleton {
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.06) 25%,
+      rgba(255,255,255,0.12) 50%,
+      rgba(255,255,255,0.06) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
-    border-radius: 4px;
+    border-radius: 6px;
+  }
+
+  /* Light theme override — use dark shimmer on light backgrounds */
+  [data-theme="light"] .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(0,0,0,0.06) 25%,
+      rgba(0,0,0,0.10) 50%,
+      rgba(0,0,0,0.06) 75%
+    );
+    background-size: 200% 100%;
   }
 
   /* ── Fade in ── */
@@ -612,12 +628,6 @@
   }
   .animate-fade-in {
     animation: fade-in 150ms ease both;
-  }
-  .skeleton {
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    border-radius: 4px;
   }
 
   /* ── Typing bounce ── */
