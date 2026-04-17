@@ -178,16 +178,23 @@ export const MessageItem = memo(function MessageItem({
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
-  const EditBox = () => (
+  // inline edit JSX — defined as a variable, NOT a component, so React never unmounts the textarea
+  const editBoxJSX = (
     <div className="mt-1 pr-4">
       <textarea
-        ref={editRef} value={editValue} onChange={handleEditInput}
+        ref={editRef}
+        value={editValue}
+        onChange={handleEditInput}
         onKeyDown={handleEditKeyDown}
-        className="message-edit-textarea w-full" rows={1}
+        onFocus={(e) => e.target.select()}
+        className="message-edit-textarea w-full"
+        rows={1}
       />
       <p className="message-edit-hint">
-        <span className="text-brand cursor-pointer hover:underline"
-          onClick={() => { const t = editValue.trim(); if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit(); }}>
+        <span
+          className="text-brand cursor-pointer hover:underline"
+          onClick={() => { const t = editValue.trim(); if (t && t !== msg.content) onSaveEdit(msg.id, t); else onCancelEdit(); }}
+        >
           save
         </span>
         &nbsp;—&nbsp;
@@ -279,10 +286,10 @@ export const MessageItem = memo(function MessageItem({
               <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
               {msg.pinned && <Pin className="w-3 h-3 text-brand ml-1 flex-shrink-0" title="Pinned" />}
             </div>
-            {isEditing ? <EditBox /> : (
+            {isEditing ? editBoxJSX : (
               <p className="message-content">
                 <MessageContent content={msg.content} currentUserId={currentUserId} />
-                <EditedLabel />
+                {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
               </p>
             )}
             {reactionsBar}
@@ -300,10 +307,10 @@ export const MessageItem = memo(function MessageItem({
         <span className="opacity-0 group-hover:opacity-100 text-2xs text-text-muted leading-5 transition-opacity duration-75">{shortTime(msg.createdAt)}</span>
       </div>
       <div className="flex-1 min-w-0">
-        {isEditing ? <EditBox /> : (
+        {isEditing ? editBoxJSX : (
           <p className="message-content">
             <MessageContent content={msg.content} currentUserId={currentUserId} />
-            <EditedLabel />
+            {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
           </p>
         )}
         {reactionsBar}

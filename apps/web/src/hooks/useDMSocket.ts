@@ -30,14 +30,20 @@ export function useDMSocket() {
       setTyping(displayName, typing);
     };
 
+    const onEdited = ({ messageId, content, editedAt }: { messageId: string; content: string; editedAt: string }) => {
+      useDMStore.getState().applyEdit(messageId, content, editedAt);
+    };
+
     _socket.on('dm:message', onMessage);
     _socket.on('dm:conversation:update', onConvUpdate);
     _socket.on('dm:typing:update', onTyping);
+    _socket.on('dm:message:edited', onEdited);
 
     return () => {
       _socket?.off('dm:message', onMessage);
       _socket?.off('dm:conversation:update', onConvUpdate);
       _socket?.off('dm:typing:update', onTyping);
+      _socket?.off('dm:message:edited', onEdited);
     };
   }, [token]);
 
@@ -53,5 +59,9 @@ export function useDMSocket() {
     _socket?.emit('dm:typing', { conversationId, typing });
   }, []);
 
-  return { joinDMRoom, sendDM, sendDMTyping };
+  const sendDMEdit = useCallback((messageId: string, content: string) => {
+    _socket?.emit('dm:edit', { messageId, content });
+  }, []);
+
+  return { joinDMRoom, sendDM, sendDMTyping, sendDMEdit };
 }

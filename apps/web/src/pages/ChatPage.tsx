@@ -28,7 +28,7 @@ export default function ChatPage() {
   const { channels } = useServerStore();
   const { user, token } = useAuthStore();
   const { sendMessage, sendTyping, joinChannel } = useSocket();
-  const { joinDMRoom, sendDM, sendDMTyping } = useDMSocket();
+  const { joinDMRoom, sendDM, sendDMTyping, sendDMEdit } = useDMSocket();
   const { theme, cycleTheme } = useThemeStore();
   const { messages, isConnected } = useChatStore();
 
@@ -161,15 +161,13 @@ export default function ChatPage() {
               <button className="canvas-icon-btn" title="Notifications (coming soon)">
                 <Bell className="w-4 h-4" />
               </button>
-              {!isDMOpen && (
-                <button
-                  onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
-                  className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
-                  title="Pinned messages"
-                >
-                  <Pin className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
+                className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
+                title="Pinned messages"
+              >
+                <Pin className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => { setShowSearch(s => !s); setShowPinned(false); }}
                 className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
@@ -208,7 +206,7 @@ export default function ChatPage() {
 
         {/* ── Search bar (on canvas, below header) ── */}
         {showSearch && showHeader && (
-          <div style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+          <div style={{ borderRadius: 10, flexShrink: 0, position: 'relative', zIndex: 50 }}>
             <SearchBar
               messages={searchMessages as any}
               currentUserId={user?.id ?? ''}
@@ -229,6 +227,7 @@ export default function ChatPage() {
                   conversationId={activeDmConversation!}
                   partner={activeDmConv?.partner ?? null}
                   onSend={handleSendDM}
+                  onEdit={sendDMEdit}
                   onTyping={handleDMTyping}
                   onLoadOlder={handleLoadOlderDM}
                   showPinnedPanel={showPinned}

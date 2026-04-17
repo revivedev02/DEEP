@@ -411,8 +411,9 @@
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  /* Results flow in-document (not absolute) since search bar is now on the canvas, not inside the card */
   .search-results {
-    @apply absolute left-0 right-0 bg-bg-secondary border border-separator/50
+    @apply left-0 right-0 bg-bg-secondary border border-t-0 border-separator/50
            rounded-b-lg shadow-elevation-high overflow-y-auto z-40
            max-h-72 divide-y divide-separator/20;
   }

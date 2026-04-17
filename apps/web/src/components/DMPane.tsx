@@ -38,14 +38,15 @@ function DateDivider({ label }: { label: string }) {
 interface DMPaneProps {
   conversationId: string;
   partner: { id: string; displayName: string; username: string; avatarUrl?: string | null; isAdmin: boolean } | null;
-  onSend: (content: string, replyToId?: string) => void;
+  onSend:   (content: string, replyToId?: string) => void;
+  onEdit:   (messageId: string, content: string) => void;
   onTyping: (typing: boolean) => void;
   onLoadOlder: () => void;
   showPinnedPanel?: boolean;
   onClosePinned?: () => void;
 }
 
-export default function DMPane({ conversationId, partner, onSend, onTyping, onLoadOlder }: DMPaneProps) {
+export default function DMPane({ conversationId, partner, onSend, onEdit, onTyping, onLoadOlder, showPinnedPanel, onClosePinned }: DMPaneProps) {
   const { messages, isLoading, isLoadingOlder, hasMore, typingUsers } = useDMStore();
   const { user, token } = useAuthStore();
 
@@ -144,18 +145,12 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
   const handleStartEdit  = useCallback((id: string) => setEditingId(id), []);
   const handleCancelEdit = useCallback(() => setEditingId(null), []);
 
-  const handleSaveEdit = useCallback(async (id: string, content: string) => {
-    if (!token) return;
+  const handleSaveEdit = useCallback((id: string, content: string) => {
     setEditingId(null);
+    // Optimistic update + socket broadcast (server saves + emits to partner)
     useDMStore.getState().applyEdit(id, content, new Date().toISOString());
-    try {
-      await fetch(`/api/dm/messages/${id}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      });
-    } catch { /* keep optimistic */ }
-  }, [token]);
+    onEdit(id, content);
+  }, [onEdit]);
 
   const handleReact = useCallback(async (msgId: string, emoji: string) => {
     if (!token) return;
@@ -274,6 +269,31 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
           onCancelReply={() => setReplyingTo(null)}
         />
       </div>
+
+      {/* DM Pinned Messages Panel */}
+      {showPinnedPanel && (
+        <div className="pins-panel" style={{ animation: 'slide-in-right 200ms ease' }}>
+          <div className="pins-panel-header">
+            <span className="text-sm font-semibold text-text-normal">Pinned Messages</span>
+            <button
+              className="text-text-muted hover:text-text-normal transition-colors p-1 rounded"
+              onClick={onClosePinned}
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
+            {messages.filter(m => (m as any).pinned).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
+                <span className="text-4xl mb-3">📌</span>
+                <p className="text-sm font-medium text-text-normal mb-1">No pins yet</p>
+                <p className="text-xs text-text-muted">Pin important messages to find them quickly.</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm modal */}
       {deleteTarget && (

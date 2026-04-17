@@ -59,6 +59,26 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
     }
   });
 
+  // Edit a DM message — saves to DB + broadcasts to conversation room
+  socket.on('dm:edit', async ({ messageId, content }: { messageId: string; content: string }) => {
+    if (!messageId || !content?.trim()) return;
+    try {
+      const msg = await prisma.directMessage.findUnique({ where: { id: messageId } });
+      if (!msg || msg.userId !== userId) return; // only author can edit
+      const updated = await prisma.directMessage.update({
+        where: { id: messageId },
+        data: { content: content.trim(), editedAt: new Date() },
+      });
+      io.to(`dm:${updated.conversationId}`).emit('dm:message:edited', {
+        messageId: updated.id,
+        content: updated.content,
+        editedAt: updated.editedAt?.toISOString(),
+      });
+    } catch (err) {
+      console.error('[dm:edit] error:', err);
+    }
+  });
+
   // DM typing indicator
   const dmTypingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
