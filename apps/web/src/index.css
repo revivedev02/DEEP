@@ -5,27 +5,27 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Dark theme — Stoat-style cool grey ── */
+  /* ── Dark theme — pure neutral grey ── */
   :root,
   [data-theme="dark"] {
-    --bg-canvas:    #16181d;
-    --bg-primary:   #1e2028;
-    --bg-secondary: #1a1c22;
-    --bg-tertiary:  #13141a;
-    --bg-floating:  #0f1014;
+    --bg-canvas:    #1c1c1c;
+    --bg-primary:   #242424;
+    --bg-secondary: #202020;
+    --bg-tertiary:  #181818;
+    --bg-floating:  #141414;
     --bg-hover:     rgba(255,255,255,0.05);
     --bg-active:    rgba(255,255,255,0.09);
-    --bg-modifier:  rgba(0,0,0,0.22);
-    --card-bg:      #1e2028;
+    --bg-modifier:  rgba(0,0,0,0.20);
+    --card-bg:      #242424;
     --card-radius:  12px;
-    --text-normal:  #f0f1f4;
-    --text-muted:   #8b929c;
+    --text-normal:  #f2f2f2;
+    --text-muted:   #909090;
     --brand-rgb:        88 101 242;
     --brand-hover-rgb:  71 82 196;
     --brand-active-rgb: 60 69 165;
-    --separator-rgb:    50 52 60;
-    --shadow-elevation: 0 8px 28px rgba(0,0,0,0.65);
-    --shadow-low:       0 1px 0 rgba(4,4,5,0.3), 0 1.5px 0 rgba(6,6,7,0.08);
+    --separator-rgb:    58 58 58;
+    --shadow-elevation: 0 8px 28px rgba(0,0,0,0.60);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.3), 0 1.5px 0 rgba(0,0,0,0.10);
     color-scheme: dark;
   }
 
