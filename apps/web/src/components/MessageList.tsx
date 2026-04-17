@@ -101,21 +101,7 @@ export function MessageList({
       className="messages-container scrollbar-thin"
       onScroll={handleScroll}
     >
-      {isLoadingMessages ? (
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
-          {[1,2,3,4,5].map(i => (
-            <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 4 }}>
-                <div style={{ width: '30%', height: 14, borderRadius: 6, background: 'rgba(255,255,255,0.15)' }} />
-                <div style={{ width: '85%', height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.10)' }} />
-                <div style={{ width: '60%', height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.10)' }} />
-              </div>
-            </div>
-          ))}
-          <p style={{ textAlign: 'center', fontSize: 14, color: '#ffffff', marginTop: 16, opacity: 0.5, fontWeight: 500 }}>Loading messages…</p>
-        </div>
-      ) : loadError ? (
+      {isLoadingMessages ? <SkMessageList /> : loadError ? (
         <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 select-none">
           <div className="w-16 h-16 rounded-full bg-bg-modifier flex items-center justify-center">
             <WifiOff className="w-7 h-7 text-text-muted" />

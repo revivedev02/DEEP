@@ -4,7 +4,7 @@ import { useChatStore } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 
 /** Minimum time (ms) the skeleton loader is guaranteed to be visible. */
-const MIN_SKELETON_MS = 2000;
+const MIN_SKELETON_MS = 400;
 
 /** Fetches messages for the active channel. Re-fetches when channel switches. */
 export function useMessages() {
@@ -17,9 +17,8 @@ export function useMessages() {
   useEffect(() => {
     if (!token || !activeChannel) return;
 
-    // 1. Immediately set loading state — skeleton becomes visible
+    // Show skeleton — clearMessages sets isLoadingMessages:true AND loadError:null
     clearMessages();
-    setLoadError(null);
 
     const start = Date.now();
     let cancelled = false;
