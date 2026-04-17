@@ -305,11 +305,11 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
     let lastDate = '';
     messages.forEach((msg, i) => {
       const d = new Date(msg.createdAt);
-      let dateLabel = isToday(d)
+      let dateLabel = isTodayIST(d)
         ? 'Today'
-        : isYesterday(d)
+        : isYesterdayIST(d)
         ? 'Yesterday'
-        : format(d, 'MMMM d, yyyy');
+        : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST }).format(d);
       const showDate = dateLabel !== lastDate;
       if (showDate) lastDate = dateLabel;
 
