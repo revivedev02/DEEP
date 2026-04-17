@@ -4,7 +4,7 @@ import { useChatStore } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 
 /** Minimum time (ms) the skeleton loader is guaranteed to be visible. */
-const MIN_SKELETON_MS = 600;
+const MIN_SKELETON_MS = 2000;
 
 /** Fetches messages for the active channel. Re-fetches when channel switches. */
 export function useMessages() {
