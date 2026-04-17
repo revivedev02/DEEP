@@ -1,7 +1,4 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
-import {
-  Bell, Pin, Search, Moon, Sun, Monitor, Users, X,
-} from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageItem } from '@/components/MessageItem';
@@ -60,19 +57,18 @@ function PartnerInfoPanel({ partner }: { partner: DMPaneProps['partner'] }) {
 interface DMPaneProps {
   conversationId: string;
   partner: { id: string; displayName: string; username: string; avatarUrl?: string | null; isAdmin: boolean } | null;
-  onClose: () => void;
   onSend: (content: string) => void;
   onTyping: (typing: boolean) => void;
   onLoadOlder: () => void;
+  showPinnedPanel?: boolean;
+  onClosePinned?: () => void;
 }
 
-export default function DMPane({ conversationId, partner, onClose, onSend, onTyping, onLoadOlder }: DMPaneProps) {
+export default function DMPane({ conversationId, partner, onSend, onTyping, onLoadOlder, showPinnedPanel, onClosePinned }: DMPaneProps) {
   const { messages, isLoading, isLoadingOlder, hasMore, typingUsers } = useDMStore();
   const { user } = useAuthStore();
-  const { theme, cycleTheme } = useThemeStore();
 
   // Header panel states
-  const [showSearch,  setShowSearch]  = useState(false);
   const [showPartner, setShowPartner] = useState(false);
 
   const scrollRef    = useRef<HTMLDivElement>(null);
@@ -132,69 +128,6 @@ export default function DMPane({ conversationId, partner, onClose, onSend, onTyp
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-
-        {/* ── DM Header ── */}
-        <div className="channel-header">
-          {/* Partner identity */}
-          <LazyAvatar name={partner?.displayName ?? '?'} avatarUrl={partner?.avatarUrl} size={8} />
-          <div className="flex flex-col ml-1">
-            <span className="channel-header-name text-sm leading-tight">{partner?.displayName ?? 'Unknown'}</span>
-            <span className="text-xs text-text-muted leading-tight">@{partner?.username}</span>
-          </div>
-
-          {/* Header actions */}
-          <div className="flex items-center gap-1 ml-auto">
-            <button className="input-action-btn" title="Notifications (coming soon)">
-              <Bell className="w-5 h-5" />
-            </button>
-
-            <button className="input-action-btn" title="Pinned messages (coming soon)">
-              <Pin className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={() => { setShowSearch(s => !s); }}
-              className={`input-action-btn ${showSearch ? 'text-brand' : ''}`}
-              title="Search messages"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-
-            <button
-              onClick={cycleTheme}
-              className="input-action-btn"
-              title={`Theme: ${theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'OLED'} — click to switch`}
-            >
-              {theme === 'dark'  ? <Moon className="w-5 h-5" />
-               : theme === 'light' ? <Sun className="w-5 h-5" />
-               : <Monitor className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={() => setShowPartner(p => !p)}
-              className={`input-action-btn ${showPartner ? 'text-text-normal' : ''}`}
-              title="Partner info"
-            >
-              <Users className="w-5 h-5" />
-            </button>
-
-            <div className="w-px h-5 bg-separator mx-1" />
-
-            <button onClick={onClose} className="input-action-btn" title="Close DM">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search bar */}
-        {showSearch && (
-          <SearchBar
-            messages={searchMessages}
-            currentUserId={user?.id ?? ''}
-            onClose={() => setShowSearch(false)}
-            onJump={scrollToMessage}
-          />
-        )}
 
         {/* DM conversation start banner */}
         {!hasMore && (
@@ -268,7 +201,7 @@ export default function DMPane({ conversationId, partner, onClose, onSend, onTyp
         />
       </div>
 
-      {/* Partner info panel (slides in from right, like members panel) */}
+      {/* Partner info panel */}
       {showPartner && <PartnerInfoPanel partner={partner} />}
     </div>
   );

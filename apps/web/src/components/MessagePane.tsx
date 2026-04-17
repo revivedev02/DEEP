@@ -1,39 +1,31 @@
 import { useState, useCallback } from 'react';
-import {
-  Hash, Users, Bell, Pin, Search, Moon, Sun, Reply, X, WifiOff, Monitor,
-} from 'lucide-react';
+import { Reply, X, WifiOff } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import PinnedPanel from '@/components/PinnedPanel';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageList } from '@/components/MessageList';
-import { SearchBar } from '@/components/SearchBar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
-import { useThemeStore } from '@/store/useThemeStore';
-import { scrollToMessage } from './messageUtils';
 
 interface Props {
-  onSendMessage: (content: string) => void;
-  onTyping: (v: boolean) => void;
-  onLoadOlder: () => void;
+  onSendMessage:    (content: string) => void;
+  onTyping:         (v: boolean) => void;
+  onLoadOlder:      () => void;
+  showPinnedPanel:  boolean;
+  onClosePinned:    () => void;
 }
 
-export default function MessagePane({ onSendMessage, onTyping, onLoadOlder }: Props) {
-  const { messages, isConnected, typingUsers, replyingTo, setReplyingTo } = useChatStore();
+export default function MessagePane({ onSendMessage, onTyping, onLoadOlder, showPinnedPanel, onClosePinned }: Props) {
+  const { messages, typingUsers, replyingTo, setReplyingTo } = useChatStore();
   const { user } = useAuthStore();
-  const { toggleMembers, showMembers, activeChannel } = useUIStore();
+  const { activeChannel } = useUIStore();
   const { channels } = useServerStore();
-  const { theme, cycleTheme } = useThemeStore();
   const { token } = useAuthStore();
 
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const channelName = activeChannelObj?.name ?? 'general';
-
-  // Panel toggles
-  const [showSearch, setShowSearch] = useState(false);
-  const [showPinned, setShowPinned] = useState(false);
 
   // ── Delete ─────────────────────────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
@@ -123,59 +115,14 @@ export default function MessagePane({ onSendMessage, onTyping, onLoadOlder }: Pr
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ emoji }),
       });
-    } catch { /* socket event will correct any drift */ }
+    } catch { /* socket event will correct drift */ }
   }, [token, user?.id]);
 
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
-        {/* Channel header */}
-        <div className="channel-header">
-          <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
-          <span className="channel-header-name">{channelName}</span>
-          <div className="channel-header-topic"><span>General chat for the crew</span></div>
-          <div className="flex items-center gap-1 ml-auto">
-            <div className="flex items-center gap-1 mr-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-status-green animate-pulse' : 'bg-text-muted'}`} />
-              <span className="text-xs text-text-muted">{isConnected ? 'live' : 'offline'}</span>
-            </div>
-            <button className="input-action-btn" title="Notifications (coming soon)"><Bell className="w-5 h-5" /></button>
-            <button
-              onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
-              className={`input-action-btn ${showPinned ? 'text-brand' : ''}`}
-              title="Pinned messages"
-            >
-              <Pin className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => { setShowSearch(s => !s); setShowPinned(false); }}
-              className={`input-action-btn ${showSearch ? 'text-brand' : ''}`}
-              title="Search messages"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            <button onClick={cycleTheme} className="input-action-btn"
-              title={`Theme: ${theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'OLED'} — click to switch`}>
-              {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'light' ? <Sun className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-            </button>
-            <button onClick={toggleMembers} className={`input-action-btn ${showMembers ? 'text-text-normal' : ''}`} title="Toggle members">
-              <Users className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search bar */}
-        {showSearch && (
-          <SearchBar
-            messages={messages}
-            currentUserId={user?.id ?? ''}
-            onClose={() => setShowSearch(false)}
-            onJump={scrollToMessage}
-          />
-        )}
-
-        {/* Message list with infinite scroll */}
+        {/* Message list */}
         <MessageList
           currentUserId={user?.id ?? ''}
           isAdmin={user?.isAdmin ?? false}
@@ -203,8 +150,8 @@ export default function MessagePane({ onSendMessage, onTyping, onLoadOlder }: Pr
               </div>
               <span>
                 {typingUsers.length === 1   ? <><strong>{typingUsers[0]}</strong> is typing…</>
-               : typingUsers.length === 2   ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
-               : <><strong>Several people</strong> are typing…</>}
+                 : typingUsers.length === 2  ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
+                 : <><strong>Several people</strong> are typing…</>}
               </span>
             </>
           )}
@@ -243,8 +190,8 @@ export default function MessagePane({ onSendMessage, onTyping, onLoadOlder }: Pr
       </div>
 
       {/* Pinned Panel */}
-      {showPinned && (
-        <PinnedPanel channelName={channelName} onClose={() => setShowPinned(false)} />
+      {showPinnedPanel && (
+        <PinnedPanel channelName={channelName} onClose={onClosePinned} />
       )}
     </div>
   );

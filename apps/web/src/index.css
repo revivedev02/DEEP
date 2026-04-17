@@ -158,6 +158,39 @@
     min-width: 0;
   }
 
+  /* ── Canvas header bar — sits above the card on the canvas ── */
+  .canvas-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+  /* Icon buttons on the canvas — subtle, no bg box */
+  .canvas-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 120ms ease, background 120ms ease;
+    border: none;
+    background: none;
+  }
+  .canvas-icon-btn:hover {
+    color: var(--text-normal);
+    background: rgba(255,255,255,0.06);
+  }
+  .canvas-icon-btn.active {
+    color: var(--text-normal);
+    background: rgba(var(--brand-rgb) / 0.15);
+  }
+
   /* ── Sidebar section title ── */
   .sidebar-section-title {
     @apply flex items-center gap-1 px-3 mt-4 mb-1
