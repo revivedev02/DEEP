@@ -166,14 +166,16 @@
   .message-actions {
     @apply absolute right-3 -top-3 flex items-center gap-0.5
            bg-bg-secondary border border-separator rounded-lg shadow-elevation-high
-           opacity-0 pointer-events-none transition-all duration-100 z-10 px-1 py-0.5;
+           opacity-0 pointer-events-none z-10 px-1 py-0.5;
+    transition: opacity 100ms ease;
+    will-change: opacity;
   }
   .message-group:hover .message-actions {
     @apply opacity-100 pointer-events-auto;
   }
   .message-action-btn {
     @apply flex items-center justify-center w-7 h-7 rounded text-text-muted
-           hover:bg-bg-hover hover:text-text-normal transition-all duration-100 cursor-pointer;
+           hover:bg-bg-hover hover:text-text-normal transition-colors duration-100 cursor-pointer;
   }
   .message-avatar {
     @apply w-10 h-10 rounded-full flex-shrink-0 object-cover cursor-pointer;

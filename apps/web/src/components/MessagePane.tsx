@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useCallback } from 'react';
-import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign } from 'lucide-react';
+import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -324,7 +324,7 @@ interface Props {
 }
 
 export default function MessagePane({ onSendMessage, onTyping }: Props) {
-  const { messages, isConnected, isLoadingMessages, typingUsers, replyingTo, setReplyingTo } = useChatStore();
+  const { messages, isConnected, isLoadingMessages, loadError, typingUsers, replyingTo, setReplyingTo } = useChatStore();
   const { user } = useAuthStore();
   const { toggleMembers, showMembers, activeChannel } = useUIStore();
   const { channels } = useServerStore();
@@ -403,7 +403,23 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
 
       {/* Messages */}
       <div ref={scrollRef} className="messages-container scrollbar-thin">
-        {isLoadingMessages ? <SkMessageList /> : (
+        {isLoadingMessages ? <SkMessageList /> : loadError ? (
+          <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 select-none">
+            <div className="w-16 h-16 rounded-full bg-bg-modifier flex items-center justify-center">
+              <WifiOff className="w-7 h-7 text-text-muted" />
+            </div>
+            <div className="text-center">
+              <p className="text-text-normal font-medium mb-1">{loadError}</p>
+              <p className="text-text-muted text-sm">Check your connection and try again.</p>
+            </div>
+            <button
+              onClick={() => useChatStore.getState().retryMessages()}
+              className="btn btn-ghost btn-sm"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
           <>
             <WelcomeBanner channelName={channelName} />
             {groups.map(({ dateLabel, msg, isFirst }) => (
