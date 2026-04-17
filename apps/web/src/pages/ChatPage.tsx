@@ -4,6 +4,7 @@ import MessagePane from '@/components/MessagePane';
 import VoicePane from '@/components/VoicePane';
 import MembersPanel from '@/components/MembersPanel';
 import DMPane from '@/components/DMPane';
+import WelcomePane from '@/components/WelcomePane';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -94,9 +95,7 @@ export default function ChatPage() {
             onLoadOlder={handleLoadOlderDM}
           />
         ) : activeChannel === '' ? (
-          <div className="flex items-center justify-center h-full text-text-muted text-sm">
-            Connecting…
-          </div>
+          <WelcomePane />
         ) : isVoice ? (
           <VoicePane />
         ) : (
