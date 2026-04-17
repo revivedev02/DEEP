@@ -109,22 +109,21 @@ export default function ChatPage() {
             />
           )}
         </div>
-
-        {/* Members panel — inside the card but no visual border */}
-        {membersVisible && (
-          <div
-            style={{
-              width: 220,
-              borderLeft: '1px solid rgba(var(--separator-rgb) / 0.10)',
-              flexShrink: 0,
-              overflow: 'hidden',
-              animation: 'members-slide-in 180ms ease both',
-            }}
-          >
-            <MembersPanel />
-          </div>
-        )}
       </div>
+
+      {/* Members panel — OUTSIDE the card, same canvas family as sidebar */}
+      {membersVisible && (
+        <div
+          style={{
+            width: 220,
+            flexShrink: 0,
+            overflow: 'hidden',
+            animation: 'members-slide-in 180ms ease both',
+          }}
+        >
+          <MembersPanel />
+        </div>
+      )}
     </div>
   );
 }
