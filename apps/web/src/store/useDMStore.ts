@@ -8,6 +8,11 @@ export interface DMUser {
   isAdmin: boolean;
 }
 
+export interface DMReaction {
+  emoji: string;
+  userId: string;
+}
+
 export interface DMMessage {
   id: string;
   content: string;
@@ -16,6 +21,13 @@ export interface DMMessage {
   conversationId: string;
   userId: string;
   user: DMUser;
+  reactions: DMReaction[];
+  replyToId?: string | null;
+  replyTo?: {
+    id: string;
+    content: string;
+    user: DMUser;
+  } | null;
 }
 
 export interface DMConversation {
@@ -27,22 +39,25 @@ export interface DMConversation {
 }
 
 interface DMState {
-  conversations:   DMConversation[];
-  messages:        DMMessage[];       // messages for current active DM
-  isLoading:       boolean;
-  isLoadingOlder:  boolean;
-  hasMore:         boolean;
-  typingUsers:     string[];
+  conversations:  DMConversation[];
+  messages:       DMMessage[];
+  isLoading:      boolean;
+  isLoadingOlder: boolean;
+  hasMore:        boolean;
+  typingUsers:    string[];
 
-  setConversations:    (c: DMConversation[]) => void;
-  upsertConversation:  (c: DMConversation) => void;
-  setMessages:         (msgs: DMMessage[]) => void;
-  prependMessages:     (msgs: DMMessage[]) => void;
-  addMessage:          (msg: DMMessage) => void;
-  setLoading:          (v: boolean) => void;
-  setLoadingOlder:     (v: boolean) => void;
-  setHasMore:          (v: boolean) => void;
-  setTyping:           (displayName: string, typing: boolean) => void;
+  setConversations:   (c: DMConversation[]) => void;
+  upsertConversation: (c: DMConversation) => void;
+  setMessages:        (msgs: DMMessage[]) => void;
+  prependMessages:    (msgs: DMMessage[]) => void;
+  addMessage:         (msg: DMMessage) => void;
+  applyEdit:          (id: string, content: string, editedAt: string) => void;
+  applyDelete:        (id: string) => void;
+  applyReaction:      (id: string, reactions: DMReaction[]) => void;
+  setLoading:         (v: boolean) => void;
+  setLoadingOlder:    (v: boolean) => void;
+  setHasMore:         (v: boolean) => void;
+  setTyping:          (displayName: string, typing: boolean) => void;
   updateConversationLastMessage: (conversationId: string, lastMessage: DMMessage) => void;
 }
 
@@ -63,7 +78,7 @@ export const useDMStore = create<DMState>((set) => ({
       return { conversations: [c, ...s.conversations] };
     }),
 
-  setMessages: (msgs) => set({ messages: msgs, isLoading: false, hasMore: msgs.length >= 50 }),
+  setMessages:  (msgs) => set({ messages: msgs, isLoading: false, hasMore: msgs.length >= 50 }),
 
   prependMessages: (msgs) =>
     set((s) => ({
@@ -72,8 +87,20 @@ export const useDMStore = create<DMState>((set) => ({
       hasMore: msgs.length >= 50,
     })),
 
-  addMessage: (msg) =>
-    set((s) => ({ messages: [...s.messages, msg] })),
+  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+
+  applyEdit: (id, content, editedAt) =>
+    set((s) => ({
+      messages: s.messages.map(m => m.id === id ? { ...m, content, editedAt } : m),
+    })),
+
+  applyDelete: (id) =>
+    set((s) => ({ messages: s.messages.filter(m => m.id !== id) })),
+
+  applyReaction: (id, reactions) =>
+    set((s) => ({
+      messages: s.messages.map(m => m.id === id ? { ...m, reactions } : m),
+    })),
 
   setLoading:      (v) => set({ isLoading: v }),
   setLoadingOlder: (v) => set({ isLoadingOlder: v }),

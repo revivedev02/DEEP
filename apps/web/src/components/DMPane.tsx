@@ -1,23 +1,25 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
+import { Reply, X } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageItem } from '@/components/MessageItem';
-import { SearchBar } from '@/components/SearchBar';
 import { SkMessageList } from '@/components/Skeleton';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { useDMStore, type DMMessage } from '@/store/useDMStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useThemeStore } from '@/store/useThemeStore';
-import { isTodayIST, isYesterdayIST, isSameAuthorWithin5Min, IST, scrollToMessage } from './messageUtils';
+import { isTodayIST, isYesterdayIST, isSameAuthorWithin5Min, IST } from './messageUtils';
 
-// ── DMMessage → ChatMessage adapter (MessageItem expects ChatMessage shape) ───
+// ── DMMessage → ChatMessage adapter ──────────────────────────────────────────
 function dmToChatMsg(m: DMMessage) {
   return {
     ...m,
     channelId: m.conversationId,
     pinned: false,
-    reactions: [],
-    replyToId: null,
-    replyTo: null,
+    reactions: m.reactions ?? [],
+    replyToId: m.replyToId ?? null,
+    replyTo: m.replyTo
+      ? { ...m.replyTo, channelId: m.conversationId, pinned: false, reactions: [], replyToId: null, replyTo: null, editedAt: null, createdAt: '' }
+      : null,
   };
 }
 
@@ -33,27 +35,6 @@ function DateDivider({ label }: { label: string }) {
   );
 }
 
-// ── Partner info side panel ───────────────────────────────────────────────────
-function PartnerInfoPanel({ partner }: { partner: DMPaneProps['partner'] }) {
-  if (!partner) return null;
-  return (
-    <div className="w-60 flex-shrink-0 border-l border-separator bg-bg-secondary flex flex-col animate-fade-in">
-      <div className="px-4 pt-6 pb-4 flex flex-col items-center text-center border-b border-separator">
-        <LazyAvatar name={partner.displayName} avatarUrl={partner.avatarUrl} size={20} />
-        <h3 className="font-bold text-text-normal mt-3 text-lg">{partner.displayName}</h3>
-        <p className="text-sm text-text-muted">@{partner.username}</p>
-        {partner.isAdmin && (
-          <span className="mt-1 text-2xs bg-brand/20 text-brand px-2 py-0.5 rounded-full font-medium">ADMIN</span>
-        )}
-      </div>
-      <div className="px-4 py-4">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">About</p>
-        <p className="text-sm text-text-muted">Member of this server.</p>
-      </div>
-    </div>
-  );
-}
-
 interface DMPaneProps {
   conversationId: string;
   partner: { id: string; displayName: string; username: string; avatarUrl?: string | null; isAdmin: boolean } | null;
@@ -64,50 +45,58 @@ interface DMPaneProps {
   onClosePinned?: () => void;
 }
 
-export default function DMPane({ conversationId, partner, onSend, onTyping, onLoadOlder, showPinnedPanel, onClosePinned }: DMPaneProps) {
+export default function DMPane({ conversationId, partner, onSend, onTyping, onLoadOlder }: DMPaneProps) {
   const { messages, isLoading, isLoadingOlder, hasMore, typingUsers } = useDMStore();
-  const { user } = useAuthStore();
-
-  // Header panel states
-  const [showPartner, setShowPartner] = useState(false);
+  const { user, token } = useAuthStore();
 
   const scrollRef    = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(messages.length);
 
-  // Auto-scroll to bottom on new message, preserve position on prepend
+  // ── Reply state ────────────────────────────────────────────────────────────
+  const [replyingTo, setReplyingTo] = useState<DMMessage | null>(null);
+
+  // ── Edit state ─────────────────────────────────────────────────────────────
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // ── Reaction picker ────────────────────────────────────────────────────────
+  const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
+
+  // ── Delete confirm ─────────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<DMMessage | null>(null);
+  const SKIP_KEY = 'deep:deleteNoConfirm';
+
+  // ── Auto-scroll ────────────────────────────────────────────────────────────
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const prevCount = prevCountRef.current;
-    if (messages.length > prevCount) {
-      if (messages.length - prevCount === 1) {
-        el.scrollTop = el.scrollHeight;
-      } else {
-        const firstNewMsg = messages[messages.length - prevCount];
-        if (firstNewMsg) {
-          const msgEl = document.getElementById(`msg-${firstNewMsg.id}`);
-          if (msgEl) requestAnimationFrame(() => msgEl.scrollIntoView({ block: 'start' }));
-        }
+    const delta = messages.length - prevCount;
+    if (delta === 1) el.scrollTop = el.scrollHeight;           // new message → scroll bottom
+    else if (delta > 1 && prevCount > 0) {                     // prepend → anchor
+      const anchorMsg = messages[delta];
+      if (anchorMsg) {
+        const msgEl = document.getElementById(`msg-${anchorMsg.id}`);
+        if (msgEl) requestAnimationFrame(() => msgEl.scrollIntoView({ block: 'start' }));
       }
     }
     prevCountRef.current = messages.length;
   }, [messages.length]);
 
-  // Infinite scroll trigger
+  // ── Infinite scroll ────────────────────────────────────────────────────────
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     if (el.scrollTop < 100 && hasMore && !isLoadingOlder) onLoadOlder();
   }, [hasMore, isLoadingOlder, onLoadOlder]);
 
-  // Group messages by date + consecutive author
+  // ── Group messages ─────────────────────────────────────────────────────────
   type Group = { dateLabel: string | null; msg: ReturnType<typeof dmToChatMsg>; isFirst: boolean };
   const groups = useMemo<Group[]>(() => {
     const result: Group[] = [];
     let lastDate = '';
     messages.forEach((msg, i) => {
       const d = new Date(msg.createdAt);
-      const dateLabel = isTodayIST(d)     ? 'Today'
+      const dateLabel = isTodayIST(d) ? 'Today'
                       : isYesterdayIST(d) ? 'Yesterday'
                       : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST }).format(d);
       const showDate = dateLabel !== lastDate;
@@ -119,11 +108,84 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
     return result;
   }, [messages]);
 
-  const noop = useCallback(() => {}, []);
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleSend = useCallback((content: string) => {
+    // Pass reply context via a custom event that DMSocket will read
+    onSend(content);
+    setReplyingTo(null);
+  }, [onSend]);
 
-  // Shape messages for SearchBar
-  const searchMessages = useMemo(() =>
-    messages.map(m => dmToChatMsg(m) as any), [messages]);
+  const handleDelete = useCallback((id: string) => {
+    if (localStorage.getItem(SKIP_KEY) === 'true') {
+      doDelete(id);
+      return;
+    }
+    const msg = useDMStore.getState().messages.find(m => m.id === id);
+    if (msg) setDeleteTarget(msg);
+  }, []);
+
+  const doDelete = useCallback(async (id: string) => {
+    if (!token) return;
+    useDMStore.getState().applyDelete(id);
+    try {
+      await fetch(`/api/dm/messages/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch { /* already removed optimistically */ }
+  }, [token]);
+
+  const handleModalConfirm = useCallback((dontAskAgain: boolean) => {
+    if (!deleteTarget) return;
+    if (dontAskAgain) localStorage.setItem(SKIP_KEY, 'true');
+    doDelete(deleteTarget.id);
+    setDeleteTarget(null);
+  }, [deleteTarget, doDelete]);
+
+  const handleStartEdit  = useCallback((id: string) => setEditingId(id), []);
+  const handleCancelEdit = useCallback(() => setEditingId(null), []);
+
+  const handleSaveEdit = useCallback(async (id: string, content: string) => {
+    if (!token) return;
+    setEditingId(null);
+    useDMStore.getState().applyEdit(id, content, new Date().toISOString());
+    try {
+      await fetch(`/api/dm/messages/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+    } catch { /* keep optimistic */ }
+  }, [token]);
+
+  const handleReact = useCallback(async (msgId: string, emoji: string) => {
+    if (!token) return;
+    const current = useDMStore.getState().messages.find(m => m.id === msgId);
+    if (current) {
+      const userId = user?.id ?? '';
+      const already = current.reactions?.some(r => r.emoji === emoji && r.userId === userId);
+      const next = already
+        ? (current.reactions ?? []).filter(r => !(r.emoji === emoji && r.userId === userId))
+        : [...(current.reactions ?? []), { emoji, userId }];
+      useDMStore.getState().applyReaction(msgId, next);
+    }
+    try {
+      const res = await fetch(`/api/dm/messages/${msgId}/reactions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        const { reactions } = await res.json();
+        useDMStore.getState().applyReaction(msgId, reactions);
+      }
+    } catch { /* keep optimistic */ }
+  }, [token, user?.id]);
+
+  const handleReply = useCallback((msg: DMMessage) => setReplyingTo(msg), []);
+  const handleOpenReactionPicker  = useCallback((id: string) => setReactingMsgId(id), []);
+  const handleCloseReactionPicker = useCallback(() => setReactingMsgId(null), []);
+  const noop = useCallback(() => {}, []);
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -142,11 +204,7 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
         )}
 
         {/* Messages */}
-        <div
-          ref={scrollRef}
-          className="messages-container scrollbar-thin"
-          onScroll={handleScroll}
-        >
+        <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}>
           {isLoading ? <SkMessageList /> : (
             <>
               {isLoadingOlder && (
@@ -162,17 +220,17 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
                     isFirst={isFirst}
                     currentUserId={user?.id ?? ''}
                     isAdmin={user?.isAdmin ?? false}
-                    onDelete={noop as any}
-                    onReply={noop as any}
+                    onDelete={handleDelete}
+                    onReply={() => handleReply(useDMStore.getState().messages.find(m => m.id === msg.id)!)}
                     onPin={noop as any}
-                    editingId={null}
-                    onStartEdit={noop as any}
-                    onSaveEdit={noop as any}
-                    onCancelEdit={noop}
-                    onReact={noop as any}
-                    reactingMsgId={null}
-                    onOpenReactionPicker={noop as any}
-                    onCloseReactionPicker={noop}
+                    editingId={editingId}
+                    onStartEdit={handleStartEdit}
+                    onSaveEdit={handleSaveEdit}
+                    onCancelEdit={handleCancelEdit}
+                    onReact={handleReact}
+                    reactingMsgId={reactingMsgId}
+                    onOpenReactionPicker={handleOpenReactionPicker}
+                    onCloseReactionPicker={handleCloseReactionPicker}
                   />
                 </div>
               ))}
@@ -192,17 +250,41 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
           )}
         </div>
 
-        {/* Input */}
+        {/* Reply banner */}
+        {replyingTo && (
+          <div className="reply-banner">
+            <Reply className="w-4 h-4 text-brand flex-shrink-0" />
+            <span className="reply-banner-text">
+              Replying to <strong className="text-text-normal">{replyingTo.user.displayName}</strong>
+              <span className="ml-2 text-text-muted truncate max-w-xs inline-block align-bottom">{replyingTo.content}</span>
+            </span>
+            <button
+              className="ml-auto p-1 rounded hover:bg-bg-modifier text-text-muted hover:text-text-normal transition-colors"
+              onClick={() => setReplyingTo(null)}
+              title="Cancel reply (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <MessageInput
-          onSend={onSend}
+          onSend={handleSend}
           channelName={partner?.displayName ?? 'user'}
           onTyping={onTyping}
-          onCancelReply={noop}
+          onCancelReply={() => setReplyingTo(null)}
         />
       </div>
 
-      {/* Partner info panel */}
-      {showPartner && <PartnerInfoPanel partner={partner} />}
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          authorName={deleteTarget.user.displayName}
+          preview={deleteTarget.content}
+          onConfirm={handleModalConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }

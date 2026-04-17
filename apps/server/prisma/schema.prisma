@@ -93,8 +93,24 @@ model DirectMessage {
   editedAt       DateTime?
   conversationId String
   userId         String
+  replyToId      String?
   conversation   DirectConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User               @relation(fields: [userId], references: [id])
+  replyTo        DirectMessage?     @relation("DMReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        DirectMessage[]    @relation("DMReplies")
+  reactions      DMReaction[]
 
   @@index([conversationId, createdAt])
+}
+
+model DMReaction {
+  id        String        @id @default(cuid())
+  emoji     String
+  userId    String
+  messageId String
+  createdAt DateTime      @default(now())
+  message   DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }
