@@ -37,7 +37,7 @@ export default function ChatPage() {
     if (!isDMOpen && activeChannel) joinChannel(activeChannel);
   }, [activeChannel, isDMOpen]);
 
-  // When a DM conversation is selected: join its room + fetch messages
+  // When a DM conversation is selected
   useEffect(() => {
     if (!isDMOpen || !activeDmConversation || !token) return;
     joinDMRoom(activeDmConversation);
@@ -50,7 +50,6 @@ export default function ChatPage() {
       .catch(() => useDMStore.getState().setLoading(false));
   }, [activeDmConversation]);
 
-  // Channel handlers
   const handleSendMessage = (content: string) => {
     if (!user || !activeChannel) return;
     const replyingTo = useChatStore.getState().replyingTo;
@@ -58,9 +57,8 @@ export default function ChatPage() {
     useChatStore.getState().setReplyingTo(null);
   };
 
-  // DM handlers
-  const handleSendDM    = (content: string) => { if (activeDmConversation) sendDM(activeDmConversation, content); };
-  const handleDMTyping  = (typing: boolean) => { if (activeDmConversation) sendDMTyping(activeDmConversation, typing); };
+  const handleSendDM   = (content: string) => { if (activeDmConversation) sendDM(activeDmConversation, content); };
+  const handleDMTyping = (typing: boolean) => { if (activeDmConversation) sendDMTyping(activeDmConversation, typing); };
 
   const handleLoadOlderDM = useCallback(() => {
     if (!token || !activeDmConversation) return;
@@ -79,45 +77,53 @@ export default function ChatPage() {
 
   const activeDmConv = useDMStore(s => s.conversations.find(c => c.id === activeDmConversation));
 
+  // Members panel visible when: text channel open OR DM open AND user toggled it
+  const membersVisible = showMembers && (isText || isDMOpen);
+
   return (
     <div className="layout-root">
+      {/* Sidebar — floats on canvas */}
       <ChannelSidebar />
 
-      <main className="main-content">
-        {isDMOpen ? (
-          // ── DM pane ──
-          <DMPane
-            conversationId={activeDmConversation!}
-            partner={activeDmConv?.partner ?? null}
-            onClose={() => useUIStore.getState().setActiveDmConversation(null)}
-            onSend={handleSendDM}
-            onTyping={handleDMTyping}
-            onLoadOlder={handleLoadOlderDM}
-          />
-        ) : activeChannel === '' ? (
-          <WelcomePane />
-        ) : isVoice ? (
-          <VoicePane />
-        ) : (
-          // ── Channel pane ──
-          <MessagePane
-            onSendMessage={handleSendMessage}
-            onTyping={sendTyping}
-            onLoadOlder={loadOlderMessages}
-          />
-        )}
-      </main>
+      {/* Chat card — floating elevated box */}
+      <div className="chat-card">
+        <div className="main-content">
+          {isDMOpen ? (
+            <DMPane
+              conversationId={activeDmConversation!}
+              partner={activeDmConv?.partner ?? null}
+              onClose={() => useUIStore.getState().setActiveDmConversation(null)}
+              onSend={handleSendDM}
+              onTyping={handleDMTyping}
+              onLoadOlder={handleLoadOlderDM}
+            />
+          ) : activeChannel === '' ? (
+            <WelcomePane />
+          ) : isVoice ? (
+            <VoicePane />
+          ) : (
+            <MessagePane
+              onSendMessage={handleSendMessage}
+              onTyping={sendTyping}
+              onLoadOlder={loadOlderMessages}
+            />
+          )}
+        </div>
 
-      {/* Members panel — always visible (it's the DM trigger) */}
-      <div
-        className="w-px flex-shrink-0 bg-separator transition-opacity duration-200"
-        style={{ opacity: showMembers && (isText || isDMOpen) ? 0.5 : 0 }}
-      />
-      <div
-        className="flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden"
-        style={{ width: showMembers && (isText || isDMOpen) ? 240 : 0, opacity: showMembers && (isText || isDMOpen) ? 1 : 0 }}
-      >
-        <MembersPanel />
+        {/* Members panel — inside the card but no visual border */}
+        {membersVisible && (
+          <div
+            style={{
+              width: 220,
+              borderLeft: '1px solid rgba(var(--separator-rgb) / 0.10)',
+              flexShrink: 0,
+              overflow: 'hidden',
+              animation: 'members-slide-in 180ms ease both',
+            }}
+          >
+            <MembersPanel />
+          </div>
+        )}
       </div>
     </div>
   );

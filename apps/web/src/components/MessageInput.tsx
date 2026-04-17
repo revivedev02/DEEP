@@ -180,11 +180,7 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
           >
             <Smile className="w-4 h-4" />
           </button>
-          <button
-            onClick={submit}
-            className="input-action-btn text-brand hover:opacity-80 transition-opacity"
-            title="Send"
-          >
+          <button onClick={submit} className="send-btn" title="Send">
             <Send className="w-4 h-4" />
           </button>
         </div>
