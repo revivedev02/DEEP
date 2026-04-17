@@ -154,14 +154,7 @@ function ReactionBar({ reactions = [], currentUserId, onReact, onOpenPicker }: {
   onOpenPicker: () => void;
 }) {
   const grouped = groupReactions(reactions, currentUserId);
-  if (grouped.length === 0) return (
-    // Only show + when there are no reactions (space is reserved when there are some)
-    <div className="reaction-bar hidden group-hover:flex">
-      <button className="reaction-add-btn" title="Add reaction" onClick={onOpenPicker}>
-        <SmilePlus className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
+  if (grouped.length === 0) return null;
   return (
     <div className="reaction-bar">
       {grouped.map(({ emoji, count, hasMe }) => (

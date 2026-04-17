@@ -407,7 +407,7 @@
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm
            bg-bg-modifier border border-separator/50
            hover:border-brand/60 hover:bg-brand/10
-           transition-all duration-100 cursor-pointer select-none;
+           transition-colors duration-100 cursor-pointer select-none;
     line-height: 1.5;
   }
   .reaction-pill.reacted {
@@ -423,7 +423,7 @@
     @apply inline-flex items-center justify-center w-7 h-7 rounded-full
            bg-bg-modifier border border-separator/50 text-text-muted
            hover:border-brand/60 hover:text-brand hover:bg-brand/10
-           transition-all duration-100 cursor-pointer select-none;
+           transition-colors duration-100 cursor-pointer select-none;
   }
 
   /* ── Inline message edit ── */
