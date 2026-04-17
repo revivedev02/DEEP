@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import staticPlugin from '@fastify/static';
+import compress from '@fastify/compress';
 import { Server } from 'socket.io';
 import { registerAuthRoutes, addAuthDecorator } from './routes/auth.js';
 import { registerMessageRoutes } from './routes/messages.js';
@@ -27,6 +28,9 @@ const app = Fastify({ logger: { level: IS_PROD ? 'warn' : 'info' } });
 // ── Plugins ──────────────────────────────────────────────────────────────────
 await app.register(cors, { origin: true, credentials: true });
 
+// Gzip/Brotli compression for all responses (~70% smaller API payloads)
+await app.register(compress, { global: true });
+
 await app.register(jwt, {
   secret: process.env.JWT_SECRET ?? 'fallback-dev-secret-change-me',
 });
@@ -35,10 +39,19 @@ addAuthDecorator(app);
 // Multipart (file uploads)
 await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024 } });
 
-// Serve built React app in production
+// Serve built React app in production with aggressive caching
 if (IS_PROD) {
   const webDist = resolve(__dirname, '../../../apps/web/dist');
-  await app.register(staticPlugin, { root: webDist, prefix: '/' });
+  await app.register(staticPlugin, {
+    root: webDist,
+    prefix: '/',
+    // Hashed assets get long cache; index.html does not
+    setHeaders(res, path) {
+      if (path.includes('/assets/')) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  });
 }
 
 // ── Health check ─────────────────────────────────────────────────────────────
@@ -66,6 +79,12 @@ await app.ready();
 const io = new Server(app.server, {
   cors: { origin: '*', credentials: true },
   transports: ['websocket', 'polling'],
+  pingTimeout: 30000,
+  pingInterval: 15000,
+  // Compress websocket frames
+  perMessageDeflate: {
+    threshold: 256, // only compress messages > 256 bytes
+  },
 });
 
 // Attach io to app so route handlers can emit events

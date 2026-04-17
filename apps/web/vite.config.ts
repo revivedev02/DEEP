@@ -17,13 +17,31 @@ export default defineConfig({
     },
   },
   build: {
+    // Disable source maps in production for smaller bundle
+    sourcemap: false,
+    // Target modern browsers for smaller output
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
-          'emoji-mart': ['@emoji-mart/react', '@emoji-mart/data'],
+          // Heavy vendor libs in their own chunks — cached separately
+          'vendor-react':  ['react', 'react-dom', 'react-router-dom'],
+          'vendor-socket': ['socket.io-client'],
+          'vendor-zustand': ['zustand'],
+          'emoji-mart':    ['@emoji-mart/react', '@emoji-mart/data'],
         },
       },
     },
-    chunkSizeWarningLimit: 800,
+    // Increase limit since emoji-mart is large but lazy
+    chunkSizeWarningLimit: 500,
+    // Use terser for better minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,  // Strip console.log in production
+        drop_debugger: true,
+        passes: 2,
+      },
+    },
   },
 });

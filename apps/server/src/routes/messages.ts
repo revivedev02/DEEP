@@ -29,15 +29,12 @@ export async function registerMessageRoutes(app: FastifyInstance) {
       const limit = Math.min(Number(req.query.limit ?? 50), 100);
 
       const messages = await prisma.message.findMany({
-        where: {
-          channelId,
-          ...(before
-            ? { createdAt: { lt: new Date((await prisma.message.findUnique({ where: { id: before } }))?.createdAt ?? new Date()) } }
-            : {}),
-        },
+        where: { channelId },
         include: messageInclude,
         orderBy: { createdAt: 'asc' },
-        take:    limit,
+        take: limit,
+        // Use Prisma cursor pagination — avoids sub-query, uses index directly
+        ...(before ? { cursor: { id: before }, skip: 1 } : {}),
       });
 
       return reply.send(messages);

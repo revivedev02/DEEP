@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect, memo } from 'react';
 import {
   Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell,
   Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign, WifiOff, Pencil, SmilePlus, Monitor,
@@ -175,8 +175,8 @@ function ReactionBar({ reactions = [], currentUserId, onReact, onOpenPicker }: {
   );
 }
 
-// ─── Single message ───────────────────────────────────────────────────────────
-function Message({
+// ─── Single message (memoized — only re-renders when its own data changes) ───
+const Message = memo(function Message({
   msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin,
   onDelete, onReply, onPin, onStartEdit, editingId, onSaveEdit, onCancelEdit,
   onReact, reactingMsgId, onOpenReactionPicker, onCloseReactionPicker,
@@ -367,7 +367,16 @@ function Message({
       <QuickReactPopup />
     </div>
   );
-}
+}, (prev, next) => {
+  return (
+    prev.msg === next.msg &&
+    prev.isFirst === next.isFirst &&
+    prev.currentUserId === next.currentUserId &&
+    prev.isAdmin === next.isAdmin &&
+    (prev.editingId === prev.msg.id) === (next.editingId === next.msg.id) &&
+    (prev.reactingMsgId === prev.msg.id) === (next.reactingMsgId === next.msg.id)
+  );
+});
 
 // ─── Welcome banner ───────────────────────────────────────────────────────────
 function WelcomeBanner({ channelName }: { channelName: string }) {

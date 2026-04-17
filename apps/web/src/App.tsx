@@ -1,9 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
-import LoginPage from '@/pages/LoginPage';
-import ChatPage from '@/pages/ChatPage';
-import AdminPage from '@/pages/AdminPage';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import AuthGuard from '@/components/AuthGuard';
+
+// Lazy-load pages — only downloaded when user navigates to them
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const ChatPage  = lazy(() => import('@/pages/ChatPage'));
+const AdminPage = lazy(() => import('@/pages/AdminPage'));
+
+// Minimal spinner for route suspense
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center h-full w-full bg-bg-primary">
+      <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 // Wraps children with a smooth fade+slide animation on every route change
 function AnimatedRoutes() {
@@ -32,12 +43,14 @@ function AnimatedRoutes() {
       className="page-transition h-full w-full"
       style={animating ? { opacity: 0, transition: 'opacity 80ms ease' } : undefined}
     >
-      <Routes location={displayLocation}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/"      element={<AuthGuard><ChatPage /></AuthGuard>} />
-        <Route path="/admin" element={<AuthGuard adminOnly><AdminPage /></AuthGuard>} />
-        <Route path="*"      element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes location={displayLocation}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/"      element={<AuthGuard><ChatPage /></AuthGuard>} />
+          <Route path="/admin" element={<AuthGuard adminOnly><AdminPage /></AuthGuard>} />
+          <Route path="*"      element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }
