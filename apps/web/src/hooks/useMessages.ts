@@ -3,13 +3,13 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 
-/** Minimum time (ms) the skeleton should stay visible so it doesn't flash. */
-const MIN_SKELETON_MS = 400;
+/** Minimum time (ms) the skeleton loader is guaranteed to be visible. */
+const MIN_SKELETON_MS = 600;
 
 /** Fetches messages for the active channel. Re-fetches when channel switches. */
 export function useMessages() {
   const { token } = useAuthStore();
-  const { setMessages, clearMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
+  const { clearMessages, setLoadError, prependMessages, setLoadingOlder } = useChatStore();
   const retryTick = useChatStore(s => s.retryTick);
   const { activeChannel } = useUIStore();
 
@@ -17,11 +17,12 @@ export function useMessages() {
   useEffect(() => {
     if (!token || !activeChannel) return;
 
-    // Show skeleton immediately
+    // 1. Immediately set loading state — skeleton becomes visible
     clearMessages();
     setLoadError(null);
 
     const start = Date.now();
+    let cancelled = false;
 
     fetch(`/api/messages?channelId=${encodeURIComponent(activeChannel)}&limit=50`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -31,14 +32,27 @@ export function useMessages() {
         return r.json();
       })
       .then(msgs => {
-        // Ensure skeleton is visible for at least MIN_SKELETON_MS
+        if (cancelled) return;
+        const data = Array.isArray(msgs) ? msgs : [];
+        // Ensure skeleton stays visible for at least MIN_SKELETON_MS
         const elapsed = Date.now() - start;
-        const remaining = Math.max(0, MIN_SKELETON_MS - elapsed);
-        setTimeout(() => setMessages(Array.isArray(msgs) ? msgs : []), remaining);
+        const wait = Math.max(0, MIN_SKELETON_MS - elapsed);
+        if (wait > 0) {
+          setTimeout(() => {
+            if (!cancelled) useChatStore.getState().setMessages(data);
+          }, wait);
+        } else {
+          useChatStore.getState().setMessages(data);
+        }
       })
-      .catch((err: Error) => setLoadError(
-        navigator.onLine ? 'Failed to load messages.' : 'You are offline.'
-      ));
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError(navigator.onLine ? 'Failed to load messages.' : 'You are offline.');
+        }
+      });
+
+    // Cleanup — prevent stale responses when switching channels fast
+    return () => { cancelled = true; };
   }, [token, activeChannel, retryTick]);
 
   // Load older messages (for infinite scroll)
