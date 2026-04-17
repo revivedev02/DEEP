@@ -102,18 +102,18 @@ export function MessageList({
       onScroll={handleScroll}
     >
       {isLoadingMessages ? (
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
           {[1,2,3,4,5].map(i => (
             <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: 4 }}>
-                <div style={{ width: '30%', height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.10)' }} />
-                <div style={{ width: '80%', height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)' }} />
-                <div style={{ width: '60%', height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ width: '30%', height: 14, borderRadius: 6, background: 'rgba(255,255,255,0.15)' }} />
+                <div style={{ width: '85%', height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.10)' }} />
+                <div style={{ width: '60%', height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.10)' }} />
               </div>
             </div>
           ))}
-          <p style={{ textAlign: 'center', fontSize: 13, color: '#888', marginTop: 8 }}>Loading messages…</p>
+          <p style={{ textAlign: 'center', fontSize: 14, color: '#ffffff', marginTop: 16, opacity: 0.5, fontWeight: 500 }}>Loading messages…</p>
         </div>
       ) : loadError ? (
         <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 select-none">
