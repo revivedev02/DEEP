@@ -1,36 +1,31 @@
 import { useMemo, useState, useRef, useCallback } from 'react';
-import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, CornerUpLeft } from 'lucide-react';
+import { Hash, Smile, PlusCircle, Gift, Sticker, Send, Users, Bell, Pin, Search, Copy, Trash2, Moon, Sun, Reply, X, AtSign } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
+import { useMembersStore } from '@/store/useMembersStore';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
 import { SkMessageList } from '@/components/Skeleton';
 import { useThemeStore } from '@/store/useThemeStore';
 
-// ─── IST timestamp helpers ──────────────────────────────────────────────────
+// ─── IST timestamp helpers ────────────────────────────────────────────────────
 const IST = 'Asia/Kolkata';
-
 const timeFmt   = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: IST });
 const fullFmt   = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: IST });
 const dateParts = new Intl.DateTimeFormat('en-IN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: IST });
 
-/** Get yyyy-mm-dd string in IST for a given date */
 function istDateKey(d: Date): string {
-  const parts = dateParts.formatToParts(d);
-  const y = parts.find(p => p.type === 'year')!.value;
-  const m = parts.find(p => p.type === 'month')!.value;
-  const dd = parts.find(p => p.type === 'day')!.value;
+  const p = dateParts.formatToParts(d);
+  const y  = p.find(x => x.type === 'year')!.value;
+  const m  = p.find(x => x.type === 'month')!.value;
+  const dd = p.find(x => x.type === 'day')!.value;
   return `${y}-${m}-${dd}`;
 }
-
-function isTodayIST(d: Date): boolean { return istDateKey(d) === istDateKey(new Date()); }
-function isYesterdayIST(d: Date): boolean {
-  const y = new Date(Date.now() - 86400000);
-  return istDateKey(d) === istDateKey(y);
-}
+function isTodayIST(d: Date)     { return istDateKey(d) === istDateKey(new Date()); }
+function isYesterdayIST(d: Date) { return istDateKey(d) === istDateKey(new Date(Date.now() - 86400000)); }
 
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
@@ -38,56 +33,75 @@ function formatTimestamp(iso: string): string {
   if (isYesterdayIST(d)) return `Yesterday at ${timeFmt.format(d)}`;
   return fullFmt.format(d);
 }
-
-function shortTime(iso: string): string {
-  return timeFmt.format(new Date(iso));
-}
-
+function shortTime(iso: string): string { return timeFmt.format(new Date(iso)); }
 
 function isSameAuthorWithin5Min(a: ChatMessage, b: ChatMessage): boolean {
   if (a.userId !== b.userId) return false;
-  if (b.replyToId) return false; // replies always get a full header
+  if (b.replyToId) return false;
   return Math.abs(new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) < 5 * 60 * 1000;
 }
 
-// ─── Date divider ────────────────────────────────────────────────────────────
+// ─── Scroll to + flash highlight a message by ID ─────────────────────────────
+function scrollToMessage(id: string) {
+  const el = document.getElementById(`msg-${id}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('message-flash');
+  setTimeout(() => el.classList.remove('message-flash'), 1800);
+}
+
+// ─── Mention renderer ─────────────────────────────────────────────────────────
+function MentionText({ content, currentUserId }: { content: string; currentUserId: string }) {
+  const { members } = useMembersStore.getState();
+  const parts = content.split(/(@everyone|@[\w.]+)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part === '@everyone') return <span key={i} className="mention mention-everyone">@everyone</span>;
+        if (part.startsWith('@')) {
+          const handle = part.slice(1).toLowerCase();
+          const member = members.find(m =>
+            m.username.toLowerCase() === handle || m.displayName.toLowerCase() === handle
+          );
+          if (member) {
+            return (
+              <span key={i} className={`mention ${member.id === currentUserId ? 'mention-me' : 'mention-other'}`}>
+                {part}
+              </span>
+            );
+          }
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+// ─── Date divider ─────────────────────────────────────────────────────────────
 function DateDivider({ label }: { label: string }) {
-  const line = {
-    flex: 1,
-    height: '1px',
-    background: 'rgb(var(--separator-rgb) / 0.5)',
-  } as React.CSSProperties;
+  const line = { flex: 1, height: '1px', background: 'rgb(var(--separator-rgb) / 0.5)' } as React.CSSProperties;
   return (
     <div className="flex items-center gap-3 px-4 my-5 select-none">
       <div style={line} />
-      <span className="text-xs font-medium text-text-muted whitespace-nowrap tracking-wide">
-        {label}
-      </span>
+      <span className="text-xs font-medium text-text-muted whitespace-nowrap tracking-wide">{label}</span>
       <div style={line} />
     </div>
   );
 }
 
-// ─── Reply preview — Discord style ──────────────────────────────────────────
+// ─── Reply preview — Discord style ───────────────────────────────────────────
 function ReplyPreview({ replyTo }: { replyTo: NonNullable<ChatMessage['replyTo']> }) {
   return (
-    <div className="reply-wrapper">
-      {/* L-shaped connector: top + left borders with rounded top-left corner */}
+    <div className="reply-wrapper" onClick={() => scrollToMessage(replyTo.id)} title="Jump to original message">
       <div className="reply-connector" />
-      {/* Mini avatar of the person being replied to */}
-      <LazyAvatar
-        name={replyTo.user.displayName}
-        avatarUrl={replyTo.user.avatarUrl}
-        size={4}
-        className="flex-shrink-0"
-      />
+      <LazyAvatar name={replyTo.user.displayName} avatarUrl={replyTo.user.avatarUrl} size={4} className="flex-shrink-0" />
       <span className="reply-author">@{replyTo.user.displayName}</span>
       <span className="reply-text">{replyTo.content}</span>
     </div>
   );
 }
 
-// ─── Single message ──────────────────────────────────────────────────────────
+// ─── Single message ───────────────────────────────────────────────────────────
 function Message({
   msg, isFirst, currentUserId, isAdmin: currentUserIsAdmin, onDelete, onReply,
 }: {
@@ -95,7 +109,7 @@ function Message({
   onDelete: (id: string) => void;
   onReply:  (msg: ChatMessage) => void;
 }) {
-  const isMe = msg.userId === currentUserId;
+  const isMe      = msg.userId === currentUserId;
   const canDelete = isMe || currentUserIsAdmin;
 
   const ActionBar = () => (
@@ -116,10 +130,8 @@ function Message({
 
   if (isFirst) {
     return (
-      // flex-col so ReplyPreview stacks above the avatar+body row
-      <div className="message-group with-avatar group">
+      <div id={`msg-${msg.id}`} className="message-group with-avatar group">
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
-        {/* Avatar + body in a horizontal sub-row */}
         <div className="flex items-start gap-4">
           <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
           <div className="message-body">
@@ -131,7 +143,9 @@ function Message({
               </span>
               <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
             </div>
-            <p className="message-content">{msg.content}</p>
+            <p className="message-content">
+              <MentionText content={msg.content} currentUserId={currentUserId} />
+            </p>
           </div>
         </div>
         <ActionBar />
@@ -140,17 +154,19 @@ function Message({
   }
 
   return (
-    <div className="flex items-start gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded group message-group">
+    <div id={`msg-${msg.id}`} className="flex items-start gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded group message-group">
       <div className="w-10 flex-shrink-0 flex justify-center pt-1">
         <span className="hidden group-hover:inline text-2xs text-text-muted leading-5">{shortTime(msg.createdAt)}</span>
       </div>
-      <p className="message-content flex-1">{msg.content}</p>
+      <p className="message-content flex-1">
+        <MentionText content={msg.content} currentUserId={currentUserId} />
+      </p>
       <ActionBar />
     </div>
   );
 }
 
-// ─── Welcome / empty state ───────────────────────────────────────────────────
+// ─── Welcome banner ───────────────────────────────────────────────────────────
 function WelcomeBanner({ channelName }: { channelName: string }) {
   return (
     <div className="px-4 mb-6 pt-8">
@@ -160,13 +176,13 @@ function WelcomeBanner({ channelName }: { channelName: string }) {
       <h2 className="text-2xl font-bold text-text-normal mb-1">Welcome to #{channelName}!</h2>
       <p className="text-text-muted text-sm max-w-md">
         This is the very beginning of <span className="text-text-normal font-medium">#{channelName}</span>.
-        Send a message to get the conversation started. Only your crew can see this.
+        Send a message to get the conversation started.
       </p>
     </div>
   );
 }
 
-// ─── Message input ───────────────────────────────────────────────────────────
+// ─── Message input with @mention autocomplete ─────────────────────────────────
 interface InputProps {
   onSend: (content: string) => void;
   channelName: string;
@@ -175,11 +191,55 @@ interface InputProps {
 }
 
 function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputProps) {
-  const [value, setValue] = useState('');
+  const [value, setValue]               = useState('');
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [activeIdx, setActiveIdx]       = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout>>();
+  const { members } = useMembersStore();
+
+  // Build suggestions: @everyone first, then matching members
+  const suggestions = mentionQuery !== null
+    ? [
+        ...('everyone'.startsWith(mentionQuery.toLowerCase())
+          ? [{ id: '_everyone', displayName: 'everyone', username: 'everyone', avatarUrl: null as string | null }]
+          : []),
+        ...members.filter(m =>
+          m.username.toLowerCase().startsWith(mentionQuery.toLowerCase()) ||
+          m.displayName.toLowerCase().startsWith(mentionQuery.toLowerCase())
+        ),
+      ].slice(0, 8)
+    : [];
+
+  const insertMention = (name: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const cursor = ta.selectionStart;
+    const before = value.slice(0, cursor);
+    const atPos  = before.lastIndexOf('@');
+    const after  = value.slice(cursor);
+    const newVal = before.slice(0, atPos) + `@${name} ` + after;
+    setValue(newVal);
+    setMentionQuery(null);
+    setActiveIdx(0);
+    setTimeout(() => {
+      ta.focus();
+      const pos = atPos + name.length + 2;
+      ta.setSelectionRange(pos, pos);
+    }, 0);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionQuery !== null && suggestions.length > 0) {
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setActiveIdx(i => (i - 1 + suggestions.length) % suggestions.length); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => (i + 1) % suggestions.length); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(suggestions[activeIdx]?.username ?? suggestions[activeIdx]?.displayName);
+        return;
+      }
+      if (e.key === 'Escape') { setMentionQuery(null); return; }
+    }
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
     if (e.key === 'Escape') { onCancelReply(); }
   };
@@ -189,16 +249,24 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
     if (!trimmed) return;
     onSend(trimmed);
     setValue('');
+    setMentionQuery(null);
     onTyping(false);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(e.target.value);
+    const v = e.target.value;
+    setValue(v);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
+    // Detect @mention query from text before cursor
+    const cursor = e.target.selectionStart;
+    const before = v.slice(0, cursor);
+    const match  = before.match(/@([\w.]*)$/);
+    if (match) { setMentionQuery(match[1]); setActiveIdx(0); }
+    else        { setMentionQuery(null); }
     // Typing indicator
     onTyping(true);
     clearTimeout(typingTimer.current);
@@ -206,36 +274,40 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
   };
 
   return (
-    <div className="message-input-wrapper">
+    <div className="message-input-wrapper relative">
+      {/* @ autocomplete popup */}
+      {mentionQuery !== null && suggestions.length > 0 && (
+        <div className="mention-dropdown">
+          <div className="px-3 py-1.5 text-2xs text-text-muted font-semibold uppercase tracking-wider border-b border-separator/30">
+            Members — type to filter
+          </div>
+          {suggestions.map((s, i) => (
+            <div
+              key={s.id}
+              className={`mention-item ${i === activeIdx ? 'active' : ''}`}
+              onMouseDown={(e) => { e.preventDefault(); insertMention(s.username || s.displayName); }}
+            >
+              {s.id === '_everyone'
+                ? <span className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0"><AtSign className="w-3 h-3 text-amber-400" /></span>
+                : <LazyAvatar name={s.displayName} avatarUrl={s.avatarUrl} size={6} />}
+              <span className="font-medium">{s.id === '_everyone' ? '@everyone' : s.displayName}</span>
+              {s.id !== '_everyone' && <span className="text-text-muted text-xs">@{s.username}</span>}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="message-input-box">
-        <button className="input-action-btn" title="Attach (coming soon)">
-          <PlusCircle className="w-5 h-5" />
-        </button>
+        <button className="input-action-btn" title="Attach (coming soon)"><PlusCircle className="w-5 h-5" /></button>
         <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder={`Message #${channelName}`}
-          className="message-input"
-          rows={1}
+          ref={textareaRef} value={value} onChange={handleInput} onKeyDown={handleKeyDown}
+          placeholder={`Message #${channelName}`} className="message-input" rows={1}
         />
         <div className="flex items-center gap-1">
-          <button className="input-action-btn" title="Gift (coming soon)">
-            <Gift className="w-4 h-4" />
-          </button>
-          <button className="input-action-btn" title="Sticker (coming soon)">
-            <Sticker className="w-4 h-4" />
-          </button>
-          <button className="input-action-btn" title="Emoji (coming soon)">
-            <Smile className="w-4 h-4" />
-          </button>
-          <button
-            onClick={submit}
-            disabled={!value.trim()}
-            className={`input-action-btn transition-colors ${value.trim() ? 'text-brand hover:text-brand-hover' : ''}`}
-            title="Send"
-          >
+          <button className="input-action-btn" title="Gift (coming soon)"><Gift className="w-4 h-4" /></button>
+          <button className="input-action-btn" title="Sticker (coming soon)"><Sticker className="w-4 h-4" /></button>
+          <button className="input-action-btn" title="Emoji (coming soon)"><Smile className="w-4 h-4" /></button>
+          <button onClick={submit} disabled={!value.trim()}
+            className={`input-action-btn transition-colors ${value.trim() ? 'text-brand hover:text-brand-hover' : ''}`} title="Send">
             <Send className="w-4 h-4" />
           </button>
         </div>
@@ -244,7 +316,7 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
   );
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+// ─── Main export ──────────────────────────────────────────────────────────────
 interface Props {
   onSendMessage: (content: string) => void;
   onTyping: (v: boolean) => void;
@@ -262,26 +334,16 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const channelName = activeChannelObj?.name ?? 'general';
 
-  // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
   const SKIP_KEY = 'deep:deleteNoConfirm';
 
   const doDelete = useCallback(async (id: string) => {
-    await fetch(`/api/messages/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    useChatStore.getState().setMessages(
-      useChatStore.getState().messages.filter(m => m.id !== id)
-    );
+    await fetch(`/api/messages/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    useChatStore.getState().setMessages(useChatStore.getState().messages.filter(m => m.id !== id));
   }, [token]);
 
   const handleDeleteMessage = useCallback((id: string) => {
-    // Skip modal if user checked "don't ask again"
-    if (localStorage.getItem(SKIP_KEY) === 'true') {
-      doDelete(id);
-      return;
-    }
+    if (localStorage.getItem(SKIP_KEY) === 'true') { doDelete(id); return; }
     const msg = useChatStore.getState().messages.find(m => m.id === id);
     if (msg) setDeleteTarget(msg);
   }, [doDelete]);
@@ -293,10 +355,7 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
     setDeleteTarget(null);
   }, [deleteTarget, doDelete]);
 
-
-  const handleReply = useCallback((msg: ChatMessage) => {
-    setReplyingTo(msg);
-  }, [setReplyingTo]);
+  const handleReply = useCallback((msg: ChatMessage) => setReplyingTo(msg), [setReplyingTo]);
 
   // Group messages by date + consecutive author
   type Group = { dateLabel: string | null; msg: ChatMessage; isFirst: boolean };
@@ -305,15 +364,12 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
     let lastDate = '';
     messages.forEach((msg, i) => {
       const d = new Date(msg.createdAt);
-      let dateLabel = isTodayIST(d)
-        ? 'Today'
-        : isYesterdayIST(d)
-        ? 'Yesterday'
-        : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST }).format(d);
+      const dateLabel = isTodayIST(d)     ? 'Today'
+                      : isYesterdayIST(d) ? 'Yesterday'
+                      : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST }).format(d);
       const showDate = dateLabel !== lastDate;
       if (showDate) lastDate = dateLabel;
-
-      const prev = messages[i - 1];
+      const prev    = messages[i - 1];
       const isFirst = !prev || !isSameAuthorWithin5Min(prev, msg) || showDate;
       result.push({ dateLabel: showDate ? dateLabel : null, msg, isFirst });
     });
@@ -326,9 +382,7 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
       <div className="channel-header">
         <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
         <span className="channel-header-name">{channelName}</span>
-        <div className="channel-header-topic">
-          <span>General chat for the crew</span>
-        </div>
+        <div className="channel-header-topic"><span>General chat for the crew</span></div>
         <div className="flex items-center gap-1 ml-auto">
           <div className="flex items-center gap-1 mr-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-status-green animate-pulse' : 'bg-text-muted'}`} />
@@ -348,9 +402,7 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
 
       {/* Messages */}
       <div ref={scrollRef} className="messages-container scrollbar-thin">
-        {isLoadingMessages ? (
-          <SkMessageList />
-        ) : (
+        {isLoadingMessages ? <SkMessageList /> : (
           <>
             <WelcomeBanner channelName={channelName} />
             {groups.map(({ dateLabel, msg, isFirst }) => (
@@ -372,11 +424,9 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
               <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
             </div>
             <span>
-              {typingUsers.length === 1
-                ? <><strong>{typingUsers[0]}</strong> is typing…</>
-                : typingUsers.length === 2
-                ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
-                : <><strong>Several people</strong> are typing…</>}
+              {typingUsers.length === 1   ? <><strong>{typingUsers[0]}</strong> is typing…</>
+             : typingUsers.length === 2   ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
+             : <><strong>Several people</strong> are typing…</>}
             </span>
           </>
         )}
@@ -390,20 +440,15 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
             Replying to <strong className="text-text-normal">{replyingTo.user.displayName}</strong>
             <span className="ml-2 text-text-muted truncate max-w-xs inline-block align-bottom">{replyingTo.content}</span>
           </span>
-          <button
-            className="ml-auto p-1 rounded hover:bg-bg-modifier text-text-muted hover:text-text-normal transition-colors"
-            onClick={() => setReplyingTo(null)}
-            title="Cancel reply (Esc)"
-          >
+          <button className="ml-auto p-1 rounded hover:bg-bg-modifier text-text-muted hover:text-text-normal transition-colors"
+            onClick={() => setReplyingTo(null)} title="Cancel reply (Esc)">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Input */}
       <MessageInput onSend={onSendMessage} channelName={channelName} onTyping={onTyping} onCancelReply={() => setReplyingTo(null)} />
 
-      {/* Delete confirm modal */}
       {deleteTarget && (
         <DeleteConfirmModal
           authorName={deleteTarget.user.displayName}
