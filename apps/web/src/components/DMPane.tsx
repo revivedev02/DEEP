@@ -6,6 +6,7 @@ import { LazyAvatar } from '@/components/LazyAvatar';
 import { MessageInput } from '@/components/MessageInput';
 import { MessageItem } from '@/components/MessageItem';
 import { SearchBar } from '@/components/SearchBar';
+import { SkMessageList } from '@/components/Skeleton';
 import { useDMStore, type DMMessage } from '@/store/useDMStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore } from '@/store/useThemeStore';
@@ -213,11 +214,7 @@ export default function DMPane({ conversationId, partner, onClose, onSend, onTyp
           className="messages-container scrollbar-thin"
           onScroll={handleScroll}
         >
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
+          {isLoading ? <SkMessageList /> : (
             <>
               {isLoadingOlder && (
                 <div className="flex justify-center py-4">

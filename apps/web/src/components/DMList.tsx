@@ -5,6 +5,7 @@ import { useDMStore, type DMConversation } from '@/store/useDMStore';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
+import { SkDMList } from '@/components/Skeleton';
 
 // ── New DM picker modal ────────────────────────────────────────────────────────
 function NewDMModal({ onClose, onStart }: { onClose: () => void; onStart: (userId: string) => void }) {
@@ -96,14 +97,17 @@ export function DMList({ activeDmId, onSelectDM }: DMListProps) {
   const { conversations, setConversations, upsertConversation } = useDMStore();
   const { token } = useAuthStore();
   const [showNewDM, setShowNewDM] = useState(false);
+  const [isLoadingConvs, setIsLoadingConvs] = useState(true);
 
   // Load conversations
   useEffect(() => {
     if (!token) return;
+    setIsLoadingConvs(true);
     fetch('/api/dm/conversations', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setConversations(data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsLoadingConvs(false));
   }, [token]);
 
   const handleStartDM = async (targetUserId: string) => {
@@ -133,7 +137,9 @@ export function DMList({ activeDmId, onSelectDM }: DMListProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin px-1">
-        {conversations.length === 0 ? (
+        {isLoadingConvs ? (
+          <SkDMList />
+        ) : conversations.length === 0 ? (
           <div className="px-4 py-6 text-center">
             <p className="text-sm text-text-muted">No DMs yet.</p>
             <button

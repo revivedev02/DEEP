@@ -85,3 +85,27 @@ export function SkChannelSidebar() {
     </div>
   );
 }
+/** Skeleton for a single DM conversation row (avatar + name + preview) */
+export function SkDMConversation() {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2">
+      <Sk w="w-8" h="h-8" className="rounded-full flex-shrink-0" />
+      <div className="flex flex-col gap-1.5 flex-1">
+        <Sk w="w-24" h="h-3" />
+        <Sk w="w-36" h="h-2.5" />
+      </div>
+    </div>
+  );
+}
+
+/** Full DM list skeleton */
+export function SkDMList() {
+  return (
+    <div className="flex flex-col animate-fade-in pt-1">
+      <SkDMConversation />
+      <SkDMConversation />
+      <SkDMConversation />
+      <SkDMConversation />
+    </div>
+  );
+}
