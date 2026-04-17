@@ -34,16 +34,22 @@ export function useDMSocket() {
       useDMStore.getState().applyEdit(messageId, content, editedAt);
     };
 
+    const onPinned = ({ messageId, pinned }: { messageId: string; pinned: boolean }) => {
+      useDMStore.getState().applyPinToggle(messageId, pinned);
+    };
+
     _socket.on('dm:message', onMessage);
     _socket.on('dm:conversation:update', onConvUpdate);
     _socket.on('dm:typing:update', onTyping);
     _socket.on('dm:message:edited', onEdited);
+    _socket.on('dm:message:pinned', onPinned);
 
     return () => {
       _socket?.off('dm:message', onMessage);
       _socket?.off('dm:conversation:update', onConvUpdate);
       _socket?.off('dm:typing:update', onTyping);
       _socket?.off('dm:message:edited', onEdited);
+      _socket?.off('dm:message:pinned', onPinned);
     };
   }, [token]);
 

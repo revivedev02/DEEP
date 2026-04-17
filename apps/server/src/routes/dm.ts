@@ -180,6 +180,40 @@ export async function registerDMRoutes(app: FastifyInstance) {
     }
   );
 
+  // POST /api/dm/messages/:id/pin — toggle pin
+  app.post<{ Params: { id: string } }>(
+    '/api/dm/messages/:id/pin',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const userId = (req.user as any).sub as string;
+      const { id } = req.params;
+      const msg = await prisma.directMessage.findUnique({ where: { id } });
+      if (!msg) return reply.code(404).send({ error: 'Not found' });
+
+      // Verify user is a participant in the conversation
+      const participant = await prisma.dMParticipant.findUnique({
+        where: { conversationId_userId: { conversationId: msg.conversationId, userId } },
+      });
+      if (!participant) return reply.code(403).send({ error: 'Forbidden' });
+
+      const updated = await prisma.directMessage.update({
+        where: { id },
+        data: { pinned: !msg.pinned },
+      });
+
+      // Broadcast to everyone in the DM room
+      const io = (app as any).io;
+      if (io) {
+        io.to(`dm:${msg.conversationId}`).emit('dm:message:pinned', {
+          messageId: id,
+          pinned: updated.pinned,
+        });
+      }
+
+      return reply.send({ pinned: updated.pinned });
+    }
+  );
+
   // DELETE /api/dm/conversations/:id — hide
   app.delete<{ Params: { id: string } }>(
     '/api/dm/conversations/:id',

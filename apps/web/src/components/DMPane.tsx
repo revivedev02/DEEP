@@ -179,6 +179,24 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
   const handleReply = useCallback((msg: DMMessage) => setReplyingTo(msg), []);
   const handleOpenReactionPicker  = useCallback((id: string) => setReactingMsgId(id), []);
   const handleCloseReactionPicker = useCallback(() => setReactingMsgId(null), []);
+
+  const handlePin = useCallback(async (msg: { id: string; pinned: boolean }) => {
+    if (!token) return;
+    const newPinned = !msg.pinned;
+    // Optimistic update
+    useDMStore.getState().applyPinToggle(msg.id, newPinned);
+    try {
+      const res = await fetch(`/api/dm/messages/${msg.id}/pin`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('pin failed');
+    } catch {
+      // Rollback
+      useDMStore.getState().applyPinToggle(msg.id, msg.pinned);
+    }
+  }, [token]);
+
   const noop = useCallback(() => {}, []);
 
   return (
@@ -216,7 +234,7 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
                     isAdmin={user?.isAdmin ?? false}
                     onDelete={handleDelete}
                     onReply={() => handleReply(useDMStore.getState().messages.find(m => m.id === msg.id)!)}
-                    onPin={noop as any}
+                    onPin={handlePin as any}
                     editingId={editingId}
                     onStartEdit={handleStartEdit}
                     onSaveEdit={handleSaveEdit}
@@ -272,7 +290,7 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
 
       {/* DM Pinned Messages Panel */}
       {showPinnedPanel && (
-        <div className="pins-panel" style={{ animation: 'slide-in-right 200ms ease' }}>
+        <div className="pins-panel">
           <div className="pins-panel-header">
             <span className="text-sm font-semibold text-text-normal">Pinned Messages</span>
             <button
@@ -284,13 +302,29 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin">
-            {messages.filter(m => (m as any).pinned).length === 0 ? (
+            {messages.filter(m => m.pinned).length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
                 <span className="text-4xl mb-3">📌</span>
                 <p className="text-sm font-medium text-text-normal mb-1">No pins yet</p>
-                <p className="text-xs text-text-muted">Pin important messages to find them quickly.</p>
+                <p className="text-xs text-text-muted">Hover a message and click the pin icon to pin it.</p>
               </div>
-            ) : null}
+            ) : (
+              <div className="divide-y divide-separator/20">
+                {messages.filter(m => m.pinned).map(m => (
+                  <div
+                    key={m.id}
+                    className="p-3 hover:bg-bg-hover cursor-pointer transition-colors"
+                    onClick={() => { const el = document.getElementById(`msg-${m.id}`); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); onClosePinned?.(); }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-text-normal">{m.user.displayName}</span>
+                      <span className="text-xs text-text-muted">{new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <p className="text-sm text-text-muted line-clamp-2">{m.content}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

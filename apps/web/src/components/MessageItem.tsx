@@ -131,6 +131,7 @@ export const MessageItem = memo(function MessageItem({
 }: MessageItemProps) {
   const isMe       = msg.userId === currentUserId;
   const canDelete  = isMe || currentUserIsAdmin;
+  const canPin     = isMe || currentUserIsAdmin;   // author or admin can pin
   const isEditing  = editingId === msg.id;
   const pickerOpen = reactingMsgId === msg.id;
 
@@ -223,7 +224,7 @@ export const MessageItem = memo(function MessageItem({
           <Pencil className="w-3.5 h-3.5" />
         </button>
       )}
-      {currentUserIsAdmin && (
+      {canPin && (
         <button
           className={`message-action-btn ${msg.pinned ? 'text-brand' : ''}`}
           title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => onPin(msg)}

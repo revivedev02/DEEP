@@ -20,6 +20,7 @@ export interface DMMessage {
   editedAt?: string | null;
   conversationId: string;
   userId: string;
+  pinned: boolean;
   user: DMUser;
   reactions: DMReaction[];
   replyToId?: string | null;
@@ -54,6 +55,7 @@ interface DMState {
   applyEdit:          (id: string, content: string, editedAt: string) => void;
   applyDelete:        (id: string) => void;
   applyReaction:      (id: string, reactions: DMReaction[]) => void;
+  applyPinToggle:     (id: string, pinned: boolean) => void;
   setLoading:         (v: boolean) => void;
   setLoadingOlder:    (v: boolean) => void;
   setHasMore:         (v: boolean) => void;
@@ -100,6 +102,11 @@ export const useDMStore = create<DMState>((set) => ({
   applyReaction: (id, reactions) =>
     set((s) => ({
       messages: s.messages.map(m => m.id === id ? { ...m, reactions } : m),
+    })),
+
+  applyPinToggle: (id, pinned) =>
+    set((s) => ({
+      messages: s.messages.map(m => m.id === id ? { ...m, pinned } : m),
     })),
 
   setLoading:      (v) => set({ isLoading: v }),
