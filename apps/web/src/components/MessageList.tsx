@@ -50,22 +50,35 @@ export function MessageList({
   const { messages, isLoadingMessages, isLoadingOlder, hasMore, loadError } = useChatStore();
   const scrollRef = useScrollToBottom<HTMLDivElement>([messages.length]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const wasLoadingOlderRef = useRef(false);
   const prevMsgCountRef    = useRef(messages.length);
 
-  // Preserve scroll position after prepending older messages
+  // Keep wasLoadingOlderRef in sync
+  useEffect(() => {
+    wasLoadingOlderRef.current = isLoadingOlder;
+  }, [isLoadingOlder]);
+
+  // Preserve scroll position ONLY when older messages are prepended (batch load).
+  // Single-message appends (send/receive) are handled by useScrollToBottom — no upward jump.
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const prevCount = prevMsgCountRef.current;
-    if (messages.length > prevCount && prevCount > 0) {
-      const firstNewMsg = messages[messages.length - prevCount];
-      if (firstNewMsg) {
-        const msgEl = document.getElementById(`msg-${firstNewMsg.id}`);
+    const delta = messages.length - prevCount;
+
+    if (delta > 1 && prevCount > 0) {
+      // Batch prepend (older messages loaded) — anchor to first previously-visible message
+      const anchorMsg = messages[delta];
+      if (anchorMsg) {
+        const msgEl = document.getElementById(`msg-${anchorMsg.id}`);
         if (msgEl) requestAnimationFrame(() => msgEl.scrollIntoView({ block: 'start' }));
       }
     }
+    // delta === 1: single new message → useScrollToBottom smoothly scrolls to bottom
+
     prevMsgCountRef.current = messages.length;
   }, [messages.length]);
+
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
