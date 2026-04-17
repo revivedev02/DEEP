@@ -28,15 +28,26 @@ export async function registerMessageRoutes(app: FastifyInstance) {
 
       const limit = Math.min(Number(req.query.limit ?? 50), 100);
 
+      if (before) {
+        // Loading older messages: cursor at 'before', skip it, take backwards
+        const messages = await prisma.message.findMany({
+          where: { channelId },
+          include: messageInclude,
+          orderBy: { createdAt: 'asc' },
+          cursor: { id: before },
+          skip: 1,
+          take: -limit, // negative = records BEFORE cursor
+        });
+        return reply.send(messages);
+      }
+
+      // Initial load: get the latest N messages
       const messages = await prisma.message.findMany({
         where: { channelId },
         include: messageInclude,
         orderBy: { createdAt: 'asc' },
-        take: limit,
-        // Use Prisma cursor pagination — avoids sub-query, uses index directly
-        ...(before ? { cursor: { id: before }, skip: 1 } : {}),
+        take: -limit, // latest N messages in ascending order
       });
-
       return reply.send(messages);
     }
   );

@@ -19,7 +19,7 @@ export default function ChatPage() {
   const { sendMessage, sendTyping, joinChannel } = useSocket();
 
   useValidateToken();  // clears stale/demo tokens
-  useMessages();       // fetch messages for active channel (re-fetches on channel switch)
+  const { loadOlderMessages } = useMessages(); // fetch messages + infinite scroll
   useServerData();     // fetch channels + server name
 
   const activeChannelObj = channels.find(c => c.id === activeChannel);
@@ -50,7 +50,7 @@ export default function ChatPage() {
         ) : isVoice ? (
           <VoicePane />
         ) : (
-          <MessagePane onSendMessage={handleSendMessage} onTyping={sendTyping} />
+          <MessagePane onSendMessage={handleSendMessage} onTyping={sendTyping} onLoadOlder={loadOlderMessages} />
         )}
       </main>
 

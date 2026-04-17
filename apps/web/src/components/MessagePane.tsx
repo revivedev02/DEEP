@@ -675,10 +675,11 @@ function MessageInput({ onSend, channelName, onTyping, onCancelReply }: InputPro
 interface Props {
   onSendMessage: (content: string) => void;
   onTyping: (v: boolean) => void;
+  onLoadOlder: () => void;
 }
 
-export default function MessagePane({ onSendMessage, onTyping }: Props) {
-  const { messages, isConnected, isLoadingMessages, loadError, typingUsers, replyingTo, setReplyingTo } = useChatStore();
+export default function MessagePane({ onSendMessage, onTyping, onLoadOlder }: Props) {
+  const { messages, isConnected, isLoadingMessages, isLoadingOlder, hasMore, loadError, typingUsers, replyingTo, setReplyingTo } = useChatStore();
   const { user } = useAuthStore();
   const { toggleMembers, showMembers, activeChannel } = useUIStore();
   const { channels } = useServerStore();
@@ -692,6 +693,40 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
   // Panel toggles
   const [showSearch, setShowSearch]   = useState(false);
   const [showPinned, setShowPinned]   = useState(false);
+
+  // Infinite scroll — load older messages when near top
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const prevMsgCountRef = useRef(messages.length);
+
+  // Preserve scroll position after prepending older messages
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const prevCount = prevMsgCountRef.current;
+    if (messages.length > prevCount && prevCount > 0) {
+      // Only adjust if messages were prepended (not appended)
+      const firstNewMsg = messages[messages.length - prevCount];
+      if (firstNewMsg) {
+        const msgEl = document.getElementById(`msg-${firstNewMsg.id}`);
+        if (msgEl) {
+          // Keep the previously-top message in view
+          requestAnimationFrame(() => {
+            msgEl.scrollIntoView({ block: 'start' });
+          });
+        }
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages.length]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    // When scrolled within 100px of the top, load older messages
+    if (el.scrollTop < 100 && hasMore && !isLoadingOlder) {
+      onLoadOlder();
+    }
+  }, [hasMore, isLoadingOlder, onLoadOlder]);
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
@@ -858,7 +893,15 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
         )}
 
         {/* Messages */}
-        <div ref={scrollRef} className="messages-container scrollbar-thin">
+        <div
+          ref={(el) => {
+            // Merge refs: scrollRef for auto-scroll-to-bottom + scrollContainerRef for infinite scroll
+            (scrollRef as any).current = el;
+            (scrollContainerRef as any).current = el;
+          }}
+          className="messages-container scrollbar-thin"
+          onScroll={handleScroll}
+        >
           {isLoadingMessages ? <SkMessageList /> : loadError ? (
             <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 select-none">
               <div className="w-16 h-16 rounded-full bg-bg-modifier flex items-center justify-center">
@@ -874,7 +917,14 @@ export default function MessagePane({ onSendMessage, onTyping }: Props) {
             </div>
           ) : (
             <>
-              <WelcomeBanner channelName={channelName} />
+              {/* Loading older messages spinner */}
+              {isLoadingOlder && (
+                <div className="flex justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {/* Welcome banner only shows when no more history */}
+              {!hasMore && <WelcomeBanner channelName={channelName} />}
               {groups.map(({ dateLabel, msg, isFirst }) => (
                 <div key={msg.id}>
                   {dateLabel && <DateDivider label={dateLabel} />}

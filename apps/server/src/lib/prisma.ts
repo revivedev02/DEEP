@@ -10,8 +10,9 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Enable WAL mode for SQLite — allows concurrent reads during writes
-// This is a no-op if the database is already in WAL mode
-prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL').catch(() => {});
-prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL').catch(() => {});
-prisma.$executeRawUnsafe('PRAGMA cache_size = -20000').catch(() => {}); // 20MB cache
+// SQLite-only optimizations (skip in production where PostgreSQL is used)
+if (!process.env.DATABASE_URL?.includes('postgres')) {
+  prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL').catch(() => {});
+  prisma.$executeRawUnsafe('PRAGMA synchronous = NORMAL').catch(() => {});
+  prisma.$executeRawUnsafe('PRAGMA cache_size = -20000').catch(() => {});
+}

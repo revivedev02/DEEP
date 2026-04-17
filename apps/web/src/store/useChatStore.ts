@@ -37,12 +37,15 @@ interface ChatState {
   onlineUsers:        Set<string>;
   isConnected:        boolean;
   isLoadingMessages:  boolean;
+  isLoadingOlder:     boolean;
+  hasMore:            boolean;
   loadError:          string | null;
   typingUsers:        string[];
   replyingTo:         ChatMessage | null;
 
   addMessage:         (msg: ChatMessage) => void;
   setMessages:        (msgs: ChatMessage[]) => void;
+  prependMessages:    (msgs: ChatMessage[]) => void;
   setPinnedMessages:  (msgs: ChatMessage[]) => void;
   applyPinToggle:     (messageId: string, pinned: boolean) => void;
   applyEdit:          (messageId: string, content: string, editedAt: string) => void;
@@ -51,6 +54,8 @@ interface ChatState {
   setConnected:       (v: boolean) => void;
   clearMessages:      () => void;
   setLoadingMessages: (v: boolean) => void;
+  setLoadingOlder:    (v: boolean) => void;
+  setHasMore:         (v: boolean) => void;
   setLoadError:       (err: string | null) => void;
   retryTick:          number;
   retryMessages:      () => void;
@@ -65,15 +70,24 @@ export const useChatStore = create<ChatState>((set) => ({
   onlineUsers:       new Set(),
   isConnected:       false,
   isLoadingMessages: true,
+  isLoadingOlder:    false,
+  hasMore:           true,
   loadError:         null,
   retryTick:         0,
   typingUsers:       [],
   replyingTo:        null,
 
   addMessage: (msg) =>
-    set((s) => ({ messages: [...s.messages, msg].slice(-500) })),
+    set((s) => ({ messages: [...s.messages, msg] })),
 
-  setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false, loadError: null }),
+  setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false, loadError: null, hasMore: msgs.length >= 50 }),
+
+  prependMessages: (msgs) =>
+    set((s) => ({
+      messages: [...msgs, ...s.messages],
+      isLoadingOlder: false,
+      hasMore: msgs.length >= 50,
+    })),
 
   setPinnedMessages: (msgs) => set({ pinnedMessages: msgs }),
 
@@ -118,8 +132,10 @@ export const useChatStore = create<ChatState>((set) => ({
     }),
 
   setConnected:      (v) => set({ isConnected: v }),
-  clearMessages:     ()  => set({ messages: [], loadError: null, pinnedMessages: [] }),
+  clearMessages:     ()  => set({ messages: [], loadError: null, pinnedMessages: [], hasMore: true }),
   setLoadingMessages:(v) => set({ isLoadingMessages: v }),
+  setLoadingOlder:   (v) => set({ isLoadingOlder: v }),
+  setHasMore:        (v) => set({ hasMore: v }),
   setLoadError:      (err) => set({ loadError: err, isLoadingMessages: false }),
   retryMessages:     () => set((s) => ({ loadError: null, isLoadingMessages: true, retryTick: s.retryTick + 1 })),
 
