@@ -199,11 +199,14 @@ function Message({
   const isEditing      = editingId === msg.id;
   const pickerOpen     = reactingMsgId === msg.id;
 
+  // Quick-react emojis (no full picker)
+  const QUICK_EMOJIS = ['😂', '😢', '😎', '💀', '❤️'];
+
   const [editValue, setEditValue] = useState(msg.content);
   const editRef    = useRef<HTMLTextAreaElement>(null);
   const pickerRef  = useRef<HTMLDivElement>(null);
 
-  // Close reaction picker on outside click
+  // Close quick picker on outside click
   useEffect(() => {
     if (!pickerOpen) return;
     const h = (e: MouseEvent) => {
@@ -248,38 +251,21 @@ function Message({
 
   const EditedLabel = () => msg.editedAt ? <span className="message-edited-label">(edited)</span> : null;
 
-  // Floating reaction picker
-  const ReactionPickerFloat = () => pickerOpen ? (
-    <div ref={pickerRef} className="absolute z-50 shadow-elevation-high rounded-xl overflow-hidden"
-      style={{ bottom: '110%', right: 0 }}>
-      <EmojiPicker
-        data={emojiData}
-        onEmojiSelect={(e: { native: string }) => { onReact(msg.id, e.native); onCloseReactionPicker(); }}
-        theme={useThemeStore.getState().theme === 'oled' ? 'dark' : 'light'}
-        previewPosition="none" skinTonePosition="none"
-        maxFrequentRows={1} set="native"
-        perLine={8}
-      />
-    </div>
-  ) : null;
-
+  // Action bar (inside message-group, hover-controlled via CSS)
   const ActionBar = () => (
     <div className="message-actions">
-      {/* Reaction button */}
-      <div className="relative">
-        <button
-          className={`message-action-btn ${pickerOpen ? 'text-brand' : ''}`}
-          title="React" onClick={() => pickerOpen ? onCloseReactionPicker() : onOpenReactionPicker(msg.id)}
-        >
-          <SmilePlus className="w-3.5 h-3.5" />
-        </button>
-        <ReactionPickerFloat />
-      </div>
+      <button
+        className={`message-action-btn ${pickerOpen ? 'text-brand' : ''}`}
+        title="React"
+        onMouseDown={(e) => { e.stopPropagation(); pickerOpen ? onCloseReactionPicker() : onOpenReactionPicker(msg.id); }}
+      >
+        <SmilePlus className="w-3.5 h-3.5" />
+      </button>
       <button className="message-action-btn" title="Reply" onClick={() => onReply(msg)}>
         <Reply className="w-3.5 h-3.5" />
       </button>
       {isMe && (
-        <button className="message-action-btn" title="Edit message"
+        <button className="message-action-btn" title="Edit"
           onClick={() => { setEditValue(msg.content); onStartEdit(msg.id); }}>
           <Pencil className="w-3.5 h-3.5" />
         </button>
@@ -305,7 +291,25 @@ function Message({
     </div>
   );
 
-  const reactions = (
+  // Quick-react popup — rendered OUTSIDE .message-actions so it doesn't disappear
+  const QuickReactPopup = () => pickerOpen ? (
+    <div ref={pickerRef}
+      className="absolute right-3 -top-3 z-20 flex items-center gap-0.5 px-1.5 py-1 bg-bg-secondary border border-separator rounded-lg shadow-elevation-high"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {QUICK_EMOJIS.map(emoji => (
+        <button
+          key={emoji}
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-bg-hover transition-colors text-lg cursor-pointer"
+          onClick={() => { onReact(msg.id, emoji); onCloseReactionPicker(); }}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  const reactionsBar = (
     <ReactionBar
       reactions={msg.reactions}
       currentUserId={currentUserId}
@@ -336,10 +340,11 @@ function Message({
                 <EditedLabel />
               </p>
             )}
-            {reactions}
+            {reactionsBar}
           </div>
         </div>
         <ActionBar />
+        <QuickReactPopup />
       </div>
     );
   }
@@ -356,9 +361,10 @@ function Message({
             <EditedLabel />
           </p>
         )}
-        {reactions}
+        {reactionsBar}
       </div>
       <ActionBar />
+      <QuickReactPopup />
     </div>
   );
 }
