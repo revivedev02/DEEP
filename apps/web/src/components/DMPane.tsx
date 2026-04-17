@@ -38,7 +38,7 @@ function DateDivider({ label }: { label: string }) {
 interface DMPaneProps {
   conversationId: string;
   partner: { id: string; displayName: string; username: string; avatarUrl?: string | null; isAdmin: boolean } | null;
-  onSend: (content: string) => void;
+  onSend: (content: string, replyToId?: string) => void;
   onTyping: (typing: boolean) => void;
   onLoadOlder: () => void;
   showPinnedPanel?: boolean;
@@ -110,10 +110,9 @@ export default function DMPane({ conversationId, partner, onSend, onTyping, onLo
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleSend = useCallback((content: string) => {
-    // Pass reply context via a custom event that DMSocket will read
-    onSend(content);
+    onSend(content, replyingTo?.id);
     setReplyingTo(null);
-  }, [onSend]);
+  }, [onSend, replyingTo]);
 
   const handleDelete = useCallback((id: string) => {
     if (localStorage.getItem(SKIP_KEY) === 'true') {

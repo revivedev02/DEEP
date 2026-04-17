@@ -134,10 +134,26 @@ export const MessageItem = memo(function MessageItem({
   const isEditing  = editingId === msg.id;
   const pickerOpen = reactingMsgId === msg.id;
 
-  const [editValue, setEditValue] = useState(msg.content);
+  const [editValue, setEditValue] = useState('');
   const editRef   = useRef<HTMLTextAreaElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
+  // Sync editValue when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setEditValue(msg.content);
+      requestAnimationFrame(() => {
+        const ta = editRef.current;
+        if (!ta) return;
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        ta.style.height = 'auto';
+        ta.style.height = `${ta.scrollHeight}px`;
+      });
+    }
+  }, [isEditing]);
+
+  // Picker outside-click close
   useEffect(() => {
     if (!pickerOpen) return;
     const h = (e: MouseEvent) => {
@@ -166,7 +182,7 @@ export const MessageItem = memo(function MessageItem({
     <div className="mt-1 pr-4">
       <textarea
         ref={editRef} value={editValue} onChange={handleEditInput}
-        onKeyDown={handleEditKeyDown} autoFocus
+        onKeyDown={handleEditKeyDown}
         className="message-edit-textarea w-full" rows={1}
       />
       <p className="message-edit-hint">
@@ -196,7 +212,7 @@ export const MessageItem = memo(function MessageItem({
       </button>
       {isMe && (
         <button className="message-action-btn" title="Edit"
-          onClick={() => { setEditValue(msg.content); onStartEdit(msg.id); }}>
+          onClick={() => onStartEdit(msg.id)}>
           <Pencil className="w-3.5 h-3.5" />
         </button>
       )}

@@ -35,7 +35,14 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
 
     if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
     onlineUsers.get(userId)!.add(socket.id);
+
+    // Tell everyone this user is online
     io.emit('presence:update', { userId, online: true });
+
+    // Send a snapshot of ALL currently online user IDs to the newly connected socket
+    // This fixes: "I joined after others, so I missed their presence:update events"
+    const onlineIds = Array.from(onlineUsers.keys());
+    socket.emit('presence:snapshot', { onlineIds });
 
     // Wire DM socket handlers
     setupDMSocketHandlers(io, socket);

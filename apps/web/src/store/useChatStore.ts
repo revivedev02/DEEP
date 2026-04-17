@@ -52,6 +52,7 @@ interface ChatState {
   applyEdit:          (messageId: string, content: string, editedAt: string) => void;
   applyReaction:      (messageId: string, reactions: RawReaction[]) => void;
   setOnline:          (userId: string, online: boolean) => void;
+  setOnlineSnapshot:  (userIds: string[]) => void;
   setConnected:       (v: boolean) => void;
   clearMessages:      () => void;
   setLoadingMessages: (v: boolean) => void;
@@ -134,6 +135,8 @@ export const useChatStore = create<ChatState>((set) => ({
       online ? next.add(userId) : next.delete(userId);
       return { onlineUsers: next };
     }),
+
+  setOnlineSnapshot: (userIds) => set({ onlineUsers: new Set(userIds) }),
 
   setConnected:      (v) => set({ isConnected: v }),
   setLoadingMessages:(v) => set({ isLoadingMessages: v }),

@@ -32,9 +32,30 @@ export default function ChatPage() {
   const { theme, cycleTheme } = useThemeStore();
   const { messages, isConnected } = useChatStore();
 
-  // Header panel states (lifted to canvas level)
-  const [showSearch, setShowSearch]   = useState(false);
-  const [showPinned, setShowPinned]   = useState(false);
+  const isDMOpen  = !!activeDmConversation;
+
+  // Header panel states
+  const [showSearch, setShowSearch] = useState(false);
+  const [showPinned, setShowPinned] = useState(false);
+
+  // For search: use DM messages when in DM, channel messages otherwise
+  const dmMessages = useDMStore(s => s.messages);
+  const searchMessages = isDMOpen
+    ? dmMessages.map(m => ({
+        ...m,
+        channelId: m.conversationId,
+        pinned: false,
+        reactions: m.reactions ?? [],
+        replyToId: m.replyToId ?? null,
+        replyTo: null,
+      }))
+    : messages;
+
+  // Reset search/pin whenever context switches
+  useEffect(() => {
+    setShowSearch(false);
+    setShowPinned(false);
+  }, [isDMOpen, activeChannel, activeDmConversation]);
 
   useValidateToken();
   const { loadOlderMessages } = useMessages();
@@ -43,7 +64,6 @@ export default function ChatPage() {
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const isVoice   = activeChannelObj?.type === 'voice';
   const isText    = !isVoice && activeChannel !== '';
-  const isDMOpen  = !!activeDmConversation;
   const showHeader = isText || isDMOpen;
   const membersVisible = showMembers && showHeader;
 
@@ -75,7 +95,7 @@ export default function ChatPage() {
     useChatStore.getState().setReplyingTo(null);
   };
 
-  const handleSendDM   = (content: string) => { if (activeDmConversation) sendDM(activeDmConversation, content); };
+  const handleSendDM   = (content: string, replyToId?: string) => { if (activeDmConversation) sendDM(activeDmConversation, content, replyToId); };
   const handleDMTyping = (typing: boolean) => { if (activeDmConversation) sendDMTyping(activeDmConversation, typing); };
 
   const handleLoadOlderDM = useCallback(() => {
@@ -190,7 +210,7 @@ export default function ChatPage() {
         {showSearch && showHeader && (
           <div style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
             <SearchBar
-              messages={messages as any}
+              messages={searchMessages as any}
               currentUserId={user?.id ?? ''}
               onClose={() => setShowSearch(false)}
               onJump={scrollToMessage}

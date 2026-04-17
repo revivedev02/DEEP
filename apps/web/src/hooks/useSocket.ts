@@ -45,6 +45,11 @@ export function useSocket() {
       setOnline(userId, online);
     });
 
+    // Snapshot: server sends all currently-online IDs on connect so we don't miss anyone
+    socketInstance.on('presence:snapshot', ({ onlineIds }: { onlineIds: string[] }) => {
+      useChatStore.getState().setOnlineSnapshot(onlineIds);
+    });
+
     socketInstance.on('typing:update', ({ displayName, typing }: { displayName: string; typing: boolean }) => {
       useChatStore.getState().setTyping(displayName, typing);
     });
