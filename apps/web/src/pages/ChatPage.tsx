@@ -210,21 +210,30 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* ── Search bar (on canvas, below header) ── */}
-        {showSearch && showHeader && (
-          <div style={{ borderRadius: 10, flexShrink: 0, position: 'relative', zIndex: 50 }}
-               className={isSearchClosing ? 'animate-slide-up-out' : ''}>
-            <SearchBar
-              messages={searchMessages as any}
-              currentUserId={user?.id ?? ''}
-              onClose={closeSearch}
-              onJump={scrollToMessage}
-            />
-          </div>
-        )}
+        {/* ── Card + Members row (search bar floats absolutely over this) ── */}
+        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden', position: 'relative' }}>
 
-        {/* ── Card + Members row ── */}
-        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+          {/* ── Search bar — floats over card, doesn't affect layout ── */}
+          {showSearch && showHeader && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                paddingBottom: 4,
+              }}
+              className={isSearchClosing ? 'animate-slide-up-out' : 'animate-slide-down'}
+            >
+              <SearchBar
+                messages={searchMessages as any}
+                currentUserId={user?.id ?? ''}
+                onClose={closeSearch}
+                onJump={scrollToMessage}
+              />
+            </div>
+          )}
 
           {/* Chat card */}
           <div className="chat-card">
