@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { Reply, X } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { MessageInput } from '@/components/MessageInput';
+import { useFloatingHighlight } from '@/hooks/useFloatingHighlight';
 import { MessageItem } from '@/components/MessageItem';
 import { SkMessageList } from '@/components/Skeleton';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -66,6 +67,8 @@ export default function DMPane({
   const scrollRef    = useRef<HTMLDivElement>(null);
   const contentRef   = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(messages.length);
+
+  const { highlightRef, onMouseOver, onMouseLeave } = useFloatingHighlight(contentRef);
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [replyingTo,   setReplyingTo]   = useState<DMMessage | null>(null);
@@ -260,9 +263,12 @@ export default function DMPane({
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
         {/* Message list — full height, partner info is already in the header */}
-        <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}>
-          {/* Inner wrapper observed by ResizeObserver for image-load / reaction height changes */}
-          <div ref={contentRef}>
+        <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}
+          onMouseOver={onMouseOver} onMouseLeave={onMouseLeave}>
+          {/* Inner wrapper — position:relative anchors the floating highlight */}
+          <div ref={contentRef} style={{ position: 'relative' }}>
+          {/* Floating highlight — single div that slides between rows */}
+          <div ref={highlightRef} className="hover-highlight" />
           {isLoading ? <SkMessageList /> : (
             <>
               {isLoadingOlder && (

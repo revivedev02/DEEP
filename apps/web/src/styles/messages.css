@@ -7,17 +7,26 @@
   .message-group {
     @apply flex gap-4 px-4 py-0.5 rounded relative;
     contain: layout;
-    /* LEAVE: slow fade-out so the previous highlight lingers while the next one fades in — no hard cut */
-    background-color: transparent;
-    transition: background-color 200ms ease-out;
-  }
-  .message-group:hover {
-    /* ENTER: quick so the intent is immediately visible */
-    background-color: var(--bg-modifier);
-    transition: background-color 60ms ease-in;
   }
   .message-group.with-avatar {
     @apply mt-4 py-1 flex-col gap-0.5;
+  }
+
+  /* Single floating highlight — slides between rows via translateY */
+  .hover-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 0;
+    border-radius: 6px;
+    background: rgb(var(--separator-rgb) / 0.10);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 0;
+    /* Position + height transition = smooth glide between messages */
+    transition: transform 0.18s ease, height 0.18s ease, opacity 0.15s ease;
+    will-change: transform, opacity;
   }
 
   /* Message hover action bar */

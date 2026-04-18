@@ -3,6 +3,7 @@ import { WifiOff, Hash } from 'lucide-react';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { SkMessageList } from '@/components/Skeleton';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
+import { useFloatingHighlight } from '@/hooks/useFloatingHighlight';
 import { MessageItem, type MessageItemProps } from '@/components/MessageItem';
 import { isTodayIST, isYesterdayIST, isSameAuthorWithin5Min, IST } from './messageUtils';
 
@@ -56,10 +57,10 @@ export function MessageList({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const contentRef         = useRef<HTMLDivElement>(null);
   const prevMsgCountRef    = useRef(messages.length);
-  // Keep currentUserId in a ref so the scroll useEffect always sees a fresh value
-  // without needing it in its dependency array (avoids re-mounting the effect)
   const currentUserIdRef   = useRef(currentUserId);
   currentUserIdRef.current = currentUserId;
+
+  const { highlightRef, onMouseOver, onMouseLeave } = useFloatingHighlight(contentRef);
 
   // ── ResizeObserver: re-scroll whenever content height grows ────────────────
   // This catches: image loads (height unknown until img onLoad), reaction bars
@@ -157,9 +158,13 @@ export function MessageList({
       }}
       className="messages-container scrollbar-thin"
       onScroll={handleScroll}
+      onMouseOver={onMouseOver}
+      onMouseLeave={onMouseLeave}
     >
-      {/* Inner content wrapper — ResizeObserver watches this for height growth */}
-      <div ref={contentRef}>
+      {/* Inner content wrapper — position:relative anchors the floating highlight */}
+      <div ref={contentRef} style={{ position: 'relative' }}>
+        {/* Floating highlight — single div that slides between rows */}
+        <div ref={highlightRef} className="hover-highlight" />
         {isLoadingMessages ? <SkMessageList /> : loadError ? (
           <div className="flex flex-col items-center justify-center flex-1 h-full gap-4 select-none">
             <div className="w-16 h-16 rounded-full bg-bg-modifier flex items-center justify-center">
