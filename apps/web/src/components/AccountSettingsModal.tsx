@@ -110,13 +110,9 @@ export default function AccountSettingsModal({ onClose }: Props) {
         {/* ── Sidebar ── */}
         <aside className="settings-sidebar">
           {/* User mini-card at top */}
-          <div className="settings-sidebar-user" onClick={() => setShowAvatarModal(true)}>
-            <div className="relative group cursor-pointer">
+          <div className="settings-sidebar-user">
+            <div className="relative flex-shrink-0">
               <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={8} />
-              <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center
-                              opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-4 h-4 text-white" />
-              </div>
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-text-normal truncate">{user?.displayName}</p>

@@ -99,8 +99,9 @@ export default function ServerIconCropModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-bg-secondary border border-separator/30 rounded-xl shadow-elevation-high w-full mx-4"
-        style={{ maxWidth: step === 'crop' ? 480 : 360 }}>
+      <div
+        className="border border-separator/30 shadow-elevation-high w-full mx-4"
+        style={{ maxWidth: step === 'crop' ? 480 : 360, background: 'var(--card-bg)', borderRadius: 'var(--card-radius)' }}>
 
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-separator/30">
           <h2 className="text-base font-semibold text-text-normal">

@@ -21,24 +21,26 @@ function NewDMModal({ onClose, onStart }: { onClose: () => void; onStart: (userI
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
         <div
-          className="bg-bg-secondary rounded-xl shadow-elevation-high w-80 flex flex-col overflow-hidden"
+          className="w-80 flex flex-col overflow-hidden animate-scale-in shadow-elevation-high border border-separator/30"
+          style={{ background: 'var(--card-bg)', borderRadius: 'var(--card-radius)' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-separator">
-            <span className="font-semibold text-text-normal">New Direct Message</span>
-            <button onClick={onClose} className="text-text-muted hover:text-text-normal transition-colors">
-              <X className="w-5 h-5" />
+          <div className="flex items-center justify-between px-4 py-3 border-b border-separator/30">
+            <span className="font-semibold text-sm text-text-normal">New Direct Message</span>
+            <button onClick={onClose} className="text-text-muted hover:text-text-normal transition-colors p-0.5 rounded">
+              <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="px-3 py-2 border-b border-separator">
+          <div className="px-3 py-2 border-b border-separator/20">
             <input
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search members…"
-              className="w-full bg-bg-primary text-sm text-text-normal placeholder:text-text-muted rounded-lg px-3 py-2 outline-none"
+              className="w-full text-sm text-text-normal placeholder:text-text-muted rounded-lg px-3 py-2 outline-none transition-colors"
+              style={{ background: 'var(--bg-hover)' }}
             />
           </div>
           <div className="overflow-y-auto max-h-64 py-1">
@@ -48,7 +50,8 @@ function NewDMModal({ onClose, onStart }: { onClose: () => void; onStart: (userI
               others.map(m => (
                 <button
                   key={m.id}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-hover transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors text-left rounded-lg mx-1"
+                  style={{ width: 'calc(100% - 8px)' }}
                   onClick={() => { onStart(m.id); onClose(); }}
                 >
                   <LazyAvatar name={m.displayName} avatarUrl={m.avatarUrl} size={8} />

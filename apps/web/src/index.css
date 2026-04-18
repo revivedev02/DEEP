@@ -184,7 +184,7 @@
   }
   .canvas-icon-btn:hover {
     color: var(--text-normal);
-    background: rgba(255,255,255,0.06);
+    background: var(--bg-hover);
   }
   .canvas-icon-btn.active {
     color: var(--text-normal);
@@ -404,7 +404,9 @@
 
   /* ── Message Search overlay ── */
   .search-bar {
-    @apply flex items-center gap-2 px-4 py-2 bg-bg-secondary border-b border-separator/40;
+    @apply flex items-center gap-2 px-4 py-2 border-b border-separator/30;
+    background: var(--card-bg);
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
     animation: slide-down 150ms ease;
   }
   @keyframes slide-down {
@@ -413,9 +415,11 @@
   }
   /* Results flow in-document (not absolute) since search bar is now on the canvas, not inside the card */
   .search-results {
-    @apply left-0 right-0 bg-bg-secondary border border-t-0 border-separator/50
-           rounded-b-lg shadow-elevation-high overflow-y-auto z-40
-           max-h-72 divide-y divide-separator/20;
+    @apply left-0 right-0 border border-t-0 border-separator/40
+           overflow-y-auto z-40 max-h-72 divide-y divide-separator/20;
+    background: var(--card-bg);
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+    box-shadow: var(--shadow-elevation);
   }
   .search-result-item {
     @apply flex items-start gap-3 px-4 py-3 cursor-pointer
@@ -637,8 +641,9 @@
            animate-fade-in backdrop-blur-sm;
   }
   .modal-box {
-    @apply bg-bg-secondary rounded-lg shadow-elevation-high w-full max-w-md mx-4
-           animate-slide-up;
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-md mx-4 animate-slide-up;
   }
   .modal-header {
     @apply px-6 pt-6 pb-4 border-b border-separator;
@@ -652,8 +657,9 @@
 
   /* ── Delete Confirm Modal ── */
   .delete-modal {
-    @apply bg-bg-secondary rounded-xl shadow-elevation-high w-full max-w-sm mx-4
-           border border-separator/30;
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-sm mx-4 border border-separator/30;
   }
   .delete-modal-header {
     @apply flex items-center justify-between px-5 pt-5 pb-4
@@ -692,11 +698,13 @@
 
   /* ── Login Page ── */
   .login-bg {
-    @apply min-h-full flex items-center justify-center
-           bg-gradient-to-br from-bg-tertiary via-bg-secondary to-bg-primary;
+    @apply min-h-full flex items-center justify-center;
+    background: var(--bg-canvas);
   }
   .login-card {
-    @apply bg-bg-secondary rounded-xl shadow-elevation-high w-full max-w-md mx-4 p-8
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-md mx-4 p-8
            animate-slide-up border border-separator/30;
   }
 
@@ -928,7 +936,6 @@
            border-b border-brand/50 pb-1 focus:border-brand transition-colors;
   }
 
-  /* Buttons */
   .settings-btn-primary {
     @apply flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
            text-white transition-all duration-150 disabled:opacity-60;
@@ -942,9 +949,16 @@
            hover:text-text-normal transition-colors duration-150;
     background: var(--bg-hover);
   }
+  .settings-btn-secondary:hover {
+    background: var(--bg-active);
+  }
   .settings-btn-ghost {
     @apply text-sm px-3 py-2 rounded-lg font-medium text-text-muted
-           hover:text-text-normal hover:bg-white/5 transition-all duration-150;
+           hover:text-text-normal transition-all duration-150;
+    background: transparent;
+  }
+  .settings-btn-ghost:hover {
+    background: var(--bg-hover);
   }
 
   /* ── Typing bounce ── */
