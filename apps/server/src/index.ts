@@ -5,7 +5,6 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import staticPlugin from '@fastify/static';
 import compress from '@fastify/compress';
-import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -30,12 +29,6 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 const app = Fastify({ logger: { level: IS_PROD ? 'warn' : 'info' } });
-
-// ── Security headers ──────────────────────────────────────────────────────────
-await app.register(helmet, {
-  contentSecurityPolicy: false, // CSP managed by React build; disable to not break SPA
-  crossOriginEmbedderPolicy: false,
-});
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 await app.register(cors, { origin: true, credentials: true });
