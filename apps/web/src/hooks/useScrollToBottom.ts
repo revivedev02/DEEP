@@ -7,12 +7,18 @@ export function useScrollToBottom<T extends HTMLElement>(deps: unknown[]) {
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
-    // only auto-scroll if user is near bottom (within 200px)
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200;
-    if (nearBottom) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    // Scroll to bottom if:
+    // 1. User is near the bottom (within 300px) — for new incoming messages
+    // 2. scrollTop is still 0 but element has content — this catches timing where
+    //    the MessageList rAF hasn't fired yet but the hook fires first
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distanceFromBottom < 300;
+    const isAtTop = el.scrollTop === 0 && el.scrollHeight > el.clientHeight;
+
+    if (nearBottom || isAtTop) {
+      el.scrollTop = el.scrollHeight;
     }
-  }, deps);
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
   return ref;
 }

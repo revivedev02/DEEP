@@ -64,6 +64,7 @@ export default function DMPane({
   const { user, token } = useAuthStore();
 
   const scrollRef    = useRef<HTMLDivElement>(null);
+  const contentRef   = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(messages.length);
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -73,15 +74,49 @@ export default function DMPane({
   const [deleteTarget, setDeleteTarget] = useState<DMMessage | null>(null);
   const SKIP_KEY = 'deep:deleteNoConfirm';
 
-  // ── Auto-scroll: new msg → bottom, prepend → anchor ───────────────────────
+  // ── ResizeObserver: re-scroll when images load or reactions appear ─────────
+  useEffect(() => {
+    const content = contentRef.current;
+    const scroll  = scrollRef.current;
+    if (!content || !scroll) return;
+    let lastH = scroll.scrollHeight;
+    const observer = new ResizeObserver(() => {
+      const newH = scroll.scrollHeight;
+      if (newH <= lastH) { lastH = newH; return; }
+      const distBefore = lastH - scroll.scrollTop - scroll.clientHeight;
+      if (distBefore < 80) scroll.scrollTop = newH;
+      lastH = newH;
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  // ── Auto-scroll: initial load, own send, single new msg, batch prepend ─────
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const prevCount = prevCountRef.current;
     const delta = messages.length - prevCount;
-    if (delta === 1) {
-      el.scrollTop = el.scrollHeight;
+
+    if (prevCount === 0 && delta > 0) {
+      // Initial load — jump to bottom so the latest message is visible
+      requestAnimationFrame(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      });
+    } else if (delta === 1) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg?.pending) {
+        // User just sent — force scroll to bottom
+        requestAnimationFrame(() => {
+          if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        });
+      } else {
+        // Incoming from partner — only scroll if near bottom
+        const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (dist < 300) el.scrollTop = el.scrollHeight;
+      }
     } else if (delta > 1 && prevCount > 0) {
+      // Batch prepend (load older) — anchor to first previously-visible message
       const anchorMsg = messages[delta];
       if (anchorMsg) {
         const msgEl = document.getElementById(`msg-${anchorMsg.id}`);
@@ -89,7 +124,7 @@ export default function DMPane({
       }
     }
     prevCountRef.current = messages.length;
-  }, [messages.length]);
+  }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reset reply/edit on conversation switch ────────────────────────────────
   useEffect(() => {
@@ -237,6 +272,8 @@ export default function DMPane({
 
         {/* Message list */}
         <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}>
+          {/* Inner wrapper observed by ResizeObserver for image-load / reaction height changes */}
+          <div ref={contentRef}>
           {isLoading ? <SkMessageList /> : (
             <>
               {isLoadingOlder && (
@@ -271,6 +308,7 @@ export default function DMPane({
               ))}
             </>
           )}
+          </div>
         </div>
 
         {/* Typing indicator */}
