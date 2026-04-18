@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X, Camera, Check, Copy, User, ChevronRight,
-  Loader2, Shield, KeyRound, Palette,
+  Loader2, Shield, Palette, ImageIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import AvatarUploadModal from '@/components/AvatarUploadModal';
+import BannerUploadModal from '@/components/BannerUploadModal';
 
 /* ─────────────────────────────────────────────────────────
    Types
@@ -42,8 +43,9 @@ function NavItem({
 export default function AccountSettingsModal({ onClose }: Props) {
   const { user, token, updateDisplayName } = useAuthStore();
 
-  const [tab, setTab]                     = useState<Tab>('account');
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [tab, setTab]                       = useState<Tab>('account');
+  const [showAvatarModal, setShowAvatarModal]   = useState(false);
+  const [showBannerModal, setShowBannerModal]   = useState(false);
 
   /* display-name editing */
   const [nameValue,   setNameValue]   = useState(user?.displayName ?? '');
@@ -164,12 +166,33 @@ export default function AccountSettingsModal({ onClose }: Props) {
                   {/* LEFT — Profile card */}
                   <div className="flex flex-col gap-4">
                     <div className="settings-profile-card">
-                      {/* Banner */}
-                      <div className="settings-profile-banner">
-                        <div className="absolute inset-0 bg-gradient-to-br from-brand/50 via-brand/20 to-transparent" />
-                        <div className="absolute inset-0" style={{
-                          backgroundImage: 'radial-gradient(circle at 80% 50%, rgb(var(--brand-rgb)/0.3) 0%, transparent 60%)',
-                        }} />
+                      {/* Banner — clickable */}
+                      <div
+                        className="settings-profile-banner group cursor-pointer relative"
+                        onClick={() => setShowBannerModal(true)}
+                        title="Change banner"
+                      >
+                        {user?.bannerUrl ? (
+                          <img
+                            src={user.bannerUrl}
+                            alt="Profile banner"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <>
+                            <div className="absolute inset-0 bg-gradient-to-br from-brand/50 via-brand/20 to-transparent" />
+                            <div className="absolute inset-0" style={{
+                              backgroundImage: 'radial-gradient(circle at 80% 50%, rgb(var(--brand-rgb)/0.3) 0%, transparent 60%)',
+                            }} />
+                          </>
+                        )}
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/45 transition-colors flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-1">
+                            <ImageIcon className="w-5 h-5 text-white" />
+                            <span className="text-white text-xs font-medium">Change Banner</span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Avatar */}
@@ -279,7 +302,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                       <p className="settings-hint">Username cannot be changed.</p>
                     </section>
 
-                    {/* Account created / info */}
+                    {/* Account info */}
                     <section>
                       <h2 className="settings-section-label">Account</h2>
                       <div className="settings-field flex-col items-start gap-3">
@@ -297,6 +320,16 @@ export default function AccountSettingsModal({ onClose }: Props) {
                             className="settings-btn-secondary flex items-center gap-1.5"
                           >
                             <Camera className="w-3.5 h-3.5" /> Change Avatar
+                          </button>
+                        </div>
+                        <div className="w-full h-px bg-separator/30" />
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-text-muted">Banner</span>
+                          <button
+                            onClick={() => setShowBannerModal(true)}
+                            className="settings-btn-secondary flex items-center gap-1.5"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5" /> Change Banner
                           </button>
                         </div>
                       </div>
@@ -331,9 +364,14 @@ export default function AccountSettingsModal({ onClose }: Props) {
         </main>
       </div>
 
-      {/* Avatar upload — stacks above settings */}
+      {/* Avatar upload */}
       {showAvatarModal && (
         <AvatarUploadModal onClose={() => setShowAvatarModal(false)} />
+      )}
+
+      {/* Banner upload */}
+      {showBannerModal && (
+        <BannerUploadModal onClose={() => setShowBannerModal(false)} />
       )}
     </>
   );

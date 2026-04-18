@@ -103,4 +103,44 @@ export async function registerUploadRoutes(app: FastifyInstance) {
       return reply.send({ iconUrl: url });
     },
   );
+
+  // ── GET /api/upload/sign-banner ──────────────────────────────────────────
+  // Returns signed payload for banner upload (wide, landscape)
+  app.get(
+    '/api/upload/sign-banner',
+    { preHandler: [app.authenticate] },
+    async (_req, reply) => {
+      const timestamp      = Math.round(Date.now() / 1000);
+      const folder         = 'deep/banners';
+      const transformation = 'c_fill,h_480,w_1440,f_webp,q_auto:best';
+
+      const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder, transformation },
+        process.env.CLOUDINARY_API_SECRET ?? '',
+      );
+
+      return reply.send({
+        signature, timestamp, folder, transformation,
+        api_key:    process.env.CLOUDINARY_API_KEY,
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      });
+    },
+  );
+
+  // ── PATCH /api/upload/banner ──────────────────────────────────────────────
+  app.patch<{ Body: { url: string } }>(
+    '/api/upload/banner',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const payload = req.user as { sub: string };
+      const { url } = req.body;
+      if (!url || !url.includes('cloudinary.com'))
+        return reply.code(400).send({ error: 'Invalid Cloudinary URL' });
+      await prisma.user.update({
+        where: { id: payload.sub },
+        data:  { bannerUrl: url },
+      });
+      return reply.send({ bannerUrl: url });
+    },
+  );
 }

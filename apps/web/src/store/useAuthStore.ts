@@ -7,17 +7,19 @@ export interface AuthUser {
   displayName: string;
   username: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   isAdmin: boolean;
 }
 
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  login:        (token: string, user: AuthUser) => void;
-  logout:       () => void;
-  isAuthenticated: () => boolean;
-  updateAvatar:       (avatarUrl: string) => void;
-  updateDisplayName:  (displayName: string) => void;
+  login:             (token: string, user: AuthUser) => void;
+  logout:            () => void;
+  isAuthenticated:   () => boolean;
+  updateAvatar:      (avatarUrl: string) => void;
+  updateBanner:      (bannerUrl: string) => void;
+  updateDisplayName: (displayName: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,6 +32,8 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: () => !!get().token && !!get().user,
       updateAvatar: (avatarUrl) =>
         set((s) => s.user ? { user: { ...s.user, avatarUrl } } : {}),
+      updateBanner: (bannerUrl) =>
+        set((s) => s.user ? { user: { ...s.user, bannerUrl } } : {}),
       updateDisplayName: (displayName) =>
         set((s) => s.user ? { user: { ...s.user, displayName } } : {}),
     }),

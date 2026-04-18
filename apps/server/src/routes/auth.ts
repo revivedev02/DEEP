@@ -97,3 +97,4 @@ export function addAuthDecorator(app: FastifyInstance) {
     }
   });
 }
+
