@@ -5,74 +5,74 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Dark theme — pure neutral grey ── */
-  :root,
-  [data-theme="dark"] {
-    --bg-canvas:    #1c1c1c;
-    --bg-primary:   #242424;
-    --bg-secondary: #202020;
-    --bg-tertiary:  #181818;
-    --bg-floating:  #141414;
-    --bg-hover:     rgba(255,255,255,0.05);
-    --bg-active:    rgba(255,255,255,0.09);
-    --bg-modifier:  rgba(0,0,0,0.20);
-    --card-bg:      #242424;
-    --card-radius:  12px;
-    --text-normal:  #f2f2f2;
-    --text-muted:   #909090;
-    --brand-rgb:        88 101 242;
-    --brand-hover-rgb:  71 82 196;
-    --brand-active-rgb: 60 69 165;
-    --separator-rgb:    58 58 58;
-    --shadow-elevation: 0 8px 28px rgba(0,0,0,0.60);
-    --shadow-low:       0 1px 0 rgba(0,0,0,0.3), 0 1.5px 0 rgba(0,0,0,0.10);
-    color-scheme: dark;
-  }
-
-  /* ── Light theme ── */
-  [data-theme="light"] {
-    --bg-canvas:    #e3e5e8;
-    --bg-primary:   #ffffff;
-    --bg-secondary: #f2f3f5;
-    --bg-tertiary:  #e3e5e8;
-    --bg-floating:  #ffffff;
-    --bg-hover:     rgba(0,0,0,0.04);
-    --bg-active:    rgba(0,0,0,0.08);
-    --bg-modifier:  rgba(0,0,0,0.04);
-    --card-bg:      #ffffff;
-    --card-radius:  12px;
-    --text-normal:  #313338;
-    --text-muted:   #5c5e66;
-    --brand-rgb:        88 101 242;
-    --brand-hover-rgb:  71 82 196;
-    --brand-active-rgb: 60 69 165;
-    --separator-rgb:    220 221 222;
-    --shadow-elevation: 0 8px 16px rgba(0,0,0,0.12);
-    --shadow-low:       0 1px 0 rgba(0,0,0,0.08), 0 1.5px 0 rgba(0,0,0,0.04);
-    color-scheme: light;
-  }
-
-  /* ── OLED dark theme — pure black ── */
+  /* ── OLED dark — pure black, color-separated card ── */
   [data-theme="oled"] {
     --bg-canvas:    #000000;
-    --bg-primary:   #0d0d0d;
-    --bg-secondary: #0a0a0a;
-    --bg-tertiary:  #111111;
-    --bg-floating:  #000000;
-    --bg-hover:     rgba(255,255,255,0.04);
-    --bg-active:    rgba(255,255,255,0.07);
+    --bg-primary:   #111111;
+    --bg-secondary: #161616;
+    --bg-tertiary:  #0d0d0d;
+    --bg-floating:  #1a1a1a;
+    --bg-hover:     rgba(255,255,255,0.05);
+    --bg-active:    rgba(255,255,255,0.09);
     --bg-modifier:  rgba(255,255,255,0.03);
-    --card-bg:      #0d0d0d;
+    --card-bg:      #131313;
     --card-radius:  12px;
-    --text-normal:  #ffffff;
+    --text-normal:  #f0f0f0;
     --text-muted:   #888888;
     --brand-rgb:        114 137 218;
     --brand-hover-rgb:  88 101 242;
     --brand-active-rgb: 71 82 196;
-    --separator-rgb:    31 31 31;
-    --shadow-elevation: 0 8px 24px rgba(0,0,0,0.85);
-    --shadow-low:       0 1px 0 rgba(4,4,5,0.4);
+    --separator-rgb:    36 36 36;
+    --shadow-elevation: none;
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.5);
     color-scheme: dark;
+  }
+
+  /* ── Navy dark — deep blue-grey, premium ── */
+  :root,
+  [data-theme="dark"] {
+    --bg-canvas:    #1b1f2e;
+    --bg-primary:   #222639;
+    --bg-secondary: #1e2235;
+    --bg-tertiary:  #181c2c;
+    --bg-floating:  #13172a;
+    --bg-hover:     rgba(255,255,255,0.06);
+    --bg-active:    rgba(255,255,255,0.11);
+    --bg-modifier:  rgba(0,0,0,0.25);
+    --card-bg:      #222639;
+    --card-radius:  12px;
+    --text-normal:  #e4e6f0;
+    --text-muted:   #8892b0;
+    --brand-rgb:        100 121 242;
+    --brand-hover-rgb:  88 101 242;
+    --brand-active-rgb: 71 82 196;
+    --separator-rgb:    44 49 72;
+    --shadow-elevation: none;
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.4);
+    color-scheme: dark;
+  }
+
+  /* ── Light — clean white card on cool-grey canvas ── */
+  [data-theme="light"] {
+    --bg-canvas:    #d8dee9;
+    --bg-primary:   #ffffff;
+    --bg-secondary: #f3f5f9;
+    --bg-tertiary:  #e4e8f0;
+    --bg-floating:  #ffffff;
+    --bg-hover:     rgba(0,0,0,0.06);
+    --bg-active:    rgba(0,0,0,0.10);
+    --bg-modifier:  rgba(0,0,0,0.05);
+    --card-bg:      #ffffff;
+    --card-radius:  12px;
+    --text-normal:  #1a1c2e;
+    --text-muted:   #5a6380;
+    --brand-rgb:        88 101 242;
+    --brand-hover-rgb:  71 82 196;
+    --brand-active-rgb: 60 69 165;
+    --separator-rgb:    198 205 220;
+    --shadow-elevation: none;
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.06);
+    color-scheme: light;
   }
 
   html, body, #root {
@@ -90,8 +90,12 @@
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--bg-floating); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--separator-rgb)); }
+  ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.55); }
+
+  /* Light theme: darker scrollbar so it's visible */
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
 
   ::selection { background: rgb(var(--brand-rgb)); color: #fff; }
 }
@@ -119,14 +123,14 @@
     flex-shrink: 0;
   }
 
-  /* ── Chat Card — the floating elevated box ── */
+  /* ── Chat Card — color-separated from canvas, no shadow ── */
   .chat-card {
     display: flex;
     flex: 1;
     overflow: hidden;
     background: var(--card-bg);
     border-radius: var(--card-radius);
-    box-shadow: var(--shadow-elevation);
+    border: 1px solid rgb(var(--separator-rgb) / 0.5);
     min-width: 0;
   }
 

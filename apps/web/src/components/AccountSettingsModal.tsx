@@ -23,13 +23,13 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`
-        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
-        transition-all duration-150 text-left
-        ${active
-          ? 'bg-white/10 text-white'
-          : 'text-text-muted hover:bg-white/5 hover:text-text-normal'}
-      `}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 text-left"
+      style={{
+        background: active ? 'var(--bg-active)' : 'transparent',
+        color: active ? 'var(--text-normal)' : 'var(--text-muted)',
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
       {label}
@@ -387,8 +387,9 @@ function ThemeSwatch({ name }: { name: Theme }) {
   const { theme, setTheme } = useThemeStore();
   const active = theme === name;
 
-  const bg:    Record<Theme, string> = { oled: '#000000', dark: '#1c1c1c', light: '#f5f5f5' };
-  const label: Record<Theme, string> = { oled: 'OLED Black', dark: 'Charcoal', light: 'Light' };
+  const bg:    Record<Theme, string> = { oled: '#000000', dark: '#1b1f2e', light: '#d8dee9' };
+  const card:  Record<Theme, string> = { oled: '#131313', dark: '#222639', light: '#ffffff' };
+  const label: Record<Theme, string> = { oled: 'OLED Black', dark: 'Navy', light: 'Light' };
 
   return (
     <button
@@ -396,10 +397,10 @@ function ThemeSwatch({ name }: { name: Theme }) {
       className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-150
         ${active ? 'border-brand shadow-[0_0_0_3px_rgb(var(--brand-rgb)/0.2)]' : 'border-separator/40 hover:border-separator'}`}
     >
-      <div
-        className="w-16 h-10 rounded-lg"
-        style={{ background: bg[name], border: '1px solid rgba(255,255,255,0.12)' }}
-      />
+      {/* Mini preview: canvas with card inside */}
+      <div className="w-16 h-10 rounded-lg overflow-hidden" style={{ background: bg[name] }}>
+        <div className="m-1.5 rounded h-[calc(100%-12px)]" style={{ background: card[name] }} />
+      </div>
       <span className="text-xs font-medium text-text-muted">{label[name]}</span>
       {active && <div className="w-1.5 h-1.5 rounded-full bg-brand" />}
     </button>

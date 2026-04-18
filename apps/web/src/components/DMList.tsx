@@ -50,7 +50,7 @@ function NewDMModal({ onClose, onStart }: { onClose: () => void; onStart: (userI
               others.map(m => (
                 <button
                   key={m.id}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors text-left rounded-lg mx-1"
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-bg-hover transition-colors text-left rounded-lg mx-1"
                   style={{ width: 'calc(100% - 8px)' }}
                   onClick={() => { onStart(m.id); onClose(); }}
                 >
