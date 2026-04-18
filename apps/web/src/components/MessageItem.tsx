@@ -98,7 +98,7 @@ function ReactionBar({ reactions = [], currentUserId, onReact, onOpenPicker }: {
         </button>
       ))}
       <button className="reaction-add-btn" title="Add reaction" onClick={onOpenPicker}>
-        <SmilePlus className="w-4 h-4" />
+        <SmilePlus className="w-3.5 h-3.5" />
       </button>
     </div>
   );
@@ -213,15 +213,15 @@ export const MessageItem = memo(function MessageItem({
         title="React"
         onMouseDown={(e) => { e.stopPropagation(); pickerOpen ? onCloseReactionPicker() : onOpenReactionPicker(msg.id); }}
       >
-        <SmilePlus className="w-4 h-4" />
+        <SmilePlus className="w-3.5 h-3.5" />
       </button>
       <button className="message-action-btn" title="Reply" onClick={() => onReply(msg)}>
-        <Reply className="w-4 h-4" />
+        <Reply className="w-3.5 h-3.5" />
       </button>
       {isMe && (
         <button className="message-action-btn" title="Edit"
           onClick={() => onStartEdit(msg.id)}>
-          <Pencil className="w-4 h-4" />
+          <Pencil className="w-3.5 h-3.5" />
         </button>
       )}
       {canPin && (
@@ -229,17 +229,17 @@ export const MessageItem = memo(function MessageItem({
           className={`message-action-btn ${msg.pinned ? 'text-brand' : ''}`}
           title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => onPin(msg)}
         >
-          <Pin className="w-4 h-4" />
+          <Pin className="w-3.5 h-3.5" />
         </button>
       )}
       <button className="message-action-btn" title="Copy"
         onClick={() => navigator.clipboard.writeText(msg.content)}>
-        <Copy className="w-4 h-4" />
+        <Copy className="w-3.5 h-3.5" />
       </button>
       {canDelete && (
         <button className="message-action-btn hover:!text-status-red" title="Delete"
           onClick={() => onDelete(msg.id)}>
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
@@ -288,7 +288,7 @@ export const MessageItem = memo(function MessageItem({
               {msg.pinned && (
                 <span className="inline-flex items-center gap-0.5 text-2xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                       style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
-                  <Pin className="w-3 h-3" /> Pinned
+                  <Pin className="w-2.5 h-2.5" /> Pinned
                 </span>
               )}
             </div>
