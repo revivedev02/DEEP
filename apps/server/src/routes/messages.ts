@@ -88,7 +88,8 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         include: messageInclude,
       });
 
-      (app as any).io?.to(updated.channelId).emit('message:pinned', {
+      // ✅ room must match 'channel:${channelId}' (set in socket handler)
+      (app as any).io?.to(`channel:${updated.channelId}`).emit('message:pinned', {
         messageId: updated.id,
         channelId: updated.channelId,
         pinned:    updated.pinned,
@@ -130,8 +131,8 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         select: { emoji: true, userId: true },
       });
 
-      // Broadcast to channel
-      (app as any).io?.to(msg.channelId).emit('message:reaction', {
+      // Broadcast to channel — ✅ correct room prefix
+      (app as any).io?.to(`channel:${msg.channelId}`).emit('message:reaction', {
         messageId: req.params.id,
         reactions,
       });
@@ -161,7 +162,8 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         include: messageInclude,
       });
 
-      (app as any).io?.to(updated.channelId).emit('message:edited', {
+      // ✅ correct room prefix
+      (app as any).io?.to(`channel:${updated.channelId}`).emit('message:edited', {
         messageId: updated.id,
         content:   updated.content,
         editedAt:  updated.editedAt,
@@ -183,6 +185,8 @@ export async function registerMessageRoutes(app: FastifyInstance) {
         return reply.code(403).send({ error: 'Forbidden' });
       await prisma.message.delete({ where: { id: req.params.id } });
       if ((msg as any).mediaUrl) destroyImage((msg as any).mediaUrl).catch(() => {});
+      // Broadcast deletion so all clients remove it instantly
+      (app as any).io?.to(`channel:${msg.channelId}`).emit('message:deleted', { messageId: req.params.id });
       return reply.code(204).send();
     }
   );

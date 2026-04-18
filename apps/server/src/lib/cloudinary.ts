@@ -53,14 +53,17 @@ export async function destroyImage(url: string | null | undefined): Promise<void
   if (!url || !url.includes('cloudinary.com')) return;
 
   try {
+    // Detect resource type from the URL path (/image/upload/ or /video/upload/)
+    const resourceType = url.includes('/video/upload/') ? 'video' : 'image';
+
     // Strip everything up to and including "/upload/", then strip optional version segment,
     // then strip the file extension to get the bare public_id.
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^./]+)?$/);
     if (!match) return;
 
-    const publicId = match[1]; // e.g. "deep/avatars/abc123"
-    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-    console.log(`🗑️  Cloudinary: deleted old asset "${publicId}"`);
+    const publicId = match[1]; // e.g. "deep/media/abc123"
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    console.log(`🗑️  Cloudinary: deleted ${resourceType} "${publicId}"`);
   } catch (err) {
     // Non-fatal — log for visibility but don't surface to the user
     console.warn('⚠️  Cloudinary: failed to delete old asset:', err);

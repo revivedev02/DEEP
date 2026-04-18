@@ -75,6 +75,13 @@ export function useSocket() {
       useChatStore.getState().applyReaction(messageId, reactions);
     });
 
+    // ── Real-time delete ──────────────────────────────────────────────────────
+    socketInstance.on('message:deleted', ({ messageId }: { messageId: string }) => {
+      useChatStore.getState().setMessages(
+        useChatStore.getState().messages.filter(m => m.id !== messageId)
+      );
+    });
+
     return () => {};
   }, [token]);
 

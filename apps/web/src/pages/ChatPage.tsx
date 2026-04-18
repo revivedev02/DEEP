@@ -29,6 +29,8 @@ export default function ChatPage() {
   const { messages } = useChatStore();
 
   const isDMOpen  = !!activeDmConversation;
+  const conversations = useDMStore(s => s.conversations);
+  const activeDmConv  = conversations.find(c => c.id === activeDmConversation);
 
   // Header panel states
   const [showSearch, setShowSearch]         = useState(false);

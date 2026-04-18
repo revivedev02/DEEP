@@ -122,14 +122,29 @@ const io = new Server(app.server, {
 // Wire Redis adapter (enables pm2 cluster + multiple server instances)
 // Graceful fallback: if Redis is unavailable, single-process mode still works
 try {
-  const pubClient = new Redis(REDIS_URL);
-  const subClient = pubClient.duplicate();
+  const redisOpts = {
+    // Don't retry forever if Redis isn't available — fail fast, fall back to single-process
+    retryStrategy: () => null,
+    enableOfflineQueue: false,
+    connectTimeout: 3000,
+    lazyConnect: false,
+  };
 
-  // ioredis connects automatically; wait for ready events
-  await Promise.all([
-    new Promise<void>((res, rej) => { pubClient.once('ready', res); pubClient.once('error', rej); }),
-    new Promise<void>((res, rej) => { subClient.once('ready', res); subClient.once('error', rej); }),
-  ]);
+  const pubClient = new Redis(REDIS_URL, redisOpts);
+  const subClient = pubClient.duplicate(redisOpts);
+
+  // Suppress unhandled error events after the initial failure (ioredis emits these on retry)
+  pubClient.on('error', () => {});
+  subClient.on('error', () => {});
+
+  // Wait for 'ready' or 'error' — race with a 4s timeout as safety net
+  const connectClient = (client: typeof pubClient) =>
+    Promise.race([
+      new Promise<void>((res, rej) => { client.once('ready', res); client.once('error', rej); }),
+      new Promise<void>((_, rej) => setTimeout(() => rej(new Error('Redis connect timeout')), 4000)),
+    ]);
+
+  await Promise.all([connectClient(pubClient), connectClient(subClient)]);
 
   io.adapter(createAdapter(pubClient, subClient));
 

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
+import { destroyImage } from '../lib/cloudinary.js';
 
 const dmUserInclude = {
   select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
@@ -128,6 +129,8 @@ export async function registerDMRoutes(app: FastifyInstance) {
       if (!msg) return reply.code(404).send({ error: 'Not found' });
       if (msg.userId !== userId) return reply.code(403).send({ error: 'Forbidden' });
       await prisma.directMessage.delete({ where: { id } });
+      // Clean up Cloudinary media (images AND videos — destroyImage detects type)
+      if (msg.mediaUrl) destroyImage(msg.mediaUrl).catch(() => {});
       // Broadcast to partner in real-time
       const io = (app as any).io;
       if (io) io.to(`dm:${msg.conversationId}`).emit('dm:message:deleted', { messageId: id });
@@ -151,6 +154,13 @@ export async function registerDMRoutes(app: FastifyInstance) {
         where: { id },
         data: { content: content.trim(), editedAt: new Date() },
         include: dmMsgInclude,
+      });
+      // Broadcast edit to both participants in real-time
+      const io = (app as any).io;
+      if (io) io.to(`dm:${updated.conversationId}`).emit('dm:message:edited', {
+        messageId: updated.id,
+        content:   updated.content,
+        editedAt:  updated.editedAt?.toISOString(),
       });
       return reply.send(updated);
     }
