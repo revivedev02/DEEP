@@ -71,7 +71,7 @@ export default function ChatPage() {
   const isVoice   = activeChannelObj?.type === 'voice';
   const isText    = !isVoice && activeChannel !== '';
   const showHeader = isText || isDMOpen;
-  const membersVisible = showMembers && showHeader;
+  const membersVisible = showMembers; // always controllable, even from welcome screen
 
   const activeDmConv = useDMStore(s => s.conversations.find(c => c.id === activeDmConversation));
   const channelName  = activeChannelObj?.name ?? 'general';
@@ -128,12 +128,12 @@ export default function ChatPage() {
       {/* ── Center column: header bar (canvas) + card + search ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, overflow: 'hidden' }}>
 
-        {/* ── Canvas-level header bar — only when channel/DM is open ── */}
-        {showHeader && (
-          <div className="canvas-header">
-            {/* Left: channel/DM identity */}
-            <div className="flex items-center gap-2 min-w-0">
-              {isDMOpen ? (
+        {/* ── Canvas-level header bar ── always visible */}
+        <div className="canvas-header">
+          {/* Left: channel/DM identity — only when a channel/DM is open */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {showHeader && (
+              isDMOpen ? (
                 <>
                   <LazyAvatar
                     name={activeDmConv?.partner.displayName ?? '?'}
@@ -159,56 +159,60 @@ export default function ChatPage() {
                     <span className="text-xs text-text-muted">{isConnected ? 'live' : 'offline'}</span>
                   </div>
                 </>
-              )}
-            </div>
-
-            {/* Right: action icons */}
-            <div className="flex items-center gap-0.5 ml-auto">
-              <button className="canvas-icon-btn" title="Notifications (coming soon)">
-                <Bell className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => { setShowPinned(p => !p); closeSearch(); }}
-                className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
-                title="Pinned messages"
-              >
-                <Pin className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
-                className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
-                title="Search messages"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-              <button
-                onClick={cycleTheme}
-                className="canvas-icon-btn"
-                title={`Theme: ${theme} — click to switch`}
-              >
-                {theme === 'dark'  ? <Moon className="w-4 h-4" />
-                 : theme === 'light' ? <Sun className="w-4 h-4" />
-                 : <Monitor className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={toggleMembers}
-                className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
-                title="Toggle members"
-              >
-                <Users className="w-4 h-4" />
-              </button>
-              {isDMOpen && (
-                <button
-                  onClick={() => useUIStore.getState().setActiveDmConversation(null)}
-                  className="canvas-icon-btn ml-1"
-                  title="Close DM"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+              )
+            )}
           </div>
-        )}
+
+          {/* Right: action icons — always visible, capped to chat card width via flex */}
+          <div className="flex items-center gap-0.5">
+            {showHeader && (
+              <>
+                <button className="canvas-icon-btn" title="Notifications (coming soon)">
+                  <Bell className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => { setShowPinned(p => !p); closeSearch(); }}
+                  className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
+                  title="Pinned messages"
+                >
+                  <Pin className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
+                  className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
+                  title="Search messages"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              </>
+            )}
+            <button
+              onClick={cycleTheme}
+              className="canvas-icon-btn"
+              title={`Theme: ${theme} — click to switch`}
+            >
+              {theme === 'dark'  ? <Moon className="w-4 h-4" />
+               : theme === 'light' ? <Sun className="w-4 h-4" />
+               : <Monitor className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={toggleMembers}
+              className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
+              title="Toggle members"
+            >
+              <Users className="w-4 h-4" />
+            </button>
+            {isDMOpen && (
+              <button
+                onClick={() => useUIStore.getState().setActiveDmConversation(null)}
+                className="canvas-icon-btn ml-1"
+                title="Close DM"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* ── Card + Members row ── */}
         <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
