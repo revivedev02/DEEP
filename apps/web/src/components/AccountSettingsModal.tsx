@@ -112,7 +112,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
           {/* User mini-card at top */}
           <div className="settings-sidebar-user" onClick={() => setShowAvatarModal(true)}>
             <div className="relative group cursor-pointer">
-              <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={10} />
+              <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={8} />
               <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center
                               opacity-0 group-hover:opacity-100 transition-opacity">
                 <Camera className="w-4 h-4 text-white" />
@@ -156,139 +156,158 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
             {/* ═══ MY ACCOUNT TAB ═══ */}
             {tab === 'account' && (
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-6">
                 <div>
                   <h1 className="settings-page-title">My Account</h1>
                   <p className="settings-page-subtitle">Manage your profile and personal details.</p>
                 </div>
 
-                {/* Profile banner card */}
-                <div className="settings-profile-card">
-                  {/* Banner */}
-                  <div className="settings-profile-banner">
-                    <div className="absolute inset-0 bg-gradient-to-br from-brand/50 via-brand/20 to-transparent" />
-                    <div className="absolute inset-0" style={{
-                      backgroundImage: 'radial-gradient(circle at 80% 50%, rgb(var(--brand-rgb)/0.3) 0%, transparent 60%)',
-                    }} />
-                  </div>
+                {/* ── Two-column layout ── */}
+                <div className="settings-account-grid">
 
-                  {/* Avatar row */}
-                  <div className="settings-profile-avatar-row">
-                    <div
-                      className="relative group cursor-pointer"
-                      onClick={() => setShowAvatarModal(true)}
-                      title="Change avatar"
-                    >
-                      <div className="ring-[5px] ring-bg-secondary rounded-full">
-                        <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={20} />
+                  {/* LEFT — Profile card */}
+                  <div className="flex flex-col gap-4">
+                    <div className="settings-profile-card">
+                      {/* Banner */}
+                      <div className="settings-profile-banner">
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand/50 via-brand/20 to-transparent" />
+                        <div className="absolute inset-0" style={{
+                          backgroundImage: 'radial-gradient(circle at 80% 50%, rgb(var(--brand-rgb)/0.3) 0%, transparent 60%)',
+                        }} />
                       </div>
-                      <div className="absolute inset-0 rounded-full bg-black/70 flex flex-col items-center justify-center
-                                      opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Camera className="w-5 h-5 text-white" />
-                        <span className="text-white text-xs mt-0.5 font-medium">Change</span>
+
+                      {/* Avatar */}
+                      <div className="px-4 -mt-8 mb-2">
+                        <div
+                          className="relative group cursor-pointer inline-block"
+                          onClick={() => setShowAvatarModal(true)}
+                          title="Change avatar"
+                        >
+                          <div className="ring-4 ring-[var(--card-bg)] rounded-full">
+                            <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={16} />
+                          </div>
+                          <div className="absolute inset-0 rounded-full bg-black/70 flex flex-col items-center justify-center
+                                          opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Camera className="w-5 h-5 text-white" />
+                            <span className="text-white text-xs mt-0.5 font-medium">Change</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Name + username */}
+                      <div className="px-4 pb-4">
+                        <p className="text-lg font-bold text-text-normal">{user?.displayName}</p>
+                        <p className="text-sm text-text-muted">@{user?.username}</p>
+                        {user?.isAdmin && (
+                          <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold"
+                               style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
+                            <Shield className="w-3 h-3" /> Admin
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => { setNameEditing(true); setNameValue(user?.displayName ?? ''); }}
-                      className="settings-btn-secondary"
-                    >
-                      Edit Profile
-                    </button>
+                    {/* Member ID card */}
+                    <div className="settings-profile-card p-4">
+                      <p className="settings-section-label mb-2">Member ID</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <code className="text-sm text-text-muted font-mono tracking-wider truncate">{user?.shortId}</code>
+                        <button onClick={handleCopyId} className={`settings-btn-secondary flex-shrink-0 flex items-center gap-1.5 ${copied ? 'text-green-400' : ''}`}>
+                          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copied ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-text-muted mt-2">Share this so friends can DM you.</p>
+                    </div>
                   </div>
 
-                  {/* Name + username */}
-                  <div className="px-5 pb-5">
-                    <p className="text-xl font-bold text-text-normal">{user?.displayName}</p>
-                    <p className="text-sm text-text-muted mt-0.5">@{user?.username}</p>
+                  {/* RIGHT — Editable fields */}
+                  <div className="flex flex-col gap-5">
+
+                    {/* Display Name */}
+                    <section>
+                      <h2 className="settings-section-label">Display Name</h2>
+                      <div className="settings-field">
+                        {nameEditing ? (
+                          <div className="flex flex-col gap-3 w-full">
+                            <input
+                              ref={nameRef}
+                              value={nameValue}
+                              onChange={e => { setNameValue(e.target.value); setNameError(''); }}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveName();
+                                if (e.key === 'Escape') { setNameEditing(false); setNameValue(user?.displayName ?? ''); }
+                              }}
+                              maxLength={32}
+                              placeholder="Display name…"
+                              className="settings-input"
+                            />
+                            {nameError && <p className="text-xs text-red-400 -mt-1">{nameError}</p>}
+                            <div className="flex gap-2">
+                              <button onClick={handleSaveName} disabled={nameSaving} className="settings-btn-primary">
+                                {nameSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                Save Changes
+                              </button>
+                              <button
+                                onClick={() => { setNameEditing(false); setNameValue(user?.displayName ?? ''); setNameError(''); }}
+                                className="settings-btn-ghost"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div>
+                              <p className="text-text-normal font-medium">{user?.displayName}</p>
+                              {nameSaved && <p className="text-xs text-green-400 mt-1 flex items-center gap-1"><Check className="w-3 h-3" /> Saved!</p>}
+                            </div>
+                            <button
+                              onClick={() => { setNameEditing(true); setNameValue(user?.displayName ?? ''); }}
+                              className="settings-btn-secondary flex items-center gap-1 flex-shrink-0"
+                            >
+                              Edit <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* Username */}
+                    <section>
+                      <h2 className="settings-section-label">Username</h2>
+                      <div className="settings-field">
+                        <p className="text-text-muted font-mono text-sm">@{user?.username}</p>
+                        <span className="settings-badge">Read-only</span>
+                      </div>
+                      <p className="settings-hint">Username cannot be changed.</p>
+                    </section>
+
+                    {/* Account created / info */}
+                    <section>
+                      <h2 className="settings-section-label">Account</h2>
+                      <div className="settings-field flex-col items-start gap-3">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-text-muted">Role</span>
+                          <span className={`text-sm font-semibold ${user?.isAdmin ? 'text-brand' : 'text-text-normal'}`}>
+                            {user?.isAdmin ? 'Administrator' : 'Member'}
+                          </span>
+                        </div>
+                        <div className="w-full h-px bg-separator/30" />
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-text-muted">Avatar</span>
+                          <button
+                            onClick={() => setShowAvatarModal(true)}
+                            className="settings-btn-secondary flex items-center gap-1.5"
+                          >
+                            <Camera className="w-3.5 h-3.5" /> Change Avatar
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+
                   </div>
                 </div>
-
-                {/* ── Display Name ── */}
-                <section>
-                  <h2 className="settings-section-label">Display Name</h2>
-                  <div className="settings-field">
-                    {nameEditing ? (
-                      <div className="flex flex-col gap-3 w-full">
-                        <input
-                          ref={nameRef}
-                          value={nameValue}
-                          onChange={e => { setNameValue(e.target.value); setNameError(''); }}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleSaveName();
-                            if (e.key === 'Escape') { setNameEditing(false); setNameValue(user?.displayName ?? ''); }
-                          }}
-                          maxLength={32}
-                          placeholder="Display name…"
-                          className="settings-input"
-                        />
-                        {nameError && <p className="text-xs text-red-400 -mt-1">{nameError}</p>}
-                        <div className="flex gap-2">
-                          <button onClick={handleSaveName} disabled={nameSaving} className="settings-btn-primary">
-                            {nameSaving
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <Check className="w-3.5 h-3.5" />}
-                            Save Changes
-                          </button>
-                          <button
-                            onClick={() => { setNameEditing(false); setNameValue(user?.displayName ?? ''); setNameError(''); }}
-                            className="settings-btn-ghost"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          <p className="text-text-normal font-medium">{user?.displayName}</p>
-                          {nameSaved && <p className="text-xs text-green-400 mt-1 flex items-center gap-1"><Check className="w-3 h-3" /> Saved!</p>}
-                        </div>
-                        <button
-                          onClick={() => { setNameEditing(true); setNameValue(user?.displayName ?? ''); }}
-                          className="settings-btn-secondary flex items-center gap-1 flex-shrink-0"
-                        >
-                          Edit <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </section>
-
-                {/* ── Username ── */}
-                <section>
-                  <h2 className="settings-section-label">Username</h2>
-                  <div className="settings-field">
-                    <p className="text-text-muted font-mono text-sm">@{user?.username}</p>
-                    <span className="settings-badge">Read-only</span>
-                  </div>
-                </section>
-
-                {/* ── Member ID ── */}
-                <section>
-                  <h2 className="settings-section-label">Member ID</h2>
-                  <div className="settings-field">
-                    <code className="text-sm text-text-muted font-mono tracking-widest">{user?.shortId}</code>
-                    <button onClick={handleCopyId} className={`settings-btn-secondary flex items-center gap-1.5 ${copied ? 'text-green-400' : ''}`}>
-                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="settings-hint">Share this ID so others can find you on DEEP.</p>
-                </section>
-
-                {/* ── Account type ── */}
-                {user?.isAdmin && (
-                  <section>
-                    <h2 className="settings-section-label">Role</h2>
-                    <div className="settings-field">
-                      <div className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-brand" />
-                        <span className="text-sm font-semibold text-brand">Administrator</span>
-                      </div>
-                    </div>
-                  </section>
-                )}
               </div>
             )}
 
@@ -302,7 +321,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
                 <section>
                   <h2 className="settings-section-label">Theme</h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4 flex-wrap">
                     {(['oled', 'dark', 'light'] as const).map(t => (
                       <ThemeSwatch key={t} name={t} />
                     ))}
