@@ -1,0 +1,184 @@
+/* Settings page — full-screen, slide-in panels */
+@layer utilities {
+  /* ── Keyframes — open ── */
+  @keyframes settings-overlay-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes settings-sidebar-in {
+    from { opacity: 0; transform: translateX(-28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes settings-main-in {
+    from { opacity: 0; transform: translateX(28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── Keyframes — close ── */
+  @keyframes settings-sidebar-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-24px); }
+  }
+  @keyframes settings-main-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(24px); }
+  }
+
+  /* .closing — plays exit animations on all panels at once */
+  .settings-overlay.closing {
+    animation: fade-out 200ms ease forwards;
+  }
+  .settings-overlay.closing .settings-sidebar {
+    animation: settings-sidebar-out 180ms ease forwards;
+  }
+  .settings-overlay.closing .settings-main {
+    animation: settings-main-out 180ms ease forwards;
+  }
+
+  /* Full-screen overlay */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    padding: 8px;
+    gap: 8px;
+    background: var(--bg-canvas);
+    animation: settings-overlay-in 180ms ease both;
+  }
+
+  /* Left sidebar */
+  .settings-sidebar {
+    @apply flex flex-col flex-shrink-0 py-4 gap-1;
+    width: 240px;
+    min-width: 240px;
+    background: transparent;
+    animation: settings-sidebar-in 260ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+  }
+
+  /* Sidebar user card */
+  .settings-sidebar-user {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer
+           transition-colors duration-150 mb-2 mx-1;
+  }
+  .settings-sidebar-user:hover {
+    background: var(--bg-hover);
+  }
+
+  /* Sidebar nav label */
+  .settings-nav-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-text-muted px-3 mb-1.5;
+  }
+
+  /* Close button */
+  .settings-close-btn {
+    @apply flex items-center justify-center gap-1 mx-auto mt-auto
+           px-3 py-2 rounded-xl text-text-muted text-xs font-medium
+           transition-all duration-150 flex-col;
+  }
+  .settings-close-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-normal);
+  }
+
+  /* Main content area */
+  .settings-main {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-elevation);
+    animation: settings-main-in 280ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+    min-width: 0;
+  }
+
+  /* Content container */
+  .settings-content {
+    @apply py-10 px-10;
+  }
+
+  /* Two-column account layout */
+  .settings-account-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Page title */
+  .settings-page-title {
+    @apply text-xl font-bold text-text-normal mb-1;
+  }
+  .settings-page-subtitle {
+    @apply text-sm text-text-muted;
+  }
+
+  /* Profile card */
+  .settings-profile-card {
+    overflow: hidden;
+    border-radius: var(--card-radius);
+    background: var(--bg-secondary);
+    border: 1px solid rgb(var(--separator-rgb) / 0.3);
+  }
+  .settings-profile-banner {
+    @apply relative overflow-hidden;
+    height: 120px;
+    background: linear-gradient(135deg, rgb(var(--brand-rgb) / 0.45), rgb(var(--brand-rgb) / 0.10));
+  }
+  .settings-profile-avatar-row {
+    @apply flex items-end justify-between px-4 -mt-8 mb-2;
+  }
+
+  /* Section label */
+  .settings-section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-text-muted mb-2;
+  }
+
+  /* Field row */
+  .settings-field {
+    @apply flex items-center justify-between gap-4 px-4 py-3 rounded-lg;
+    background: var(--bg-secondary);
+    border: 1px solid rgb(var(--separator-rgb) / 0.3);
+  }
+
+  /* Hint & Badge */
+  .settings-hint {
+    @apply text-xs text-text-muted mt-1.5 px-1;
+  }
+  .settings-badge {
+    @apply text-xs px-2 py-0.5 rounded-md font-medium text-text-muted;
+    background: var(--bg-hover);
+  }
+
+  /* Input */
+  .settings-input {
+    @apply w-full bg-transparent outline-none text-sm text-text-normal
+           border-b border-brand/50 pb-1 focus:border-brand transition-colors;
+  }
+
+  /* Buttons */
+  .settings-btn-primary {
+    @apply flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+           text-white transition-all duration-150 disabled:opacity-60;
+    background: rgb(var(--brand-rgb));
+  }
+  .settings-btn-primary:hover:not(:disabled) {
+    background: rgb(var(--brand-hover-rgb));
+  }
+  .settings-btn-secondary {
+    @apply text-xs px-3 py-1.5 rounded-lg font-medium text-text-muted
+           hover:text-text-normal transition-colors duration-150;
+    background: var(--bg-hover);
+  }
+  .settings-btn-secondary:hover {
+    background: var(--bg-active);
+  }
+  .settings-btn-ghost {
+    @apply text-sm px-3 py-2 rounded-lg font-medium text-text-muted
+           hover:text-text-normal transition-all duration-150;
+    background: transparent;
+  }
+  .settings-btn-ghost:hover {
+    background: var(--bg-hover);
+  }
+}

@@ -1,0 +1,121 @@
+/* ── Modals ── */
+@layer components {
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/70
+           animate-fade-in backdrop-blur-sm;
+  }
+  .modal-box {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-md mx-4 animate-scale-in;
+  }
+  .modal-header {
+    @apply px-6 pt-6 pb-4 border-b border-separator;
+  }
+  .modal-body {
+    @apply px-6 py-4;
+  }
+  .modal-footer {
+    @apply px-6 pb-6 pt-4 flex justify-end gap-3;
+  }
+
+  /* ── Delete Confirm Modal ── */
+  .delete-modal {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-sm mx-4 border border-separator/30;
+  }
+  .delete-modal-header {
+    @apply flex items-center justify-between px-5 pt-5 pb-4
+           border-b border-separator/30;
+  }
+  .delete-modal-body {
+    @apply px-5 py-4;
+  }
+  .delete-modal-preview {
+    @apply bg-bg-primary rounded-lg px-3 py-2.5 border border-separator/40;
+  }
+  .delete-modal-footer {
+    @apply flex items-center justify-between px-5 pb-5 pt-3
+           border-t border-separator/20;
+  }
+
+  /* ── Dropdown ── */
+  .dropdown-menu {
+    @apply bg-bg-secondary border border-separator/50 rounded-md shadow-elevation-high
+           py-1 flex flex-col;
+  }
+  .dropdown-item {
+    @apply flex items-center gap-2.5 px-3 py-2 text-sm text-text-normal
+           hover:bg-bg-hover cursor-pointer transition-colors duration-100 rounded-sm mx-1;
+  }
+  .dropdown-divider {
+    @apply h-px bg-separator/40 my-1 mx-2;
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-bg-floating rounded
+           shadow-elevation-high pointer-events-none whitespace-nowrap
+           opacity-0 group-hover:opacity-100 transition-opacity duration-150;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded
+           text-sm font-medium transition-all duration-150 select-none cursor-pointer
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-hover active:bg-brand-active;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-text-muted hover:bg-bg-modifier hover:text-text-normal;
+  }
+  .btn-danger {
+    @apply btn bg-status-red/20 text-status-red hover:bg-status-red hover:text-white;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* ── Form ── */
+  .form-label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5;
+  }
+  .form-input {
+    @apply w-full px-3 py-2 rounded bg-bg-tertiary text-sm text-text-normal
+           placeholder:text-text-muted border border-separator
+           focus:outline-none focus:border-brand transition-colors duration-150;
+  }
+  .form-hint {
+    @apply text-xs text-text-muted mt-1;
+  }
+
+  /* ── Admin Panel ── */
+  .admin-table {
+    @apply w-full text-sm text-left border-collapse;
+  }
+  .admin-table th {
+    @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-muted
+           border-b border-separator;
+  }
+  .admin-table td {
+    @apply px-4 py-3 text-text-normal border-b border-separator/50;
+  }
+  .admin-table tr:hover td {
+    @apply bg-bg-modifier;
+  }
+
+  /* ── Login Page ── */
+  .login-bg {
+    @apply min-h-full flex items-center justify-center;
+    background: var(--bg-canvas);
+  }
+  .login-card {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    @apply shadow-elevation-high w-full max-w-md mx-4 p-8
+           animate-slide-up border border-separator/30;
+  }
+}
