@@ -71,15 +71,21 @@ export default function DMPane({
   const [deleteTarget, setDeleteTarget] = useState<DMMessage | null>(null);
   const SKIP_KEY = 'deep:deleteNoConfirm';
 
-  // ── Auto-scroll: new msg → bottom, prepend → anchor ───────────────────────
+  // ── Auto-scroll: initial load → bottom, new msg → bottom, prepend → anchor ──
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const prevCount = prevCountRef.current;
     const delta = messages.length - prevCount;
-    if (delta === 1) {
+
+    if (prevCount === 0 && messages.length > 0) {
+      // Initial load — instant jump to bottom, no animation
+      el.scrollTop = el.scrollHeight;
+    } else if (delta === 1) {
+      // Single new message — scroll to bottom
       el.scrollTop = el.scrollHeight;
     } else if (delta > 1 && prevCount > 0) {
+      // Older messages prepended — anchor to first previously-visible message
       const anchorMsg = messages[delta];
       if (anchorMsg) {
         const msgEl = document.getElementById(`msg-${anchorMsg.id}`);

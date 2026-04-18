@@ -150,7 +150,7 @@
     @apply text-base font-semibold text-text-normal;
   }
   .channel-header-topic {
-    @apply hidden md:flex items-center gap-1 text-sm text-text-muted
+    @apply hidden md:flex items-center gap-1 text-[13px] text-text-muted
            pl-3 ml-2 border-l border-separator truncate;
   }
 
@@ -178,8 +178,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
     color: var(--text-muted);
     cursor: pointer;
@@ -210,7 +210,7 @@
     margin: 1px 8px;
     padding: 7px 10px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text-muted);
     cursor: pointer;
     select: none;
@@ -226,7 +226,7 @@
     font-weight: 500;
   }
   .channel-item .channel-icon {
-    @apply w-4 h-4 flex-shrink-0;
+    @apply w-5 h-5 flex-shrink-0;
     opacity: 0.6;
   }
   .channel-item.active .channel-icon {
@@ -235,7 +235,7 @@
 
   /* ── User Panel ── */
   .user-panel {
-    @apply flex items-center gap-2 px-2 py-2 mt-auto
+    @apply flex items-center gap-2.5 px-2.5 py-2.5 mt-auto
            hover:bg-bg-modifier transition-colors duration-150 cursor-pointer
            rounded-lg mx-2 mb-1;
   }
@@ -243,13 +243,13 @@
     @apply relative flex-shrink-0;
   }
   .avatar img, .avatar-placeholder {
-    @apply w-8 h-8 rounded-full object-cover;
+    @apply w-9 h-9 rounded-full object-cover;
   }
   .avatar-placeholder {
-    @apply flex items-center justify-center bg-brand text-white text-sm font-semibold w-8 h-8 rounded-full;
+    @apply flex items-center justify-center bg-brand text-white text-sm font-semibold w-9 h-9 rounded-full;
   }
   .status-dot {
-    @apply absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full;
+    @apply absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full;
     border: 2px solid var(--bg-canvas);
   }
   .status-dot.online  { @apply bg-status-green; }
@@ -281,7 +281,7 @@
     @apply opacity-100 pointer-events-auto;
   }
   .message-action-btn {
-    @apply flex items-center justify-center w-7 h-7 rounded text-text-muted
+    @apply flex items-center justify-center w-8 h-8 rounded text-text-muted
            hover:bg-bg-hover hover:text-text-normal transition-colors duration-100 cursor-pointer;
   }
   .message-avatar {
@@ -298,22 +298,22 @@
     @apply flex items-baseline gap-2;
   }
   .message-author {
-    @apply text-sm font-semibold text-text-normal cursor-pointer hover:underline;
+    @apply text-base font-semibold text-text-normal cursor-pointer hover:underline;
   }
   .message-author.admin {
     @apply text-brand;
   }
   .message-timestamp {
-    @apply text-2xs text-text-muted;
+    @apply text-xs text-text-muted;
   }
   .message-content {
-    @apply text-sm text-text-normal leading-relaxed break-words;
+    @apply text-base text-text-normal leading-relaxed break-words;
   }
   .message-content-continuation {
-    @apply text-sm text-text-normal leading-relaxed break-words pl-14;
+    @apply text-base text-text-normal leading-relaxed break-words pl-14;
   }
   .continuation-timestamp {
-    @apply hidden text-2xs text-text-muted w-10 flex-shrink-0 text-right leading-5
+    @apply hidden text-xs text-text-muted w-10 flex-shrink-0 text-right leading-5
            group-hover:inline-block select-none cursor-default;
   }
 
@@ -357,7 +357,7 @@
   /* ── Reply Banner (above input, "Replying to X") ── */
   .reply-banner {
     @apply flex items-center gap-2 px-4 py-1.5 bg-bg-modifier
-           border-t border-separator/30 text-sm text-text-muted;
+           border-t border-separator/30 text-[15px] text-text-muted;
   }
   .reply-banner-text {
     @apply flex items-center gap-1 truncate flex-1 text-xs;
@@ -394,7 +394,7 @@
            overflow-hidden z-50;
   }
   .mention-item {
-    @apply flex items-center gap-2.5 px-3 py-2 cursor-pointer text-sm
+    @apply flex items-center gap-2.5 px-3 py-2 cursor-pointer text-[15px]
            text-text-normal transition-colors duration-75;
   }
   .mention-item:hover, .mention-item.active {
@@ -471,9 +471,9 @@
     background: var(--bg-active);
   }
   .message-input {
-    @apply flex-1 bg-transparent text-sm text-text-normal placeholder:text-text-muted
+    @apply flex-1 bg-transparent text-base text-text-normal placeholder:text-text-muted
            outline-none resize-none leading-relaxed;
-    min-height: 22px;
+    min-height: 24px;
     max-height: 180px;
   }
   .input-action-btn {
@@ -537,7 +537,7 @@
     background: var(--bg-hover);
   }
   .member-name {
-    @apply text-sm text-text-muted;
+    @apply text-[15px] text-text-muted;
   }
   .member-item:hover .member-name {
     @apply text-text-normal;
@@ -557,7 +557,7 @@
            py-1 flex flex-col;
   }
   .dropdown-item {
-    @apply flex items-center gap-2.5 px-3 py-2 text-sm text-text-normal
+    @apply flex items-center gap-2.5 px-3 py-2 text-[15px] text-text-normal
            hover:bg-bg-hover cursor-pointer transition-colors duration-100 rounded-sm mx-1;
   }
   .dropdown-divider {
@@ -585,7 +585,7 @@
     @apply text-brand;
   }
   .reaction-add-btn {
-    @apply inline-flex items-center justify-center w-7 h-7 rounded-full
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-full
            bg-bg-modifier border border-separator/50 text-text-muted
            hover:border-brand/60 hover:text-brand hover:bg-brand/10
            transition-colors duration-100 cursor-pointer select-none;
@@ -593,7 +593,7 @@
 
   /* ── Inline message edit ── */
   .message-edit-textarea {
-    @apply w-full bg-bg-modifier text-text-normal text-sm rounded-lg px-3 py-2
+    @apply w-full bg-bg-modifier text-text-normal text-base rounded-lg px-3 py-2
            outline-none resize-none leading-relaxed border border-brand/50
            focus:border-brand transition-colors;
     min-height: 42px;
@@ -988,12 +988,12 @@
 
   /* Input */
   .settings-input {
-    @apply w-full bg-transparent outline-none text-sm text-text-normal
+    @apply w-full bg-transparent outline-none text-[15px] text-text-normal
            border-b border-brand/50 pb-1 focus:border-brand transition-colors;
   }
 
   .settings-btn-primary {
-    @apply flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+    @apply flex items-center gap-1.5 px-4 py-2 rounded-lg text-[15px] font-semibold
            text-white transition-all duration-150 disabled:opacity-60;
     background: rgb(var(--brand-rgb));
   }

@@ -151,7 +151,7 @@ export default function ChatPage() {
                 </>
               ) : (
                 <>
-                  <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
+                  <Hash className="w-6 h-6 text-text-muted flex-shrink-0" />
                   <span className="text-base font-semibold text-text-normal truncate">{channelName}</span>
                   {/* Live indicator */}
                   <div className="flex items-center gap-1.5 ml-2">
@@ -165,37 +165,37 @@ export default function ChatPage() {
             {/* Right: action icons */}
             <div className="flex items-center gap-0.5 ml-auto">
               <button className="canvas-icon-btn" title="Notifications (coming soon)">
-                <Bell className="w-4 h-4" />
+                <Bell className="w-5 h-5" />
               </button>
               <button
                 onClick={() => { setShowPinned(p => !p); closeSearch(); }}
                 className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
                 title="Pinned messages"
               >
-                <Pin className="w-4 h-4" />
+                <Pin className="w-5 h-5" />
               </button>
               <button
                 onClick={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
                 className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
                 title="Search messages"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-5 h-5" />
               </button>
               <button
                 onClick={cycleTheme}
                 className="canvas-icon-btn"
                 title={`Theme: ${theme} — click to switch`}
               >
-                {theme === 'dark'  ? <Moon className="w-4 h-4" />
-                 : theme === 'light' ? <Sun className="w-4 h-4" />
-                 : <Monitor className="w-4 h-4" />}
+                {theme === 'dark'  ? <Moon className="w-5 h-5" />
+                 : theme === 'light' ? <Sun className="w-5 h-5" />
+                 : <Monitor className="w-5 h-5" />}
               </button>
               <button
                 onClick={toggleMembers}
                 className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
                 title="Toggle members"
               >
-                <Users className="w-4 h-4" />
+                <Users className="w-5 h-5" />
               </button>
               {isDMOpen && (
                 <button
@@ -203,7 +203,7 @@ export default function ChatPage() {
                   className="canvas-icon-btn ml-1"
                   title="Close DM"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               )}
             </div>
