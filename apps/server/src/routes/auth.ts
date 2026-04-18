@@ -33,6 +33,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
         displayName: user.displayName,
         username:    user.username,
         avatarUrl:   user.avatarUrl,
+        bannerUrl:   user.bannerUrl,
         isAdmin:     user.isAdmin,
       },
     });
@@ -51,6 +52,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       displayName: user.displayName,
       username:    user.username,
       avatarUrl:   user.avatarUrl,
+      bannerUrl:   user.bannerUrl,
       isAdmin:     user.isAdmin,
     });
   });
@@ -72,6 +74,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       displayName: user.displayName,
       username:    user.username,
       avatarUrl:   user.avatarUrl,
+      bannerUrl:   user.bannerUrl,
       isAdmin:     user.isAdmin,
     });
   });
@@ -97,4 +100,3 @@ export function addAuthDecorator(app: FastifyInstance) {
     }
   });
 }
-
