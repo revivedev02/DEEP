@@ -117,35 +117,29 @@ export default function ChatPage() {
       {/* ── Channel Sidebar — on canvas ── */}
       <ChannelSidebar />
 
-      {/* ── Center column: header bar (canvas) + card + search ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+      {/* ── Center column: [chat column + members panel] side by side ── */}
+      <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
 
-        <ChatHeader
-          showHeader={showHeader}
-          showSearch={showSearch}
-          showPinned={showPinned}
-          membersVisible={membersVisible}
-          onToggleSearch={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
-          onTogglePinned={() => { setShowPinned(p => !p); closeSearch(); }}
-          onToggleMembers={toggleMembers}
-        />
+        {/* Chat column: header + card stacked — header width = card width ✅ */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, overflow: 'hidden' }}>
 
-        {/* ── Card + Members row ── */}
-        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
+          <ChatHeader
+            showHeader={showHeader}
+            showSearch={showSearch}
+            showPinned={showPinned}
+            membersVisible={membersVisible}
+            onToggleSearch={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
+            onTogglePinned={() => { setShowPinned(p => !p); closeSearch(); }}
+            onToggleMembers={toggleMembers}
+          />
 
           {/* Chat card — search overlay is scoped inside here */}
           <div className="chat-card" style={{ position: 'relative' }}>
 
-            {/* ── Search bar — floats over the card only, doesn't affect layout ── */}
+            {/* Search bar — floats over the card only */}
             {showSearch && showHeader && (
               <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 50,
-                }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }}
                 className={isSearchClosing ? 'animate-slide-up-out' : 'animate-slide-down'}
               >
                 <SearchBar
@@ -185,20 +179,21 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Members panel — always mounted, width animates smoothly */}
-          <div
-            style={{
-              width: membersVisible ? 220 : 0,
-              flexShrink: 0,
-              overflow: 'hidden',
-              transition: 'width 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease',
-              opacity: membersVisible ? 1 : 0,
-            }}
-          >
-            <MembersPanel />
-          </div>
+        </div>{/* end chat column */}
 
+        {/* Members panel — sibling to chat column, NOT to card */}
+        <div
+          style={{
+            width: membersVisible ? 220 : 0,
+            flexShrink: 0,
+            overflow: 'hidden',
+            transition: 'width 220ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease',
+            opacity: membersVisible ? 1 : 0,
+          }}
+        >
+          <MembersPanel />
         </div>
+
       </div>
     </div>
   );
