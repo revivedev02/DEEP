@@ -20,10 +20,10 @@
     top: 0;
     height: 0;
     border-radius: 6px;
-    background: rgb(var(--separator-rgb) / 0.10);
+    /* var(--bg-hover) is theme-aware: white-5% on OLED, white-6% on dark, black-6% on light */
+    background: var(--bg-hover);
     pointer-events: none;
     opacity: 0;
-    z-index: 0;
     /* Position + height transition = smooth glide between messages */
     transition: transform 0.18s ease, height 0.18s ease, opacity 0.15s ease;
     will-change: transform, opacity;
