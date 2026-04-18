@@ -52,10 +52,14 @@ export function MessageList({
   currentUserId, isAdmin, channelName, onLoadOlder, ...handlers
 }: MessageListProps) {
   const { messages, isLoadingMessages, isLoadingOlder, hasMore, loadError } = useChatStore();
-  const scrollRef       = useScrollToBottom<HTMLDivElement>([messages.length]);
+  const scrollRef          = useScrollToBottom<HTMLDivElement>([messages.length]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const contentRef      = useRef<HTMLDivElement>(null);
-  const prevMsgCountRef = useRef(messages.length);
+  const contentRef         = useRef<HTMLDivElement>(null);
+  const prevMsgCountRef    = useRef(messages.length);
+  // Keep currentUserId in a ref so the scroll useEffect always sees a fresh value
+  // without needing it in its dependency array (avoids re-mounting the effect)
+  const currentUserIdRef   = useRef(currentUserId);
+  currentUserIdRef.current = currentUserId;
 
   // ── ResizeObserver: re-scroll whenever content height grows ────────────────
   // This catches: image loads (height unknown until img onLoad), reaction bars
@@ -97,14 +101,17 @@ export function MessageList({
       });
     } else if (delta === 1) {
       const lastMsg = messages[messages.length - 1];
-      if (lastMsg?.pending) {
-        // User sent a message — ALWAYS scroll to bottom, even if they were reading old msgs
+      // Scroll to bottom if:
+      //  a) message is pending (media optimistic) — user's own upload
+      //  b) message userId matches current user — user's own text message
+      //     (text messages have no pending flag; they arrive via socket like others)
+      const isOwnMessage = !!lastMsg?.pending || lastMsg?.userId === currentUserIdRef.current;
+      if (isOwnMessage) {
         requestAnimationFrame(() => {
           if (scrollContainerRef.current) scrollToEnd(scrollContainerRef.current);
         });
       }
-      // Non-pending delta=1 (incoming from others) → useScrollToBottom handles it
-      // (only scrolls if user is already near bottom — correct Discord-like behaviour)
+      // else: useScrollToBottom handles nearBottom check for incoming messages
     } else if (delta > 1 && prevCount > 0) {
       // Batch prepend (older messages loaded) — anchor to first previously-visible message
       const anchorMsg = messages[delta];

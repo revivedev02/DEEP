@@ -105,8 +105,9 @@ export default function DMPane({
       });
     } else if (delta === 1) {
       const lastMsg = messages[messages.length - 1];
-      if (lastMsg?.pending) {
-        // User just sent — force scroll to bottom
+      const isOwnMessage = !!lastMsg?.pending || lastMsg?.userId === user?.id;
+      if (isOwnMessage) {
+        // User sent a message (text or media) — always scroll to bottom
         requestAnimationFrame(() => {
           if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         });
@@ -258,19 +259,7 @@ export default function DMPane({
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
-        {/* Conversation start banner */}
-        {!hasMore && (
-          <div className="px-6 pt-8 pb-4 flex-shrink-0">
-            <LazyAvatar name={partner?.displayName ?? '?'} avatarUrl={partner?.avatarUrl} size={20} />
-            <h2 className="text-2xl font-bold text-text-normal mt-4 mb-1">{partner?.displayName}</h2>
-            <p className="text-text-muted text-sm">
-              This is the beginning of your direct message history with{' '}
-              <strong className="text-text-normal">@{partner?.username}</strong>.
-            </p>
-          </div>
-        )}
-
-        {/* Message list */}
+        {/* Message list — full height, partner info is already in the header */}
         <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}>
           {/* Inner wrapper observed by ResizeObserver for image-load / reaction height changes */}
           <div ref={contentRef}>
@@ -279,6 +268,16 @@ export default function DMPane({
               {isLoadingOlder && (
                 <div className="flex justify-center py-4">
                   <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {/* Compact beginning-of-history label — scrolls with messages, only visible at the top */}
+              {!hasMore && (
+                <div className="flex items-center gap-3 px-4 pt-8 pb-5 select-none">
+                  <LazyAvatar name={partner?.displayName ?? '?'} avatarUrl={partner?.avatarUrl} size={10} />
+                  <div>
+                    <p className="text-sm font-semibold text-text-normal">{partner?.displayName}</p>
+                    <p className="text-xs text-text-muted">This is the very beginning of your conversation with <strong>@{partner?.username}</strong>.</p>
+                  </div>
                 </div>
               )}
               {groups.map(({ dateLabel, msg, isFirst }) => (
