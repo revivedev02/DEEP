@@ -54,6 +54,27 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       isAdmin:     user.isAdmin,
     });
   });
+
+  // PATCH /api/me  { displayName? } -> updated user
+  app.patch<{ Body: { displayName?: string } }>('/api/me', {
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    const payload = req.user as { sub: string };
+    const { displayName } = req.body;
+    if (!displayName?.trim()) return reply.code(400).send({ error: 'displayName required' });
+    const user = await prisma.user.update({
+      where: { id: payload.sub },
+      data:  { displayName: displayName.trim() },
+    });
+    return reply.send({
+      id:          user.id,
+      shortId:     user.shortId,
+      displayName: user.displayName,
+      username:    user.username,
+      avatarUrl:   user.avatarUrl,
+      isAdmin:     user.isAdmin,
+    });
+  });
 }
 
 // Augment Fastify to add authenticate decorator + jwt user type

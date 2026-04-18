@@ -16,7 +16,8 @@ interface AuthState {
   login:        (token: string, user: AuthUser) => void;
   logout:       () => void;
   isAuthenticated: () => boolean;
-  updateAvatar: (avatarUrl: string) => void;
+  updateAvatar:       (avatarUrl: string) => void;
+  updateDisplayName:  (displayName: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,6 +30,8 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: () => !!get().token && !!get().user,
       updateAvatar: (avatarUrl) =>
         set((s) => s.user ? { user: { ...s.user, avatarUrl } } : {}),
+      updateDisplayName: (displayName) =>
+        set((s) => s.user ? { user: { ...s.user, displayName } } : {}),
     }),
     { name: 'pdl-auth' }
   )
