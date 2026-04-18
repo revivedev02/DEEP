@@ -21,7 +21,7 @@ const dmMsgInclude = {
 export function setupDMSocketHandlers(io: Server, socket: Socket) {
   const userId = (socket as any).userId as string;
 
-  // Join a DM conversation room
+  // ── Join DM room ────────────────────────────────────────────────────────────
   socket.on('dm:join', async ({ conversationId }: { conversationId: string }) => {
     const p = await prisma.dMParticipant.findUnique({
       where: { conversationId_userId: { conversationId, userId } },
@@ -32,7 +32,7 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
     socket.join(`dm:${conversationId}`);
   });
 
-  // Send a DM message (with optional reply)
+  // ── Send message ────────────────────────────────────────────────────────────
   socket.on('dm:send', async (data: unknown) => {
     const parsed = dmSendSchema.safeParse(data);
     if (!parsed.success) return;
@@ -48,42 +48,52 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
         data: { content, userId, conversationId, ...(replyToId ? { replyToId } : {}) },
         include: dmMsgInclude,
       });
-
       io.to(`dm:${conversationId}`).emit('dm:message', message);
-      io.to(`dm:${conversationId}`).emit('dm:conversation:update', {
-        conversationId,
-        lastMessage: message,
-      });
+      io.to(`dm:${conversationId}`).emit('dm:conversation:update', { conversationId, lastMessage: message });
     } catch (err) {
-      console.error('[dm:send] error:', err);
+      console.error('[dm:send]', err);
     }
   });
 
-  // Edit a DM message — saves to DB + broadcasts to conversation room
+  // ── Edit message ────────────────────────────────────────────────────────────
   socket.on('dm:edit', async ({ messageId, content }: { messageId: string; content: string }) => {
     if (!messageId || !content?.trim()) return;
     try {
       const msg = await prisma.directMessage.findUnique({ where: { id: messageId } });
-      if (!msg || msg.userId !== userId) return; // only author can edit
+      if (!msg || msg.userId !== userId) return;
       const updated = await prisma.directMessage.update({
         where: { id: messageId },
-        data: { content: content.trim(), editedAt: new Date() },
+        data:  { content: content.trim(), editedAt: new Date() },
       });
       io.to(`dm:${updated.conversationId}`).emit('dm:message:edited', {
         messageId: updated.id,
-        content: updated.content,
-        editedAt: updated.editedAt?.toISOString(),
+        content:   updated.content,
+        editedAt:  updated.editedAt?.toISOString(),
       });
     } catch (err) {
-      console.error('[dm:edit] error:', err);
+      console.error('[dm:edit]', err);
     }
   });
 
-  // DM typing indicator
+  // ── Delete message ──────────────────────────────────────────────────────────
+  // Called from REST but we also support socket-side for instant partner sync
+  socket.on('dm:delete', async ({ messageId }: { messageId: string }) => {
+    if (!messageId) return;
+    try {
+      const msg = await prisma.directMessage.findUnique({ where: { id: messageId } });
+      if (!msg || msg.userId !== userId) return;
+      await prisma.directMessage.delete({ where: { id: messageId } });
+      io.to(`dm:${msg.conversationId}`).emit('dm:message:deleted', { messageId });
+    } catch (err) {
+      console.error('[dm:delete]', err);
+    }
+  });
+
+  // ── Typing indicator ────────────────────────────────────────────────────────
   const dmTypingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   socket.on('dm:typing', ({ conversationId, typing }: { conversationId: string; typing: boolean }) => {
-    const room = `dm:${conversationId}`;
+    const room        = `dm:${conversationId}`;
     const displayName = (socket as any).displayName as string;
     socket.to(room).emit('dm:typing:update', { displayName, typing });
     if (typing) {

@@ -10,15 +10,23 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { isTodayIST, isYesterdayIST, isSameAuthorWithin5Min, IST } from './messageUtils';
 
 // ── DMMessage → ChatMessage adapter ──────────────────────────────────────────
+// IMPORTANT: preserve all real values — never hardcode pinned:false etc.
 function dmToChatMsg(m: DMMessage) {
   return {
     ...m,
     channelId: m.conversationId,
-    pinned: false,
-    reactions: m.reactions ?? [],
-    replyToId: m.replyToId ?? null,
+    // pinned, reactions, replyToId spread from `...m`
     replyTo: m.replyTo
-      ? { ...m.replyTo, channelId: m.conversationId, pinned: false, reactions: [], replyToId: null, replyTo: null, editedAt: null, createdAt: '' }
+      ? {
+          ...m.replyTo,
+          channelId: m.conversationId,
+          pinned: false,
+          reactions: [],
+          replyToId: null,
+          replyTo: null,
+          editedAt: null,
+          createdAt: '',
+        }
       : null,
   };
 }
@@ -46,34 +54,32 @@ interface DMPaneProps {
   onClosePinned?: () => void;
 }
 
-export default function DMPane({ conversationId, partner, onSend, onEdit, onTyping, onLoadOlder, showPinnedPanel, onClosePinned }: DMPaneProps) {
+export default function DMPane({
+  conversationId, partner, onSend, onEdit, onTyping, onLoadOlder,
+  showPinnedPanel, onClosePinned,
+}: DMPaneProps) {
   const { messages, isLoading, isLoadingOlder, hasMore, typingUsers } = useDMStore();
   const { user, token } = useAuthStore();
 
   const scrollRef    = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef(messages.length);
 
-  // ── Reply state ────────────────────────────────────────────────────────────
-  const [replyingTo, setReplyingTo] = useState<DMMessage | null>(null);
-
-  // ── Edit state ─────────────────────────────────────────────────────────────
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  // ── Reaction picker ────────────────────────────────────────────────────────
-  const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
-
-  // ── Delete confirm ─────────────────────────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [replyingTo,   setReplyingTo]   = useState<DMMessage | null>(null);
+  const [editingId,    setEditingId]    = useState<string | null>(null);
+  const [reactingMsgId,setReactingMsgId]= useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DMMessage | null>(null);
   const SKIP_KEY = 'deep:deleteNoConfirm';
 
-  // ── Auto-scroll ────────────────────────────────────────────────────────────
+  // ── Auto-scroll: new msg → bottom, prepend → anchor ───────────────────────
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const prevCount = prevCountRef.current;
     const delta = messages.length - prevCount;
-    if (delta === 1) el.scrollTop = el.scrollHeight;           // new message → scroll bottom
-    else if (delta > 1 && prevCount > 0) {                     // prepend → anchor
+    if (delta === 1) {
+      el.scrollTop = el.scrollHeight;
+    } else if (delta > 1 && prevCount > 0) {
       const anchorMsg = messages[delta];
       if (anchorMsg) {
         const msgEl = document.getElementById(`msg-${anchorMsg.id}`);
@@ -83,6 +89,13 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
     prevCountRef.current = messages.length;
   }, [messages.length]);
 
+  // ── Reset reply/edit on conversation switch ────────────────────────────────
+  useEffect(() => {
+    setReplyingTo(null);
+    setEditingId(null);
+    setReactingMsgId(null);
+  }, [conversationId]);
+
   // ── Infinite scroll ────────────────────────────────────────────────────────
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -90,7 +103,7 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
     if (el.scrollTop < 100 && hasMore && !isLoadingOlder) onLoadOlder();
   }, [hasMore, isLoadingOlder, onLoadOlder]);
 
-  // ── Group messages ─────────────────────────────────────────────────────────
+  // ── Message groups (date + consecutive-author grouping) ───────────────────
   type Group = { dateLabel: string | null; msg: ReturnType<typeof dmToChatMsg>; isFirst: boolean };
   const groups = useMemo<Group[]>(() => {
     const result: Group[] = [];
@@ -99,7 +112,9 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
       const d = new Date(msg.createdAt);
       const dateLabel = isTodayIST(d) ? 'Today'
                       : isYesterdayIST(d) ? 'Yesterday'
-                      : new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: IST }).format(d);
+                      : new Intl.DateTimeFormat('en-IN', {
+                          day: 'numeric', month: 'long', year: 'numeric', timeZone: IST,
+                        }).format(d);
       const showDate = dateLabel !== lastDate;
       if (showDate) lastDate = dateLabel;
       const prev    = messages[i - 1];
@@ -110,20 +125,13 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
   }, [messages]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
   const handleSend = useCallback((content: string) => {
     onSend(content, replyingTo?.id);
     setReplyingTo(null);
   }, [onSend, replyingTo]);
 
-  const handleDelete = useCallback((id: string) => {
-    if (localStorage.getItem(SKIP_KEY) === 'true') {
-      doDelete(id);
-      return;
-    }
-    const msg = useDMStore.getState().messages.find(m => m.id === id);
-    if (msg) setDeleteTarget(msg);
-  }, []);
-
+  // Delete — optimistic, then REST; partner sees via dm:message:deleted socket
   const doDelete = useCallback(async (id: string) => {
     if (!token) return;
     useDMStore.getState().applyDelete(id);
@@ -132,8 +140,14 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-    } catch { /* already removed optimistically */ }
+    } catch { /* optimistic already applied */ }
   }, [token]);
+
+  const handleDelete = useCallback((id: string) => {
+    if (localStorage.getItem(SKIP_KEY) === 'true') { doDelete(id); return; }
+    const msg = useDMStore.getState().messages.find(m => m.id === id);
+    if (msg) setDeleteTarget(msg);
+  }, [doDelete]);
 
   const handleModalConfirm = useCallback((dontAskAgain: boolean) => {
     if (!deleteTarget) return;
@@ -142,26 +156,28 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
     setDeleteTarget(null);
   }, [deleteTarget, doDelete]);
 
+  // Edit — optimistic + socket broadcast via onEdit
   const handleStartEdit  = useCallback((id: string) => setEditingId(id), []);
   const handleCancelEdit = useCallback(() => setEditingId(null), []);
-
-  const handleSaveEdit = useCallback((id: string, content: string) => {
+  const handleSaveEdit   = useCallback((id: string, content: string) => {
     setEditingId(null);
-    // Optimistic update + socket broadcast (server saves + emits to partner)
     useDMStore.getState().applyEdit(id, content, new Date().toISOString());
     onEdit(id, content);
   }, [onEdit]);
 
+  // React — optimistic + REST; server returns authoritative reaction list
   const handleReact = useCallback(async (msgId: string, emoji: string) => {
     if (!token) return;
-    const current = useDMStore.getState().messages.find(m => m.id === msgId);
+    const store = useDMStore.getState();
+    const current = store.messages.find(m => m.id === msgId);
     if (current) {
-      const userId = user?.id ?? '';
-      const already = current.reactions?.some(r => r.emoji === emoji && r.userId === userId);
-      const next = already
-        ? (current.reactions ?? []).filter(r => !(r.emoji === emoji && r.userId === userId))
-        : [...(current.reactions ?? []), { emoji, userId }];
-      useDMStore.getState().applyReaction(msgId, next);
+      const userId  = user?.id ?? '';
+      const already = current.reactions.some(r => r.emoji === emoji && r.userId === userId);
+      store.applyReaction(msgId,
+        already
+          ? current.reactions.filter(r => !(r.emoji === emoji && r.userId === userId))
+          : [...current.reactions, { emoji, userId }],
+      );
     }
     try {
       const res = await fetch(`/api/dm/messages/${msgId}/reactions`, {
@@ -176,14 +192,17 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
     } catch { /* keep optimistic */ }
   }, [token, user?.id]);
 
+  // Reply
   const handleReply = useCallback((msg: DMMessage) => setReplyingTo(msg), []);
+
+  // Reaction picker
   const handleOpenReactionPicker  = useCallback((id: string) => setReactingMsgId(id), []);
   const handleCloseReactionPicker = useCallback(() => setReactingMsgId(null), []);
 
+  // Pin — optimistic + REST; partner sees via dm:message:pinned socket
   const handlePin = useCallback(async (msg: { id: string; pinned: boolean }) => {
     if (!token) return;
     const newPinned = !msg.pinned;
-    // Optimistic update
     useDMStore.getState().applyPinToggle(msg.id, newPinned);
     try {
       const res = await fetch(`/api/dm/messages/${msg.id}/pin`, {
@@ -192,18 +211,16 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
       });
       if (!res.ok) throw new Error('pin failed');
     } catch {
-      // Rollback
-      useDMStore.getState().applyPinToggle(msg.id, msg.pinned);
+      useDMStore.getState().applyPinToggle(msg.id, msg.pinned); // rollback
     }
   }, [token]);
 
-  const noop = useCallback(() => {}, []);
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
-        {/* DM conversation start banner */}
+        {/* Conversation start banner */}
         {!hasMore && (
           <div className="px-6 pt-8 pb-4 flex-shrink-0">
             <LazyAvatar name={partner?.displayName ?? '?'} avatarUrl={partner?.avatarUrl} size={20} />
@@ -215,7 +232,7 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
           </div>
         )}
 
-        {/* Messages */}
+        {/* Message list */}
         <div ref={scrollRef} className="messages-container scrollbar-thin" onScroll={handleScroll}>
           {isLoading ? <SkMessageList /> : (
             <>
@@ -233,7 +250,10 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
                     currentUserId={user?.id ?? ''}
                     isAdmin={user?.isAdmin ?? false}
                     onDelete={handleDelete}
-                    onReply={() => handleReply(useDMStore.getState().messages.find(m => m.id === msg.id)!)}
+                    onReply={() => {
+                      const raw = useDMStore.getState().messages.find(m => m.id === msg.id);
+                      if (raw) handleReply(raw);
+                    }}
                     onPin={handlePin as any}
                     editingId={editingId}
                     onStartEdit={handleStartEdit}
@@ -255,7 +275,9 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
           {typingUsers.length > 0 && (
             <>
               <div className="typing-dots">
-                <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
               </div>
               <span><strong>{typingUsers[0]}</strong> is typing…</span>
             </>
@@ -268,7 +290,9 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
             <Reply className="w-4 h-4 text-brand flex-shrink-0" />
             <span className="reply-banner-text">
               Replying to <strong className="text-text-normal">{replyingTo.user.displayName}</strong>
-              <span className="ml-2 text-text-muted truncate max-w-xs inline-block align-bottom">{replyingTo.content}</span>
+              <span className="ml-2 text-text-muted truncate max-w-xs inline-block align-bottom">
+                {replyingTo.content}
+              </span>
             </span>
             <button
               className="ml-auto p-1 rounded hover:bg-bg-modifier text-text-muted hover:text-text-normal transition-colors"
@@ -288,7 +312,7 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
         />
       </div>
 
-      {/* DM Pinned Messages Panel */}
+      {/* Pinned messages panel */}
       {showPinnedPanel && (
         <div className="pins-panel">
           <div className="pins-panel-header">
@@ -313,12 +337,17 @@ export default function DMPane({ conversationId, partner, onSend, onEdit, onTypi
                 {messages.filter(m => m.pinned).map(m => (
                   <div
                     key={m.id}
-                    className="p-3 hover:bg-bg-hover cursor-pointer transition-colors"
-                    onClick={() => { const el = document.getElementById(`msg-${m.id}`); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); onClosePinned?.(); }}
+                    className="p-4 hover:bg-bg-hover cursor-pointer transition-colors"
+                    onClick={() => {
+                      document.getElementById(`msg-${m.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      onClosePinned?.();
+                    }}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-semibold text-text-normal">{m.user.displayName}</span>
-                      <span className="text-xs text-text-muted">{new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-xs text-text-muted">
+                        {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                     <p className="text-sm text-text-muted line-clamp-2">{m.content}</p>
                   </div>

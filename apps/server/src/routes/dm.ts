@@ -128,6 +128,9 @@ export async function registerDMRoutes(app: FastifyInstance) {
       if (!msg) return reply.code(404).send({ error: 'Not found' });
       if (msg.userId !== userId) return reply.code(403).send({ error: 'Forbidden' });
       await prisma.directMessage.delete({ where: { id } });
+      // Broadcast to partner in real-time
+      const io = (app as any).io;
+      if (io) io.to(`dm:${msg.conversationId}`).emit('dm:message:deleted', { messageId: id });
       return reply.send({ ok: true });
     }
   );
@@ -166,9 +169,7 @@ export async function registerDMRoutes(app: FastifyInstance) {
         where: { messageId_userId_emoji: { messageId: id, userId, emoji } },
       });
       if (existing) {
-        await prisma.dMReaction.delete({
-          where: { messageId_userId_emoji: { messageId: id, userId, emoji } },
-        });
+        await prisma.dMReaction.delete({ where: { messageId_userId_emoji: { messageId: id, userId, emoji } } });
       } else {
         await prisma.dMReaction.create({ data: { messageId: id, userId, emoji } });
       }
@@ -176,6 +177,12 @@ export async function registerDMRoutes(app: FastifyInstance) {
         where: { messageId: id },
         select: { emoji: true, userId: true },
       });
+      // Broadcast to partner in real-time
+      const msg = await prisma.directMessage.findUnique({ where: { id }, select: { conversationId: true } });
+      if (msg) {
+        const io = (app as any).io;
+        if (io) io.to(`dm:${msg.conversationId}`).emit('dm:message:reacted', { messageId: id, reactions });
+      }
       return reply.send({ reactions });
     }
   );
