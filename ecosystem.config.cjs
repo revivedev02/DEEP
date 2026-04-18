@@ -1,7 +1,15 @@
-// pm2 ecosystem config — cluster mode for 1,000 concurrent users
-// Run: pm2 start ecosystem.config.cjs
+// pm2 ecosystem config — FOR SELF-HOSTED VPS DEPLOYMENTS ONLY
+//
+// ⚠️  DO NOT use pm2 on Railway. Railway manages the process lifecycle itself.
+//     On Railway, the start command in railway.json handles everything.
+//
+// For VPS (Ubuntu, DigitalOcean, etc.):
+//   npm install -g pm2
+//   pm2 start ecosystem.config.cjs --env production
+//   pm2 save && pm2 startup   ← auto-restart on reboot
+//
 // Monitor: pm2 monit
-// Logs: pm2 logs deep-server
+// Logs:    pm2 logs deep-server
 // Reload (zero-downtime): pm2 reload deep-server
 
 module.exports = {

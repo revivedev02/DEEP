@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env --import tsx/esm src/index.ts",
-    "dev:watch": "tsx watch --env-file=.env src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "db:push": "node --env-file=.env --import tsx/esm node_modules/prisma/build/index.js db push",
-    "db:generate": "prisma generate",
-    "db:seed": "node --env-file=.env --import tsx/esm prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "dev":        "node --env-file=.env --import tsx/esm src/index.ts",
+    "dev:watch":  "tsx watch --env-file=.env src/index.ts",
+    "build":      "prisma generate && tsc",
+    "start":      "node dist/index.js",
+    "db:push":    "node --env-file=.env --import tsx/esm node_modules/prisma/build/index.js db push",
+    "db:generate":"prisma generate",
+    "db:seed":    "node --env-file=.env --import tsx/esm prisma/seed.ts",
+    "db:studio":  "prisma studio"
   },
   "dependencies": {
     "@fastify/compress": "7",
