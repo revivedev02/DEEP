@@ -4,7 +4,20 @@ import { prisma } from '../lib/prisma.js';
 export async function registerAuthRoutes(app: FastifyInstance) {
 
   // POST /api/auth/login  { shortId } -> { token, user }
+  // Tight rate limit: 10 attempts per 15 minutes (brute-force protection)
   app.post<{ Body: { shortId: string } }>('/api/auth/login', {
+    config: {
+      rateLimit: {
+        max:        10,
+        timeWindow: '15 minutes',
+        errorResponseBuilder: () => ({
+          code: 429,
+          error: 'Too Many Requests',
+          message: 'Too many login attempts. Try again in 15 minutes.',
+          statusCode: 429,
+        }),
+      },
+    },
     schema: {
       body: {
         type: 'object',

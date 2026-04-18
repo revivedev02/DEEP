@@ -5,7 +5,11 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import staticPlugin from '@fastify/static';
 import compress from '@fastify/compress';
+import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import { Server } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import Redis from 'ioredis';
 import { registerAuthRoutes, addAuthDecorator } from './routes/auth.js';
 import { registerMessageRoutes } from './routes/messages.js';
 import { registerAdminRoutes } from './routes/admin.js';
@@ -23,30 +27,59 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT    = Number(process.env.PORT ?? 3000);
 const HOST    = '0.0.0.0';
 const IS_PROD = process.env.NODE_ENV === 'production';
+const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
 const app = Fastify({ logger: { level: IS_PROD ? 'warn' : 'info' } });
 
-// ── Plugins ──────────────────────────────────────────────────────────────────
+// ── Security headers ──────────────────────────────────────────────────────────
+await app.register(helmet, {
+  contentSecurityPolicy: false, // CSP managed by React build; disable to not break SPA
+  crossOriginEmbedderPolicy: false,
+});
+
+// ── CORS ─────────────────────────────────────────────────────────────────────
 await app.register(cors, { origin: true, credentials: true });
 
-// Gzip/Brotli compression for all responses (~70% smaller API payloads)
+// ── Gzip/Brotli compression ───────────────────────────────────────────────────
 await app.register(compress, { global: true });
 
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// Global default: 300 requests per minute per IP.
+// Tighter limits are added per-route inside the auth handler.
+await app.register(rateLimit, {
+  global:    true,
+  max:       300,
+  timeWindow: '1 minute',
+  errorResponseBuilder: (_req, context) => ({
+    code:        429,
+    error:       'Too Many Requests',
+    message:     `Rate limit exceeded. Retry in ${Math.ceil(context.ttl / 1000)}s.`,
+    statusCode:  429,
+  }),
+  // Use IP address as the key; x-forwarded-for aware
+  keyGenerator: (req) =>
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim()
+    ?? req.ip,
+});
+
+// ── JWT ───────────────────────────────────────────────────────────────────────
 await app.register(jwt, {
   secret: process.env.JWT_SECRET ?? 'fallback-dev-secret-change-me',
+  sign: {
+    expiresIn: '30d', // Token expiry — refresh not needed for this app pattern
+  },
 });
 addAuthDecorator(app);
 
-// Multipart (file uploads)
+// ── Multipart (file uploads) ──────────────────────────────────────────────────
 await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024 } });
 
-// Serve built React app in production with aggressive caching
+// ── Serve built React app ─────────────────────────────────────────────────────
 if (IS_PROD) {
   const webDist = resolve(__dirname, '../../../apps/web/dist');
   await app.register(staticPlugin, {
     root: webDist,
     prefix: '/',
-    // Hashed assets get long cache; index.html does not
     setHeaders(res, path) {
       if (path.includes('/assets/')) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -55,10 +88,12 @@ if (IS_PROD) {
   });
 }
 
-// ── Health check ─────────────────────────────────────────────────────────────
-app.get('/api/health', async () => ({ status: 'ok', ts: Date.now() }));
+// ── Health check ──────────────────────────────────────────────────────────────
+app.get('/api/health', {
+  config: { rateLimit: { max: 60, timeWindow: '1 minute' } }, // generous for load balancer probes
+}, async () => ({ status: 'ok', ts: Date.now() }));
 
-// ── Routes ───────────────────────────────────────────────────────────────────
+// ── Routes ────────────────────────────────────────────────────────────────────
 await registerAuthRoutes(app);
 await registerMessageRoutes(app);
 await registerAdminRoutes(app);
@@ -75,30 +110,65 @@ if (IS_PROD) {
   });
 }
 
-// ── Socket.IO ────────────────────────────────────────────────────────────────
+// ── Socket.IO + Redis Adapter ─────────────────────────────────────────────────
 await app.ready();
 
 const io = new Server(app.server, {
   cors: { origin: '*', credentials: true },
   transports: ['websocket', 'polling'],
-  pingTimeout: 30000,
+  pingTimeout:  30000,
   pingInterval: 15000,
-  // Compress websocket frames
-  perMessageDeflate: {
-    threshold: 256, // only compress messages > 256 bytes
-  },
+  // Compress websocket frames > 256 bytes
+  perMessageDeflate: { threshold: 256 },
+  // How long to wait before considering a transport upgrade failed
+  upgradeTimeout: 10000,
+  // Max payload size per socket event (prevent large object attacks)
+  maxHttpBufferSize: 1e6, // 1 MB
 });
+
+// Wire Redis adapter (enables pm2 cluster + multiple server instances)
+// Graceful fallback: if Redis is unavailable, single-process mode still works
+try {
+  const pubClient = new Redis(REDIS_URL);
+  const subClient = pubClient.duplicate();
+
+  // ioredis connects automatically; wait for ready events
+  await Promise.all([
+    new Promise<void>((res, rej) => { pubClient.once('ready', res); pubClient.once('error', rej); }),
+    new Promise<void>((res, rej) => { subClient.once('ready', res); subClient.once('error', rej); }),
+  ]);
+
+  io.adapter(createAdapter(pubClient, subClient));
+
+  console.log('✅  Socket.IO Redis adapter connected — cluster mode enabled');
+
+  // Cleanup on shutdown
+  const shutdown = async () => {
+    pubClient.disconnect();
+    subClient.disconnect();
+    await prisma.$disconnect();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT',  shutdown);
+
+} catch (err) {
+  console.warn(
+    '⚠️  Redis unavailable — running in single-process mode (socket events will not sync across workers).',
+    (err as Error).message,
+  );
+}
 
 // Attach io to app so route handlers can emit events
 (app as any).io = io;
 
 setupSocketHandlers(io, app);
 
-// ── Listen ───────────────────────────────────────────────────────────────────
+// ── Listen ────────────────────────────────────────────────────────────────────
 await app.listen({ port: PORT, host: HOST });
 console.log(`\n🚀  DEEP server running on http://localhost:${PORT}\n`);
 
-// ── Seed admin user (idempotent) ─────────────────────────────────────────────
+// ── Seed (idempotent) ─────────────────────────────────────────────────────────
 try {
   const adminShortId = process.env.ADMIN_SHORTID ?? 'admin_init';
   const exists = await prisma.user.findUnique({ where: { shortId: adminShortId } });
@@ -115,7 +185,6 @@ try {
   } else {
     console.log(`✅  Admin exists — login ID: ${adminShortId}`);
   }
-  // Seed default channels
   const channelCount = await prisma.channel.count();
   if (channelCount === 0) {
     await prisma.channel.createMany({
@@ -126,7 +195,6 @@ try {
     });
     console.log('✅  Default channels seeded.');
   }
-  // Seed server settings
   await prisma.serverSettings.upsert({
     where:  { id: 'main' },
     update: {},
