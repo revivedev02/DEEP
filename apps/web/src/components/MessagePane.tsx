@@ -8,9 +8,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
+import type { UploadedMedia } from '@/lib/uploadMedia';
 
 interface Props {
-  onSendMessage:    (content: string) => void;
+  onSendMessage:    (content: string, media?: UploadedMedia) => void;
   onTyping:         (v: boolean) => void;
   onLoadOlder:      () => void;
   showPinnedPanel:  boolean;

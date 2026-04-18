@@ -24,6 +24,8 @@ model User {
 model Message {
   id          String    @id @default(cuid())
   content     String
+  mediaUrl    String?   // Cloudinary CDN URL (image or video)
+  mediaType   String?   // "image" | "video"
   userId      String
   user        User      @relation(fields: [userId], references: [id])
   createdAt   DateTime  @default(now())
@@ -90,6 +92,8 @@ model DMParticipant {
 model DirectMessage {
   id             String             @id @default(cuid())
   content        String
+  mediaUrl       String?  // Cloudinary CDN URL (image or video)
+  mediaType      String?  // "image" | "video"
   createdAt      DateTime           @default(now())
   editedAt       DateTime?
   conversationId String

@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { Smile, PlusCircle, Gift, Sticker, Send, AtSign } from 'lucide-react';
+import { Smile, Paperclip, Gift, Sticker, Send, AtSign, X, Image, Film, Loader2 } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useThemeStore } from '@/store/useThemeStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { uploadMedia, validateMediaFile, type UploadedMedia } from '@/lib/uploadMedia';
 // @ts-ignore — emoji-mart has no bundled types for the React wrapper
 import EmojiPicker from '@emoji-mart/react';
 import emojiData from '@emoji-mart/data';
 
 interface MessageInputProps {
-  onSend: (content: string) => void;
-  channelName: string;
-  onTyping: (v: boolean) => void;
+  onSend:        (content: string, media?: UploadedMedia) => void;
+  channelName:   string;
+  onTyping:      (v: boolean) => void;
   onCancelReply: () => void;
 }
 
@@ -19,8 +21,41 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [activeIdx, setActiveIdx]       = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout>>();
   const { members } = useMembersStore();
+  const { token } = useAuthStore();
+
+  // ── Staged media (selected but not yet sent) ────────────────────────────────
+  const [stagedFile,  setStagedFile]  = useState<File | null>(null);
+  const [stagedPreview, setStagedPreview] = useState<string | null>(null); // object URL
+  const [stagedType, setStagedType]   = useState<'image' | 'video' | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Revoke object URL on unmount / new file
+  const clearStaged = () => {
+    if (stagedPreview) URL.revokeObjectURL(stagedPreview);
+    setStagedFile(null);
+    setStagedPreview(null);
+    setStagedType(null);
+    setUploadError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const err = validateMediaFile(file);
+    if (err) { setUploadError(err); if (fileInputRef.current) fileInputRef.current.value = ''; return; }
+    setUploadError(null);
+    const type = file.type.startsWith('video/') ? 'video' : 'image';
+    setStagedFile(file);
+    setStagedType(type);
+    setStagedPreview(URL.createObjectURL(file));
+    // Focus back on input after file select
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
 
   const suggestions = mentionQuery !== null
     ? [
@@ -67,14 +102,33 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     if (e.key === 'Escape') { onCancelReply(); }
   };
 
-  const submit = () => {
+  const submit = async () => {
     const trimmed = value.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
-    setValue('');
-    setMentionQuery(null);
-    onTyping(false);
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    // Either text or file needed
+    if (!trimmed && !stagedFile) return;
+
+    if (stagedFile) {
+      setIsUploading(true);
+      try {
+        const media = await uploadMedia(stagedFile, token ?? '');
+        onSend(trimmed, media);
+        setValue('');
+        clearStaged();
+        setMentionQuery(null);
+        onTyping(false);
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      } catch (err: unknown) {
+        setUploadError(err instanceof Error ? err.message : 'Upload failed.');
+      } finally {
+        setIsUploading(false);
+      }
+    } else {
+      onSend(trimmed);
+      setValue('');
+      setMentionQuery(null);
+      onTyping(false);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    }
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -125,8 +179,20 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     }, 0);
   };
 
+  const canSend = (value.trim().length > 0 || !!stagedFile) && !isUploading;
+
   return (
     <div className="message-input-wrapper relative">
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+
       {/* Mention autocomplete */}
       {mentionQuery !== null && suggestions.length > 0 && (
         <div className="mention-dropdown">
@@ -164,12 +230,62 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
         </div>
       )}
 
+      {/* Upload error toast */}
+      {uploadError && (
+        <div className="mx-3 mb-2 px-3 py-2 rounded-lg bg-status-red/15 border border-status-red/30 text-sm text-status-red flex items-center gap-2">
+          <span className="flex-1">{uploadError}</span>
+          <button onClick={() => setUploadError(null)} className="flex-shrink-0 hover:opacity-70"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
+
+      {/* Staged media preview */}
+      {stagedFile && (
+        <div className="media-upload-preview">
+          <div className="media-upload-preview-inner">
+            {stagedType === 'image' && stagedPreview ? (
+              <img src={stagedPreview} alt="preview" className="media-preview-img" />
+            ) : (
+              <div className="media-preview-video-ph">
+                <Film className="w-6 h-6 text-text-muted" />
+                <span className="text-xs text-text-muted truncate max-w-[160px]">{stagedFile.name}</span>
+              </div>
+            )}
+            <div className="media-preview-meta">
+              <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                {stagedType === 'image'
+                  ? <Image className="w-3 h-3" />
+                  : <Film className="w-3 h-3" />}
+                <span className="truncate max-w-[120px]">{stagedFile.name}</span>
+                <span className="text-text-muted/60">· {(stagedFile.size / 1024 / 1024).toFixed(1)} MB</span>
+              </div>
+            </div>
+            <button
+              className="media-preview-remove"
+              onClick={clearStaged}
+              title="Remove attachment"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="message-input-box">
-        <button className="input-action-btn" title="Attach (coming soon)"><PlusCircle className="w-5 h-5" /></button>
+        {/* Attach button */}
+        <button
+          className="input-action-btn"
+          title="Attach image or video (max 8 MB / 25 MB)"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Paperclip className="w-5 h-5" />
+        </button>
+
         <textarea
           ref={textareaRef} value={value} onChange={handleInput} onKeyDown={handleKeyDown}
-          placeholder={`Message #${channelName}`} className="message-input" rows={1}
+          placeholder={stagedFile ? 'Add a caption… (optional)' : `Message #${channelName}`}
+          className="message-input" rows={1}
         />
+
         <div className="flex items-center gap-1">
           <button className="input-action-btn" title="Gift (coming soon)"><Gift className="w-4 h-4" /></button>
           <button className="input-action-btn" title="Sticker (coming soon)"><Sticker className="w-4 h-4" /></button>
@@ -180,8 +296,15 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
           >
             <Smile className="w-4 h-4" />
           </button>
-          <button onClick={submit} className="send-btn" title="Send">
-            <Send className="w-4 h-4" />
+          <button
+            onClick={submit}
+            className={`send-btn ${canSend ? '' : 'opacity-40 cursor-not-allowed'}`}
+            title="Send"
+            disabled={!canSend}
+          >
+            {isUploading
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <Send className="w-4 h-4" />}
           </button>
         </div>
       </div>

@@ -16,6 +16,8 @@ export interface RawReaction {
 export interface ChatMessage {
   id: string;
   content: string;
+  mediaUrl?:  string | null;
+  mediaType?: 'image' | 'video' | null;
   userId: string;
   channelId: string;
   createdAt: string;

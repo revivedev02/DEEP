@@ -16,6 +16,8 @@ export interface DMReaction {
 export interface DMMessage {
   id: string;
   content: string;
+  mediaUrl?:  string | null;
+  mediaType?: 'image' | 'video' | null;
   createdAt: string;
   editedAt?: string | null;
   conversationId: string;

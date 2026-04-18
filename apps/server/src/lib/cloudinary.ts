@@ -39,3 +39,30 @@ export async function uploadImage(
     uploadStream.end(buffer);
   });
 }
+
+/**
+ * Extract the Cloudinary public_id from a secure URL and delete it.
+ * Errors are silently swallowed — a failed delete must never block the caller.
+ *
+ * Example URL:
+ *   https://res.cloudinary.com/mycloud/image/upload/v1234567890/deep/avatars/abc123.webp
+ * Extracted public_id:
+ *   deep/avatars/abc123
+ */
+export async function destroyImage(url: string | null | undefined): Promise<void> {
+  if (!url || !url.includes('cloudinary.com')) return;
+
+  try {
+    // Strip everything up to and including "/upload/", then strip optional version segment,
+    // then strip the file extension to get the bare public_id.
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^./]+)?$/);
+    if (!match) return;
+
+    const publicId = match[1]; // e.g. "deep/avatars/abc123"
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+    console.log(`🗑️  Cloudinary: deleted old asset "${publicId}"`);
+  } catch (err) {
+    // Non-fatal — log for visibility but don't surface to the user
+    console.warn('⚠️  Cloudinary: failed to delete old asset:', err);
+  }
+}

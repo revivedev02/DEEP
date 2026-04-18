@@ -1,11 +1,14 @@
 import type { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
+import { destroyImage } from '../lib/cloudinary.js';
 
 const dmSendSchema = z.object({
   conversationId: z.string().min(1),
-  content:        z.string().min(1).max(4000),
+  content:        z.string().max(4000),
   replyToId:      z.string().optional(),
+  mediaUrl:       z.string().url().optional(),
+  mediaType:      z.enum(['image', 'video']).optional(),
 });
 
 const dmUserSelect = {
@@ -36,7 +39,10 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
   socket.on('dm:send', async (data: unknown) => {
     const parsed = dmSendSchema.safeParse(data);
     if (!parsed.success) return;
-    const { conversationId, content, replyToId } = parsed.data;
+    const { conversationId, content, replyToId, mediaUrl, mediaType } = parsed.data;
+
+    // Must have content OR media
+    if (!content.trim() && !mediaUrl) return;
 
     const participant = await prisma.dMParticipant.findUnique({
       where: { conversationId_userId: { conversationId, userId } },
@@ -45,7 +51,14 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
 
     try {
       const message = await prisma.directMessage.create({
-        data: { content, userId, conversationId, ...(replyToId ? { replyToId } : {}) },
+        data: {
+          content:        content.trim(),
+          userId,
+          conversationId,
+          replyToId:  replyToId  ?? null,
+          mediaUrl:   mediaUrl   ?? null,
+          mediaType:  mediaType  ?? null,
+        },
         include: dmMsgInclude,
       });
       io.to(`dm:${conversationId}`).emit('dm:message', message);
@@ -83,6 +96,8 @@ export function setupDMSocketHandlers(io: Server, socket: Socket) {
       const msg = await prisma.directMessage.findUnique({ where: { id: messageId } });
       if (!msg || msg.userId !== userId) return;
       await prisma.directMessage.delete({ where: { id: messageId } });
+      // Clean up Cloudinary media if present
+      if (msg.mediaUrl) destroyImage(msg.mediaUrl).catch(() => {});
       io.to(`dm:${msg.conversationId}`).emit('dm:message:deleted', { messageId });
     } catch (err) {
       console.error('[dm:delete]', err);

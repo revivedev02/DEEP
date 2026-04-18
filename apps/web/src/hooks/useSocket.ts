@@ -82,8 +82,8 @@ export function useSocket() {
     socketInstance?.emit('channel:join', { channelId });
   };
 
-  const sendMessage = (content: string, channelId: string, replyToId?: string) => {
-    socketInstance?.emit('message:send', { content, channelId, replyToId });
+  const sendMessage = (content: string, channelId: string, replyToId?: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
+    socketInstance?.emit('message:send', { content, channelId, replyToId, mediaUrl, mediaType });
   };
 
   const sendTyping = (typing: boolean) => {

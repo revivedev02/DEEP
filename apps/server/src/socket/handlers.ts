@@ -4,13 +4,16 @@ import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { messageInclude } from '../routes/messages.js';
 import { setupDMSocketHandlers } from './dmHandlers.js';
+import { destroyImage } from '../lib/cloudinary.js';
 
 const onlineUsers = new Map<string, Set<string>>();
 
 const sendSchema = z.object({
-  content:   z.string().min(1).max(4000),
+  content:   z.string().max(4000),
   channelId: z.string().min(1),
   replyToId: z.string().optional(),
+  mediaUrl:  z.string().url().optional(),
+  mediaType: z.enum(['image', 'video']).optional(),
 });
 
 export function setupSocketHandlers(io: Server, app: FastifyInstance) {
@@ -60,7 +63,10 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
       const parsed = sendSchema.safeParse(data);
       if (!parsed.success) return;
 
-      const { content, channelId, replyToId } = parsed.data;
+      const { content, channelId, replyToId, mediaUrl, mediaType } = parsed.data;
+
+      // Must have content OR media (Discord allows image-only messages)
+      if (!content.trim() && !mediaUrl) return;
 
       const channel = await prisma.channel.findUnique({ where: { id: channelId } });
       if (!channel) return;
@@ -73,7 +79,14 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
 
       try {
         const message = await prisma.message.create({
-          data: { content, userId, channelId, replyToId: replyToId ?? null },
+          data: {
+            content:   content.trim(),
+            userId,
+            channelId,
+            replyToId: replyToId ?? null,
+            mediaUrl:  mediaUrl  ?? null,
+            mediaType: mediaType ?? null,
+          },
           include: messageInclude,
         });
         io.to(`channel:${channelId}`).emit('message:new', message);

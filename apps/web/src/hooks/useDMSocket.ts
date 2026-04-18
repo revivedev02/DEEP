@@ -74,8 +74,8 @@ export function useDMSocket() {
     _socket?.emit('dm:join', { conversationId });
   }, []);
 
-  const sendDM = useCallback((conversationId: string, content: string, replyToId?: string) => {
-    _socket?.emit('dm:send', { conversationId, content, replyToId });
+  const sendDM = useCallback((conversationId: string, content: string, replyToId?: string, mediaUrl?: string, mediaType?: 'image' | 'video') => {
+    _socket?.emit('dm:send', { conversationId, content, replyToId, mediaUrl, mediaType });
   }, []);
 
   const sendDMTyping = useCallback((conversationId: string, typing: boolean) => {

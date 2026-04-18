@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma.js';
+import { destroyImage } from '../lib/cloudinary.js';
 
 // Shared include for message queries — always pull replyTo, user, and reactions
 export const messageInclude = {
@@ -181,6 +182,7 @@ export async function registerMessageRoutes(app: FastifyInstance) {
       if (msg.userId !== payload.sub && !payload.isAdmin)
         return reply.code(403).send({ error: 'Forbidden' });
       await prisma.message.delete({ where: { id: req.params.id } });
+      if ((msg as any).mediaUrl) destroyImage((msg as any).mediaUrl).catch(() => {});
       return reply.code(204).send();
     }
   );

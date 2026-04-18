@@ -294,3 +294,106 @@
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30%           { transform: translateY(-3px); opacity: 1; }
 }
+
+/* ── Media Attachments ── */
+@layer components {
+  /* Wrapper around image/video inside a chat message */
+  .media-attachment {
+    @apply mt-2 max-w-sm;
+  }
+
+  /* Inline image — click to lightbox */
+  .media-img {
+    @apply rounded-xl object-contain cursor-zoom-in select-none;
+    max-width: 100%;
+    max-height: 340px;
+    display: block;
+    background: var(--bg-modifier);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .media-img:hover {
+    opacity: 0.92;
+    transform: scale(1.005);
+  }
+
+  /* Inline video — native controls */
+  .media-video {
+    @apply rounded-xl block;
+    max-width: 100%;
+    max-height: 340px;
+    background: #000;
+  }
+
+  /* ── Upload preview bar (above input) ── */
+  .media-upload-preview {
+    @apply mx-3 mb-2;
+  }
+  .media-upload-preview-inner {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl border border-separator/50 relative;
+    background: var(--bg-secondary);
+  }
+
+  /* Thumbnail for image preview */
+  .media-preview-img {
+    @apply rounded-lg object-cover flex-shrink-0;
+    width: 52px;
+    height: 52px;
+  }
+
+  /* Placeholder for video preview (no thumbnail) */
+  .media-preview-video-ph {
+    @apply flex flex-col items-center justify-center gap-1 rounded-lg flex-shrink-0 text-center;
+    width: 52px;
+    height: 52px;
+    background: var(--bg-hover);
+  }
+
+  /* Filename + size */
+  .media-preview-meta {
+    @apply flex-1 min-w-0;
+  }
+
+  /* Remove staged file button */
+  .media-preview-remove {
+    @apply absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full
+           text-text-muted hover:text-status-red hover:bg-status-red/10 transition-colors duration-100;
+  }
+
+  /* ── Lightbox ── */
+  .media-lightbox {
+    @apply fixed inset-0 z-50 flex flex-col items-center justify-center;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(6px);
+    animation: fade-in 150ms ease both;
+    cursor: zoom-out;
+  }
+
+  .media-lightbox-toolbar {
+    @apply absolute top-4 right-4 flex items-center gap-2;
+    cursor: default;
+  }
+  .media-lightbox-btn {
+    @apply flex items-center justify-center w-9 h-9 rounded-lg text-white/70
+           hover:text-white hover:bg-white/10 transition-colors duration-150;
+  }
+
+  .media-lightbox-content {
+    @apply flex items-center justify-center p-6;
+    max-width: 90vw;
+    max-height: 90vh;
+    cursor: default;
+  }
+
+  .media-lightbox-img {
+    @apply rounded-xl shadow-2xl select-none;
+    max-width: 88vw;
+    max-height: 88vh;
+    object-fit: contain;
+  }
+
+  .media-lightbox-video {
+    @apply rounded-xl shadow-2xl;
+    max-width: 88vw;
+    max-height: 88vh;
+  }
+}

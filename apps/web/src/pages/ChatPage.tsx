@@ -18,6 +18,7 @@ import { useValidateToken } from '@/hooks/useValidateToken';
 import { useServerData } from '@/hooks/useServerData';
 import { useDMSocket } from '@/hooks/useDMSocket';
 import { scrollToMessage } from '@/components/messageUtils';
+import type { UploadedMedia } from '@/lib/uploadMedia';
 
 export default function ChatPage() {
   const { activeChannel, showMembers, toggleMembers, activeDmConversation } = useUIStore();
@@ -86,14 +87,16 @@ export default function ChatPage() {
       .catch(() => useDMStore.getState().setLoading(false));
   }, [activeDmConversation]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = (content: string, media?: UploadedMedia) => {
     if (!user || !activeChannel) return;
     const replyingTo = useChatStore.getState().replyingTo;
-    sendMessage(content, activeChannel, replyingTo?.id);
+    sendMessage(content, activeChannel, replyingTo?.id, media?.url, media?.type);
     useChatStore.getState().setReplyingTo(null);
   };
 
-  const handleSendDM   = (content: string, replyToId?: string) => { if (activeDmConversation) sendDM(activeDmConversation, content, replyToId); };
+  const handleSendDM   = (content: string, media?: UploadedMedia, replyToId?: string) => {
+    if (activeDmConversation) sendDM(activeDmConversation, content, replyToId, media?.url, media?.type);
+  };
   const handleDMTyping = (typing: boolean) => { if (activeDmConversation) sendDMTyping(activeDmConversation, typing); };
 
   const handleLoadOlderDM = useCallback(() => {

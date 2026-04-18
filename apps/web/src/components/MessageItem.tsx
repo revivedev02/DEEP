@@ -1,12 +1,45 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { Pin, Reply, Pencil, Copy, Trash2, SmilePlus } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
+import { MediaLightbox } from '@/components/MediaLightbox';
 import { useMembersStore } from '@/store/useMembersStore';
 import type { ChatMessage, RawReaction } from '@/store/useChatStore';
 import { formatTimestamp, shortTime, scrollToMessage } from './messageUtils';
 
 // ─── URL regex ────────────────────────────────────────────────────────────────
 const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)])/g;
+
+// ─── Media Attachment ─────────────────────────────────────────────────────────
+function MediaAttachment({ url, type }: { url: string; type: 'image' | 'video' }) {
+  const [lightbox, setLightbox] = useState(false);
+  return (
+    <>
+      <div className="media-attachment">
+        {type === 'image' ? (
+          <img
+            src={url}
+            alt="attachment"
+            className="media-img"
+            loading="lazy"
+            onClick={() => setLightbox(true)}
+            title="Click to expand"
+          />
+        ) : (
+          <video
+            src={url}
+            className="media-video"
+            controls
+            preload="metadata"
+          />
+        )}
+      </div>
+      {lightbox && (
+        <MediaLightbox url={url} type={type} onClose={() => setLightbox(false)} />
+      )}
+    </>
+  );
+}
+
 
 function MessageContent({ content, currentUserId }: { content: string; currentUserId: string }) {
   const { members } = useMembersStore();
@@ -293,10 +326,17 @@ export const MessageItem = memo(function MessageItem({
               )}
             </div>
             {isEditing ? editBoxJSX : (
-              <p className="message-content">
-                <MessageContent content={msg.content} currentUserId={currentUserId} />
-                {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
-              </p>
+              <>
+                {msg.content && (
+                  <p className="message-content">
+                    <MessageContent content={msg.content} currentUserId={currentUserId} />
+                    {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
+                  </p>
+                )}
+                {msg.mediaUrl && msg.mediaType && (
+                  <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} />
+                )}
+              </>
             )}
             {reactionsBar}
           </div>
@@ -314,16 +354,21 @@ export const MessageItem = memo(function MessageItem({
       </div>
       <div className="flex-1 min-w-0">
         {isEditing ? editBoxJSX : (
-          <p className="message-content">
-            <MessageContent content={msg.content} currentUserId={currentUserId} />
-            {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
-            {msg.pinned && (
-              <span className="inline-flex items-center gap-0.5 text-2xs font-medium px-1.5 py-0.5 rounded-full ml-1.5 align-middle flex-shrink-0"
-                    style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
-                <Pin className="w-2.5 h-2.5" /> Pinned
-              </span>
+          <>
+            <p className="message-content">
+              <MessageContent content={msg.content} currentUserId={currentUserId} />
+              {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
+              {msg.pinned && (
+                <span className="inline-flex items-center gap-0.5 text-2xs font-medium px-1.5 py-0.5 rounded-full ml-1.5 align-middle flex-shrink-0"
+                      style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
+                  <Pin className="w-2.5 h-2.5" /> Pinned
+                </span>
+              )}
+            </p>
+            {msg.mediaUrl && msg.mediaType && (
+              <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} />
             )}
-          </p>
+          </>
         )}
         {reactionsBar}
       </div>
