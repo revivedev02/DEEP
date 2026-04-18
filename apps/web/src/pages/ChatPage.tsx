@@ -21,7 +21,7 @@ import { scrollToMessage } from '@/components/messageUtils';
 import type { UploadedMedia } from '@/lib/uploadMedia';
 
 export default function ChatPage() {
-  const { activeChannel, showMembers, toggleMembers, activeDmConversation } = useUIStore();
+  const { activeChannel, showMembers, toggleMembers, activeDmConversation, showChannelSidebar, toggleChannelSidebar } = useUIStore();
   const { channels } = useServerStore();
   const { user, token } = useAuthStore();
   const { sendMessage, sendTyping, joinChannel } = useSocket();
@@ -119,8 +119,18 @@ export default function ChatPage() {
   return (
     <div className="layout-root">
 
-      {/* ── Channel Sidebar — on canvas ── */}
-      <ChannelSidebar />
+      {/* ── Channel Sidebar — animated width, smooth collapse ── */}
+      <div
+        style={{
+          width: showChannelSidebar ? 240 : 0,
+          minWidth: 0,
+          flexShrink: 0,
+          overflow: 'hidden',
+          transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
+        }}
+      >
+        <ChannelSidebar />
+      </div>
 
       {/* ── Center column: [chat column + members panel] side by side ── */}
       <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
@@ -133,6 +143,8 @@ export default function ChatPage() {
             showSearch={showSearch}
             showPinned={showPinned}
             membersVisible={membersVisible}
+            sidebarVisible={showChannelSidebar}
+            onToggleSidebar={toggleChannelSidebar}
             onToggleSearch={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
             onTogglePinned={() => { setShowPinned(p => !p); closeSearch(); }}
             onToggleMembers={toggleMembers}

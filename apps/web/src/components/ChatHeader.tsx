@@ -1,4 +1,4 @@
-import { Bell, Hash, Moon, Monitor, Pin, Search, Sun, Users, X } from 'lucide-react';
+import { Bell, Hash, Moon, Monitor, PanelLeft, Pin, Search, Sun, Users, X } from 'lucide-react';
 import { useThemeStore }  from '../store/useThemeStore';
 import { useUIStore }     from '../store/useUIStore';
 import { useChatStore }   from '../store/useChatStore';
@@ -11,6 +11,8 @@ interface ChatHeaderProps {
   showSearch:      boolean;
   showPinned:      boolean;
   membersVisible:  boolean;
+  sidebarVisible?: boolean;
+  onToggleSidebar?: () => void;
   onToggleSearch:  () => void;
   onTogglePinned:  () => void;
   onToggleMembers: () => void;
@@ -21,6 +23,8 @@ export default function ChatHeader({
   showSearch,
   showPinned,
   membersVisible,
+  sidebarVisible,
+  onToggleSidebar,
   onToggleSearch,
   onTogglePinned,
   onToggleMembers,
@@ -40,8 +44,18 @@ export default function ChatHeader({
 
   return (
     <div className="canvas-header">
-      {/* Left: channel/DM identity */}
+      {/* Left: sidebar toggle + channel/DM identity */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
+
+        {/* Sidebar toggle — always visible so user can reopen it */}
+        <button
+          onClick={onToggleSidebar}
+          className={`canvas-icon-btn flex-shrink-0 ${sidebarVisible ? 'active' : ''}`}
+          title={sidebarVisible ? 'Hide channels' : 'Show channels'}
+        >
+          <PanelLeft className="w-4 h-4" />
+        </button>
+
         {showHeader && (
           isDMOpen ? (
             <>
