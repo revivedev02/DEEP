@@ -28,8 +28,9 @@
     color-scheme: dark;
   }
 
-  /* ── Navy dark — deep blue-grey, premium ── */
-  :root,
+  /* ── Navy dark — deep blue-grey, premium ──
+     :root:not([data-theme]) = fallback when JS hasn't loaded yet */
+  :root:not([data-theme]),
   [data-theme="dark"] {
     --bg-canvas:    #1b1f2e;
     --bg-primary:   #222639;

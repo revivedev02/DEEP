@@ -285,7 +285,12 @@ export const MessageItem = memo(function MessageItem({
                 {isMe && <span className="ml-1.5 text-2xs bg-bg-modifier text-text-muted px-1.5 py-0.5 rounded font-medium">YOU</span>}
               </span>
               <span className="message-timestamp">{formatTimestamp(msg.createdAt)}</span>
-              {msg.pinned && <Pin className="w-3 h-3 text-brand ml-1 flex-shrink-0" title="Pinned" />}
+              {msg.pinned && (
+                <span className="inline-flex items-center gap-0.5 text-2xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
+                  <Pin className="w-2.5 h-2.5" /> Pinned
+                </span>
+              )}
             </div>
             {isEditing ? editBoxJSX : (
               <p className="message-content">
@@ -312,6 +317,12 @@ export const MessageItem = memo(function MessageItem({
           <p className="message-content">
             <MessageContent content={msg.content} currentUserId={currentUserId} />
             {msg.editedAt ? <span className="message-edited-label">(edited)</span> : null}
+            {msg.pinned && (
+              <span className="inline-flex items-center gap-0.5 text-2xs font-medium px-1.5 py-0.5 rounded-full ml-1.5 align-middle flex-shrink-0"
+                    style={{ background: 'rgb(var(--brand-rgb)/0.15)', color: 'rgb(var(--brand-rgb))' }}>
+                <Pin className="w-2.5 h-2.5" /> Pinned
+              </span>
+            )}
           </p>
         )}
         {reactionsBar}
