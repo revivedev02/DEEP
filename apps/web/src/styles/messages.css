@@ -5,8 +5,16 @@
     overflow-y: scroll;
   }
   .message-group {
-    @apply flex gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded relative;
+    @apply flex gap-4 px-4 py-0.5 rounded relative;
     contain: layout;
+    /* LEAVE: slow fade-out so the previous highlight lingers while the next one fades in — no hard cut */
+    background-color: transparent;
+    transition: background-color 200ms ease-out;
+  }
+  .message-group:hover {
+    /* ENTER: quick so the intent is immediately visible */
+    background-color: var(--bg-modifier);
+    transition: background-color 60ms ease-in;
   }
   .message-group.with-avatar {
     @apply mt-4 py-1 flex-col gap-0.5;
@@ -17,11 +25,16 @@
     @apply absolute right-3 -top-3 flex items-center gap-0.5
            bg-bg-secondary border border-separator rounded-lg shadow-elevation-high
            opacity-0 pointer-events-none z-10 px-1 py-0.5;
-    transition: opacity 100ms ease;
-    will-change: opacity;
+    /* LEAVE: slow fade + shrink down so it eases out gently */
+    transform: translateY(3px) scale(0.94);
+    transition: opacity 200ms ease, transform 200ms ease;
+    will-change: opacity, transform;
   }
   .message-group:hover .message-actions {
     @apply opacity-100 pointer-events-auto;
+    transform: translateY(0) scale(1);
+    /* ENTER: fast + spring overshoot — premium feel */
+    transition: opacity 70ms ease, transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .message-action-btn {
     @apply flex items-center justify-center w-7 h-7 rounded text-text-muted

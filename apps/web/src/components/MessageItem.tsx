@@ -354,7 +354,7 @@ export const MessageItem = memo(function MessageItem({
   }
 
   return (
-    <div id={`msg-${msg.id}`} className={`flex items-start gap-4 px-4 py-0.5 hover:bg-bg-modifier transition-colors duration-75 rounded group message-group ${msg.pinned ? 'border-l-2 border-brand/40' : ''}`}>
+    <div id={`msg-${msg.id}`} className={`message-group group ${msg.pinned ? 'border-l-2 border-brand/40' : ''}`}>
       <div className="w-10 flex-shrink-0 flex justify-center pt-1">
         <span className="opacity-0 group-hover:opacity-100 text-2xs text-text-muted leading-5 transition-opacity duration-75">{shortTime(msg.createdAt)}</span>
       </div>
