@@ -31,6 +31,12 @@ async function getCroppedBlob(imageSrc: string, crop: CroppedArea): Promise<Blob
 export default function AvatarUploadModal({ onClose }: Props) {
   const { user, token, updateAvatar } = useAuthStore();
 
+  const [isClosing, setIsClosing] = useState(false);
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(onClose, 170);
+  }, [onClose]);
+
   // Step 1: select → Step 2: crop → Step 3: uploading/done
   const [step, setStep]           = useState<'select' | 'crop' | 'upload'>('select');
   const [imageSrc, setImageSrc]   = useState<string | null>(null);
@@ -119,7 +125,7 @@ export default function AvatarUploadModal({ onClose }: Props) {
       updateAvatar(url);
       emitAvatarUpdate(url);
       setStatus('done');
-      setTimeout(onClose, 1200);
+      setTimeout(handleClose, 1200);
     } catch (e: any) {
       setErrMsg(e.message ?? 'Upload failed');
       setStatus('error');
@@ -128,11 +134,11 @@ export default function AvatarUploadModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
-        className="border border-separator/30 shadow-elevation-high w-full mx-4"
+        className={`border border-separator/30 shadow-elevation-high w-full mx-4 ${isClosing ? 'animate-scale-out' : 'animate-scale-in'}`}
         style={{ maxWidth: step === 'crop' ? 480 : 360, background: 'var(--card-bg)', borderRadius: 'var(--card-radius)' }}>
 
         {/* Header */}
@@ -146,7 +152,7 @@ export default function AvatarUploadModal({ onClose }: Props) {
                 ← Back
               </button>
             )}
-            <button onClick={onClose} className="p-1 rounded text-text-muted hover:text-text-normal hover:bg-bg-modifier transition-colors">
+            <button onClick={handleClose} className="p-1 rounded text-text-muted hover:text-text-normal hover:bg-bg-modifier transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>

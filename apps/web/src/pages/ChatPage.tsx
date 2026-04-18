@@ -35,8 +35,14 @@ export default function ChatPage() {
   const isDMOpen  = !!activeDmConversation;
 
   // Header panel states
-  const [showSearch, setShowSearch] = useState(false);
-  const [showPinned, setShowPinned] = useState(false);
+  const [showSearch, setShowSearch]         = useState(false);
+  const [isSearchClosing, setIsSearchClosing] = useState(false);
+  const [showPinned, setShowPinned]         = useState(false);
+
+  const closeSearch = useCallback(() => {
+    setIsSearchClosing(true);
+    setTimeout(() => { setShowSearch(false); setIsSearchClosing(false); }, 150);
+  }, []);
 
   // For search: use DM messages when in DM, channel messages otherwise
   const dmMessages = useDMStore(s => s.messages);
@@ -162,14 +168,14 @@ export default function ChatPage() {
                 <Bell className="w-4 h-4" />
               </button>
               <button
-                onClick={() => { setShowPinned(p => !p); setShowSearch(false); }}
+                onClick={() => { setShowPinned(p => !p); closeSearch(); }}
                 className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
                 title="Pinned messages"
               >
                 <Pin className="w-4 h-4" />
               </button>
               <button
-                onClick={() => { setShowSearch(s => !s); setShowPinned(false); }}
+                onClick={() => { if (showSearch) { closeSearch(); } else { setShowSearch(true); setShowPinned(false); } }}
                 className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
                 title="Search messages"
               >
@@ -206,11 +212,12 @@ export default function ChatPage() {
 
         {/* ── Search bar (on canvas, below header) ── */}
         {showSearch && showHeader && (
-          <div style={{ borderRadius: 10, flexShrink: 0, position: 'relative', zIndex: 50 }}>
+          <div style={{ borderRadius: 10, flexShrink: 0, position: 'relative', zIndex: 50 }}
+               className={isSearchClosing ? 'animate-slide-up-out' : ''}>
             <SearchBar
               messages={searchMessages as any}
               currentUserId={user?.id ?? ''}
-              onClose={() => setShowSearch(false)}
+              onClose={closeSearch}
               onJump={scrollToMessage}
             />
           </div>

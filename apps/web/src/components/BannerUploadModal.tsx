@@ -28,6 +28,12 @@ async function getCroppedBlob(src: string, crop: CroppedArea): Promise<Blob> {
 export default function BannerUploadModal({ onClose }: Props) {
   const { user, token, updateBanner } = useAuthStore();
 
+  const [isClosing, setIsClosing] = useState(false);
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(onClose, 170);
+  }, [onClose]);
+
   const [step, setStep]               = useState<'select' | 'crop' | 'upload'>('select');
   const [imageSrc, setImageSrc]       = useState<string | null>(null);
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
@@ -109,7 +115,7 @@ export default function BannerUploadModal({ onClose }: Props) {
       setProgress(100);
       updateBanner(url);
       setStatus('done');
-      setTimeout(onClose, 1200);
+      setTimeout(handleClose, 1200);
     } catch (e: any) {
       setErrMsg(e.message ?? 'Upload failed');
       setStatus('error');
@@ -118,11 +124,11 @@ export default function BannerUploadModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className={`fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
-        className="border border-separator/30 shadow-elevation-high w-full mx-4"
+        className={`border border-separator/30 shadow-elevation-high w-full mx-4 ${isClosing ? 'animate-scale-out' : 'animate-scale-in'}`}
         style={{
           maxWidth: step === 'crop' ? 600 : 420,
           background: 'var(--card-bg)',
@@ -145,7 +151,7 @@ export default function BannerUploadModal({ onClose }: Props) {
               </button>
             )}
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1 rounded text-text-muted hover:text-text-normal transition-colors"
               style={{ background: 'var(--bg-hover)' }}
             >

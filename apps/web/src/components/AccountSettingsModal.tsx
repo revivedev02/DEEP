@@ -43,9 +43,16 @@ function NavItem({
 export default function AccountSettingsModal({ onClose }: Props) {
   const { user, token, updateDisplayName } = useAuthStore();
 
-  const [tab, setTab]                       = useState<Tab>('account');
-  const [showAvatarModal, setShowAvatarModal]   = useState(false);
-  const [showBannerModal, setShowBannerModal]   = useState(false);
+  const [tab, setTab]                         = useState<Tab>('account');
+  const [showAvatarModal, setShowAvatarModal]  = useState(false);
+  const [showBannerModal, setShowBannerModal]  = useState(false);
+  const [isClosing, setIsClosing]              = useState(false);
+
+  /* ── Animated close — plays exit animation then calls real onClose ── */
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(onClose, 210);
+  }, [onClose]);
 
   /* display-name editing */
   const [nameValue,   setNameValue]   = useState(user?.displayName ?? '');
@@ -60,10 +67,10 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
   /* ── close on Esc ── */
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [onClose]);
+  }, [handleClose]);
 
   /* ── focus name input ── */
   useEffect(() => {
@@ -106,8 +113,8 @@ export default function AccountSettingsModal({ onClose }: Props) {
     <>
       {/* ── Full-screen backdrop with zoom-out entry ── */}
       <div
-        className="settings-overlay"
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        className={`settings-overlay${isClosing ? ' closing' : ''}`}
+        onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       >
         {/* ── Sidebar ── */}
         <aside className="settings-sidebar">
@@ -139,7 +146,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
 
           {/* Close button at bottom */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="settings-close-btn"
             title="Close Settings (Esc)"
           >

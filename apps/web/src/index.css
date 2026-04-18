@@ -796,21 +796,40 @@
   .animate-fade-in {
     animation: fade-in 150ms ease both;
   }
+  .animate-fade-out {
+    animation: fade-out 160ms ease forwards;
+  }
 
-  /* ── Modal scale-in ── */
+  /* ── Modal scale-in / scale-out ── */
   @keyframes scale-in {
     from { opacity: 0; transform: scale(0.95) translateY(8px); }
     to   { opacity: 1; transform: scale(1)    translateY(0); }
   }
+  @keyframes scale-out {
+    from { opacity: 1; transform: scale(1)    translateY(0); }
+    to   { opacity: 0; transform: scale(0.95) translateY(6px); }
+  }
   .animate-scale-in {
     animation: scale-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-scale-out {
+    animation: scale-out 160ms ease forwards;
+  }
+
+  /* ── Slide-up-out (search bar close) ── */
+  @keyframes slide-up-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-10px); }
+  }
+  .animate-slide-up-out {
+    animation: slide-up-out 140ms ease forwards;
   }
 
   /* ═══════════════════════════════════════════════════════
      SETTINGS PAGE — full-screen, zoom-out entry
   ═══════════════════════════════════════════════════════ */
 
-  /* Keyframes */
+  /* Keyframes — open */
   @keyframes settings-overlay-in {
     from { opacity: 0; }
     to   { opacity: 1; }
@@ -822,6 +841,31 @@
   @keyframes settings-main-in {
     from { opacity: 0; transform: translateX(28px); }
     to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Keyframes — close (reverse) */
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+  @keyframes settings-sidebar-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-24px); }
+  }
+  @keyframes settings-main-out {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(24px); }
+  }
+
+  /* .closing — plays exit animations on all three panels at once */
+  .settings-overlay.closing {
+    animation: fade-out 200ms ease forwards;
+  }
+  .settings-overlay.closing .settings-sidebar {
+    animation: settings-sidebar-out 180ms ease forwards;
+  }
+  .settings-overlay.closing .settings-main {
+    animation: settings-main-out 180ms ease forwards;
   }
 
   /* Full-screen overlay — same canvas as app */
@@ -848,7 +892,10 @@
   /* Sidebar user card */
   .settings-sidebar-user {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer
-           hover:bg-white/5 transition-colors duration-150 mb-2 mx-1;
+           transition-colors duration-150 mb-2 mx-1;
+  }
+  .settings-sidebar-user:hover {
+    background: var(--bg-hover);
   }
 
   /* Sidebar nav label */
@@ -860,8 +907,12 @@
   .settings-close-btn {
     @apply flex items-center justify-center gap-1 mx-auto mt-auto
            px-3 py-2 rounded-xl text-text-muted text-xs font-medium
-           hover:bg-white/10 hover:text-text-normal transition-all duration-150
+           transition-all duration-150
            flex-col;
+  }
+  .settings-close-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-normal);
   }
 
   /* Main content area — same card style as .chat-card */
