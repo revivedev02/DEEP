@@ -210,33 +210,33 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* ── Card + Members row (search bar floats absolutely over this) ── */}
-        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden', position: 'relative' }}>
+        {/* ── Card + Members row ── */}
+        <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0, overflow: 'hidden' }}>
 
-          {/* ── Search bar — floats over card, doesn't affect layout ── */}
-          {showSearch && showHeader && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 50,
-                paddingBottom: 4,
-              }}
-              className={isSearchClosing ? 'animate-slide-up-out' : 'animate-slide-down'}
-            >
-              <SearchBar
-                messages={searchMessages as any}
-                currentUserId={user?.id ?? ''}
-                onClose={closeSearch}
-                onJump={scrollToMessage}
-              />
-            </div>
-          )}
+          {/* Chat card — search overlay is scoped inside here */}
+          <div className="chat-card" style={{ position: 'relative' }}>
 
-          {/* Chat card */}
-          <div className="chat-card">
+            {/* ── Search bar — floats over the card only, doesn't affect layout ── */}
+            {showSearch && showHeader && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 50,
+                }}
+                className={isSearchClosing ? 'animate-slide-up-out' : 'animate-slide-down'}
+              >
+                <SearchBar
+                  messages={searchMessages as any}
+                  currentUserId={user?.id ?? ''}
+                  onClose={closeSearch}
+                  onJump={scrollToMessage}
+                />
+              </div>
+            )}
+
             <div className="main-content">
               {isDMOpen ? (
                 <DMPane
