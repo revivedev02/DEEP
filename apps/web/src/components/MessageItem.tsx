@@ -10,7 +10,7 @@ import { formatTimestamp, shortTime, scrollToMessage } from './messageUtils';
 const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)])/g;
 
 // ─── Media Attachment ─────────────────────────────────────────────────────────
-function MediaAttachment({ url, type }: { url: string; type: 'image' | 'video' }) {
+function MediaAttachment({ url, type, pending }: { url: string; type: 'image' | 'video'; pending?: boolean }) {
   const [lightbox, setLightbox] = useState(false);
   return (
     <>
@@ -19,18 +19,24 @@ function MediaAttachment({ url, type }: { url: string; type: 'image' | 'video' }
           <img
             src={url}
             alt="attachment"
-            className="media-img"
+            className={`media-img ${pending ? 'media-img-pending' : ''}`}
             loading="lazy"
-            onClick={() => setLightbox(true)}
-            title="Click to expand"
+            onClick={() => !pending && setLightbox(true)}
+            title={pending ? 'Uploading…' : 'Click to expand'}
+            draggable={false}
           />
         ) : (
           <video
             src={url}
             className="media-video"
-            controls
+            controls={!pending}
             preload="metadata"
           />
+        )}
+        {pending && (
+          <div className="media-pending-overlay" aria-label="Uploading…">
+            <div className="media-pending-spinner" />
+          </div>
         )}
       </div>
       {lightbox && (
@@ -334,15 +340,15 @@ export const MessageItem = memo(function MessageItem({
                   </p>
                 )}
                 {msg.mediaUrl && msg.mediaType && (
-                  <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} />
+                  <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} pending={!!msg.pending} />
                 )}
               </>
             )}
             {reactionsBar}
           </div>
         </div>
-        <ActionBar />
-        <QuickReactPopup />
+        {!msg.pending && <ActionBar />}
+        {!msg.pending && <QuickReactPopup />}
       </div>
     );
   }
@@ -366,14 +372,14 @@ export const MessageItem = memo(function MessageItem({
               )}
             </p>
             {msg.mediaUrl && msg.mediaType && (
-              <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} />
+              <MediaAttachment url={msg.mediaUrl} type={msg.mediaType} pending={!!msg.pending} />
             )}
           </>
         )}
         {reactionsBar}
       </div>
-      <ActionBar />
-      <QuickReactPopup />
+      {!msg.pending && <ActionBar />}
+      {!msg.pending && <QuickReactPopup />}
     </div>
   );
 }, (prev, next) => {

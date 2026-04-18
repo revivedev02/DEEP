@@ -18,6 +18,9 @@ export interface ChatMessage {
   content: string;
   mediaUrl?:  string | null;
   mediaType?: 'image' | 'video' | null;
+  // ── optimistic/pending (client-only, never from server) ──
+  pending?:   boolean;
+  pendingId?: string;
   userId: string;
   channelId: string;
   createdAt: string;
@@ -46,6 +49,8 @@ interface ChatState {
   replyingTo:         ChatMessage | null;
 
   addMessage:         (msg: ChatMessage) => void;
+  addPendingMessage:  (msg: ChatMessage) => void;
+  removePendingMessage: (pendingId: string) => void;
   setMessages:        (msgs: ChatMessage[]) => void;
   clearMessages:      () => void;
   prependMessages:    (msgs: ChatMessage[]) => void;
@@ -83,6 +88,14 @@ export const useChatStore = create<ChatState>((set) => ({
 
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, msg] })),
+
+  addPendingMessage: (msg) =>
+    set((s) => ({ messages: [...s.messages, msg] })),
+
+  removePendingMessage: (pendingId) =>
+    set((s) => ({
+      messages: s.messages.filter(m => m.pendingId !== pendingId),
+    })),
 
   setMessages: (msgs) => set({ messages: msgs, isLoadingMessages: false, loadError: null, hasMore: msgs.length >= 50 }),
 

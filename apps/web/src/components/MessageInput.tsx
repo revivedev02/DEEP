@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Smile, Paperclip, Gift, Sticker, Send, AtSign, X, Image, Film, Loader2 } from 'lucide-react';
+import { Smile, Paperclip, Gift, Sticker, Send, AtSign, X, Image, Film } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useThemeStore } from '@/store/useThemeStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { uploadMedia, validateMediaFile, type UploadedMedia } from '@/lib/uploadMedia';
+import { useUIStore } from '@/store/useUIStore';
+import { useChatStore, type ChatMessage } from '@/store/useChatStore';
+import { useDMStore, type DMMessage } from '@/store/useDMStore';
+import { uploadMedia, validateMediaFile } from '@/lib/uploadMedia';
+import type { UploadedMedia } from '@/lib/uploadMedia';
 // @ts-ignore — emoji-mart has no bundled types for the React wrapper
 import EmojiPicker from '@emoji-mart/react';
 import emojiData from '@emoji-mart/data';
@@ -20,20 +24,18 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
   const [value, setValue]               = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [activeIdx, setActiveIdx]       = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef  = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const typingTimer = useRef<ReturnType<typeof setTimeout>>();
-  const { members } = useMembersStore();
-  const { token } = useAuthStore();
+  const typingTimer  = useRef<ReturnType<typeof setTimeout>>();
+  const { members }  = useMembersStore();
+  const { token }    = useAuthStore();
 
-  // ── Staged media (selected but not yet sent) ────────────────────────────────
-  const [stagedFile,  setStagedFile]  = useState<File | null>(null);
-  const [stagedPreview, setStagedPreview] = useState<string | null>(null); // object URL
-  const [stagedType, setStagedType]   = useState<'image' | 'video' | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  // ── Staged media (selected, not yet sent) ───────────────────────────────────
+  const [stagedFile,    setStagedFile]    = useState<File | null>(null);
+  const [stagedPreview, setStagedPreview] = useState<string | null>(null);
+  const [stagedType,    setStagedType]    = useState<'image' | 'video' | null>(null);
+  const [uploadError,   setUploadError]   = useState<string | null>(null);
 
-  // Revoke object URL on unmount / new file
   const clearStaged = () => {
     if (stagedPreview) URL.revokeObjectURL(stagedPreview);
     setStagedFile(null);
@@ -53,10 +55,10 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     setStagedFile(file);
     setStagedType(type);
     setStagedPreview(URL.createObjectURL(file));
-    // Focus back on input after file select
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
+  // ── Mention autocomplete ────────────────────────────────────────────────────
   const suggestions = mentionQuery !== null
     ? [
         ...('everyone'.startsWith(mentionQuery.toLowerCase())
@@ -102,35 +104,6 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     if (e.key === 'Escape') { onCancelReply(); }
   };
 
-  const submit = async () => {
-    const trimmed = value.trim();
-    // Either text or file needed
-    if (!trimmed && !stagedFile) return;
-
-    if (stagedFile) {
-      setIsUploading(true);
-      try {
-        const media = await uploadMedia(stagedFile, token ?? '');
-        onSend(trimmed, media);
-        setValue('');
-        clearStaged();
-        setMentionQuery(null);
-        onTyping(false);
-        if (textareaRef.current) textareaRef.current.style.height = 'auto';
-      } catch (err: unknown) {
-        setUploadError(err instanceof Error ? err.message : 'Upload failed.');
-      } finally {
-        setIsUploading(false);
-      }
-    } else {
-      onSend(trimmed);
-      setValue('');
-      setMentionQuery(null);
-      onTyping(false);
-      if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    }
-  };
-
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value;
     setValue(v);
@@ -146,6 +119,103 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     onTyping(true);
     clearTimeout(typingTimer.current);
     typingTimer.current = setTimeout(() => onTyping(false), 3000);
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const submit = () => {
+    const trimmed = value.trim();
+    if (!trimmed && !stagedFile) return;
+
+    if (stagedFile) {
+      // Snapshot everything before clearing UI
+      const fileSnapshot  = stagedFile;
+      const typeSnapshot  = stagedType!;
+      const captionSnapshot = trimmed;
+
+      // 1. Create a local blob URL for the optimistic preview
+      const localUrl  = URL.createObjectURL(fileSnapshot);
+      const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      // 2. Build the optimistic message
+      const { user }                              = useAuthStore.getState();
+      const { activeChannel, activeDmConversation } = useUIStore.getState();
+      const isDM = !!activeDmConversation;
+
+      const optimisticBase = {
+        id:        pendingId,
+        pendingId,
+        pending:   true,
+        content:   captionSnapshot,
+        mediaUrl:  localUrl,
+        mediaType: typeSnapshot,
+        userId:    user?.id ?? '',
+        createdAt: new Date().toISOString(),
+        editedAt:  null,
+        pinned:    false,
+        reactions: [],
+        replyToId: null,
+        replyTo:   null,
+        user: {
+          id:          user?.id ?? '',
+          displayName: (user as any)?.displayName ?? '',
+          username:    (user as any)?.username    ?? '',
+          avatarUrl:   (user as any)?.avatarUrl   ?? null,
+          isAdmin:     (user as any)?.isAdmin     ?? false,
+        },
+      };
+
+      if (isDM) {
+        useDMStore.getState().addPendingMessage({
+          ...optimisticBase,
+          conversationId: activeDmConversation!,
+        } as DMMessage);
+      } else {
+        useChatStore.getState().addPendingMessage({
+          ...optimisticBase,
+          channelId: activeChannel,
+        } as ChatMessage);
+      }
+
+      // 3. Clear UI immediately — user can type the next message now
+      clearStaged();
+      setValue('');
+      setMentionQuery(null);
+      onTyping(false);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+      // 4. Upload in background (fire-and-forget, no await)
+      uploadMedia(fileSnapshot, token ?? '')
+        .then(media => {
+          // Remove the pending message first, then emit the real one
+          if (isDM) useDMStore.getState().removePendingMessage(pendingId);
+          else      useChatStore.getState().removePendingMessage(pendingId);
+
+          URL.revokeObjectURL(localUrl);
+          onSend(captionSnapshot, media);
+        })
+        .catch((err: unknown) => {
+          // Upload failed → remove pending, restore UI
+          if (isDM) useDMStore.getState().removePendingMessage(pendingId);
+          else      useChatStore.getState().removePendingMessage(pendingId);
+
+          URL.revokeObjectURL(localUrl);
+
+          // Restore staged file so user can retry
+          setStagedFile(fileSnapshot);
+          setStagedType(typeSnapshot);
+          setStagedPreview(URL.createObjectURL(fileSnapshot));
+          setValue(captionSnapshot);
+          setUploadError(err instanceof Error ? err.message : 'Upload failed. Try again.');
+        });
+
+    } else {
+      // Text-only
+      onSend(trimmed);
+      setValue('');
+      setMentionQuery(null);
+      onTyping(false);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    }
   };
 
   // ── Emoji picker ────────────────────────────────────────────────────────────
@@ -179,7 +249,7 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
     }, 0);
   };
 
-  const canSend = (value.trim().length > 0 || !!stagedFile) && !isUploading;
+  const canSend = value.trim().length > 0 || !!stagedFile;
 
   return (
     <div className="message-input-wrapper relative">
@@ -247,23 +317,16 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
             ) : (
               <div className="media-preview-video-ph">
                 <Film className="w-6 h-6 text-text-muted" />
-                <span className="text-xs text-text-muted truncate max-w-[160px]">{stagedFile.name}</span>
               </div>
             )}
             <div className="media-preview-meta">
               <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                {stagedType === 'image'
-                  ? <Image className="w-3 h-3" />
-                  : <Film className="w-3 h-3" />}
-                <span className="truncate max-w-[120px]">{stagedFile.name}</span>
-                <span className="text-text-muted/60">· {(stagedFile.size / 1024 / 1024).toFixed(1)} MB</span>
+                {stagedType === 'image' ? <Image className="w-3 h-3" /> : <Film className="w-3 h-3" />}
+                <span className="truncate max-w-[140px]">{stagedFile.name}</span>
+                <span className="opacity-60">· {(stagedFile.size / 1024 / 1024).toFixed(1)} MB</span>
               </div>
             </div>
-            <button
-              className="media-preview-remove"
-              onClick={clearStaged}
-              title="Remove attachment"
-            >
+            <button className="media-preview-remove" onClick={clearStaged} title="Remove">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -271,12 +334,7 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
       )}
 
       <div className="message-input-box">
-        {/* Attach button */}
-        <button
-          className="input-action-btn"
-          title="Attach image or video (max 8 MB / 25 MB)"
-          onClick={() => fileInputRef.current?.click()}
-        >
+        <button className="input-action-btn" title="Attach image or video" onClick={() => fileInputRef.current?.click()}>
           <Paperclip className="w-5 h-5" />
         </button>
 
@@ -302,9 +360,7 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
             title="Send"
             disabled={!canSend}
           >
-            {isUploading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Send className="w-4 h-4" />}
+            <Send className="w-4 h-4" />
           </button>
         </div>
       </div>

@@ -18,6 +18,9 @@ export interface DMMessage {
   content: string;
   mediaUrl?:  string | null;
   mediaType?: 'image' | 'video' | null;
+  // ── optimistic/pending (client-only) ──
+  pending?:   boolean;
+  pendingId?: string;
   createdAt: string;
   editedAt?: string | null;
   conversationId: string;
@@ -53,7 +56,9 @@ interface DMState {
   upsertConversation: (c: DMConversation) => void;
   setMessages:        (msgs: DMMessage[]) => void;
   prependMessages:    (msgs: DMMessage[]) => void;
-  addMessage:         (msg: DMMessage) => void;
+  addMessage:           (msg: DMMessage) => void;
+  addPendingMessage:    (msg: DMMessage) => void;
+  removePendingMessage: (pendingId: string) => void;
   applyEdit:          (id: string, content: string, editedAt: string) => void;
   applyDelete:        (id: string) => void;
   applyReaction:      (id: string, reactions: DMReaction[]) => void;
@@ -92,6 +97,11 @@ export const useDMStore = create<DMState>((set) => ({
     })),
 
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+
+  addPendingMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+
+  removePendingMessage: (pendingId) =>
+    set((s) => ({ messages: s.messages.filter(m => m.pendingId !== pendingId) })),
 
   applyEdit: (id, content, editedAt) =>
     set((s) => ({

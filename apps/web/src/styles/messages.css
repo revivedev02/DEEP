@@ -300,6 +300,31 @@
   /* Wrapper around image/video inside a chat message */
   .media-attachment {
     @apply mt-2 max-w-sm;
+    position: relative; /* overlay anchor */
+  }
+
+  /* Uploading state: glass overlay + spinner */
+  .media-pending-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    backdrop-filter: blur(1px);
+  }
+  .media-pending-spinner {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    animation: media-spin 0.75s linear infinite;
+  }
+  @keyframes media-spin {
+    to { transform: rotate(360deg); }
   }
 
   /* Inline image — click to lightbox */
@@ -311,9 +336,13 @@
     background: var(--bg-modifier);
     transition: opacity 120ms ease, transform 120ms ease;
   }
-  .media-img:hover {
+  .media-img:hover:not(.media-img-pending) {
     opacity: 0.92;
     transform: scale(1.005);
+  }
+  .media-img-pending {
+    cursor: default;
+    opacity: 0.6;
   }
 
   /* Inline video — native controls */
