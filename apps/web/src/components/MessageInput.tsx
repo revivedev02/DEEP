@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Smile, Paperclip, Gift, Sticker, Send, AtSign, X, Image, Film } from 'lucide-react';
+import { Smile, Paperclip, Send, AtSign, X, Image, Film } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useMembersStore } from '@/store/useMembersStore';
 import { useThemeStore } from '@/store/useThemeStore';
@@ -16,11 +16,12 @@ import emojiData from '@emoji-mart/data';
 interface MessageInputProps {
   onSend:        (content: string, media?: UploadedMedia) => void;
   channelName:   string;
+  isDM?:         boolean;  // shows '@' prefix instead of '#' in placeholder
   onTyping:      (v: boolean) => void;
   onCancelReply: () => void;
 }
 
-export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: MessageInputProps) {
+export function MessageInput({ onSend, channelName, isDM, onTyping, onCancelReply }: MessageInputProps) {
   const [value, setValue]               = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [activeIdx, setActiveIdx]       = useState(0);
@@ -340,13 +341,11 @@ export function MessageInput({ onSend, channelName, onTyping, onCancelReply }: M
 
         <textarea
           ref={textareaRef} value={value} onChange={handleInput} onKeyDown={handleKeyDown}
-          placeholder={stagedFile ? 'Add a caption… (optional)' : `Message #${channelName}`}
+          placeholder={stagedFile ? 'Add a caption… (optional)' : `Message ${isDM ? '@' : '#'}${channelName}`}
           className="message-input" rows={1}
         />
 
         <div className="flex items-center gap-1">
-          <button className="input-action-btn" title="Gift (coming soon)"><Gift className="w-4 h-4" /></button>
-          <button className="input-action-btn" title="Sticker (coming soon)"><Sticker className="w-4 h-4" /></button>
           <button
             className={`input-action-btn transition-colors ${showEmoji ? 'text-brand' : ''}`}
             title="Emoji"

@@ -1,6 +1,5 @@
 import { useMemo, useRef, useCallback, useEffect } from 'react';
-import { WifiOff } from 'lucide-react';
-import { Hash } from 'lucide-react';
+import { WifiOff, Hash } from 'lucide-react';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { SkMessageList } from '@/components/Skeleton';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';

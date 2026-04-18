@@ -61,7 +61,6 @@ interface ChatState {
   setOnline:          (userId: string, online: boolean) => void;
   setOnlineSnapshot:  (userIds: string[]) => void;
   setConnected:       (v: boolean) => void;
-  clearMessages:      () => void;
   setLoadingMessages: (v: boolean) => void;
   setLoadingOlder:    (v: boolean) => void;
   setHasMore:         (v: boolean) => void;

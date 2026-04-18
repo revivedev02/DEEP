@@ -8,6 +8,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { useDMStore, type DMMessage } from '@/store/useDMStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { isTodayIST, isYesterdayIST, isSameAuthorWithin5Min, IST } from './messageUtils';
+import type { UploadedMedia } from '@/lib/uploadMedia';
 
 // ── DMMessage → ChatMessage adapter ──────────────────────────────────────────
 // IMPORTANT: preserve all real values — never hardcode pinned:false etc.
@@ -46,7 +47,8 @@ function DateDivider({ label }: { label: string }) {
 interface DMPaneProps {
   conversationId: string;
   partner: { id: string; displayName: string; username: string; avatarUrl?: string | null; isAdmin: boolean } | null;
-  onSend:   (content: string, replyToId?: string) => void;
+  // onSend must carry media so MessageInput's file upload flows through correctly
+  onSend:   (content: string, media?: UploadedMedia, replyToId?: string) => void;
   onEdit:   (messageId: string, content: string) => void;
   onTyping: (typing: boolean) => void;
   onLoadOlder: () => void;
@@ -126,8 +128,9 @@ export default function DMPane({
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  const handleSend = useCallback((content: string) => {
-    onSend(content, replyingTo?.id);
+  // ✅ FIXED: accept media from MessageInput and pass it through to onSend
+  const handleSend = useCallback((content: string, media?: UploadedMedia) => {
+    onSend(content, media, replyingTo?.id);
     setReplyingTo(null);
   }, [onSend, replyingTo]);
 
@@ -279,7 +282,13 @@ export default function DMPane({
                 <div className="typing-dot" />
                 <div className="typing-dot" />
               </div>
-              <span><strong>{typingUsers[0]}</strong> is typing…</span>
+              <span>
+                {typingUsers.length === 1
+                  ? <><strong>{typingUsers[0]}</strong> is typing…</>
+                  : typingUsers.length === 2
+                  ? <><strong>{typingUsers[0]}</strong> and <strong>{typingUsers[1]}</strong> are typing…</>
+                  : <><strong>Several people</strong> are typing…</>}
+              </span>
             </>
           )}
         </div>
@@ -307,6 +316,7 @@ export default function DMPane({
         <MessageInput
           onSend={handleSend}
           channelName={partner?.displayName ?? 'user'}
+          isDM
           onTyping={onTyping}
           onCancelReply={() => setReplyingTo(null)}
         />
@@ -349,7 +359,9 @@ export default function DMPane({
                         {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-sm text-text-muted line-clamp-2">{m.content}</p>
+                    <p className="text-sm text-text-muted line-clamp-2">
+                      {m.content || (m.mediaType === 'image' ? '📷 Image' : m.mediaType === 'video' ? '🎬 Video' : '(empty)')}
+                    </p>
                   </div>
                 ))}
               </div>
