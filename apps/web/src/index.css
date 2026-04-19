@@ -61,26 +61,26 @@
     color-scheme: dark;
   }
 
-  /* Light — clean white card on cool-grey canvas */
+  /* Light — clean white on neutral grey canvas */
   [data-theme="light"] {
-    --bg-canvas:    #d8dee9;
+    --bg-canvas:    #ebebeb;
     --bg-primary:   #ffffff;
-    --bg-secondary: #f3f5f9;
-    --bg-tertiary:  #e4e8f0;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary:  #ededed;
     --bg-floating:  #ffffff;
-    --bg-hover:     rgba(0,0,0,0.06);
-    --bg-active:    rgba(0,0,0,0.10);
-    --bg-modifier:  rgba(0,0,0,0.05);
+    --bg-hover:     rgba(0,0,0,0.05);
+    --bg-active:    rgba(0,0,0,0.09);
+    --bg-modifier:  rgba(0,0,0,0.04);
     --card-bg:      #ffffff;
     --card-radius:  12px;
-    --text-normal:  #1a1c2e;
-    --text-muted:   #5a6380;
+    --text-normal:  #1a1a1a;
+    --text-muted:   #6b6b6b;
     --brand-rgb:        88 101 242;
     --brand-hover-rgb:  71 82 196;
     --brand-active-rgb: 60 69 165;
-    --separator-rgb:    198 205 220;
+    --separator-rgb:    200 200 200;
     --shadow-elevation: none;
-    --shadow-low:       0 1px 0 rgba(0,0,0,0.06);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.08);
     color-scheme: light;
   }
 
