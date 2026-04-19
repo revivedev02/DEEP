@@ -6,7 +6,7 @@
  * Speaking → green border + glow.
  * Muted/deafened → icon badge on avatar.
  */
-import { Mic, MicOff, Headphones, Volume2, HeadphonesIcon } from 'lucide-react';
+import { Mic, MicOff, Headphones, HeadphonesIcon } from 'lucide-react';
 import { useVoiceStore }   from '@/store/useVoiceStore';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { LazyAvatar }      from '@/components/LazyAvatar';
@@ -50,19 +50,14 @@ export default function VoicePane({ channelId, channelName }: Props) {
   return (
     <div className="voice-pane-discord">
 
-      {/* ── Channel Header ── */}
-      <div className="voice-pane-discord-header">
-        <Volume2 className="w-5 h-5 text-text-muted flex-shrink-0" />
-        <span className="voice-pane-discord-title">{channelName}</span>
-        {inThisChannel && (
-          <span className="voice-pane-discord-connected">
-            <span className="voice-status-dot" style={{ width: 7, height: 7 }} />
-            Connected
-          </span>
-        )}
-      </div>
+      {/* Connected pill — shown inside the card, below the external header */}
+      {inThisChannel && (
+        <div className="voice-pane-discord-connected" style={{ alignSelf: 'flex-start' }}>
+          <span className="voice-status-dot" style={{ width: 7, height: 7 }} />
+          Voice Connected · {count} {count === 1 ? 'member' : 'members'}
+        </div>
+      )}
 
-      {/* ── Participant tiles — fill remaining space ── */}
       <div
         className="voice-tiles-area"
         style={{
@@ -72,7 +67,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
       >
         {count === 0 ? (
           <div className="voice-empty">
-            <Volume2 className="w-10 h-10 text-text-muted opacity-40" />
+            <Mic className="w-10 h-10 text-text-muted opacity-40" />
             <span className="voice-empty-text">
               {isConnecting ? 'Connecting…' : 'No one is here yet.'}
             </span>
@@ -155,7 +150,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
           className="profile-card-msg-btn w-full justify-center mt-auto"
           onClick={() => joinChannel(channelId, channelName)}
         >
-          <Volume2 className="w-4 h-4" /> Join Voice
+          <Mic className="w-4 h-4" /> Join Voice
         </button>
       )}
     </div>

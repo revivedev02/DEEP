@@ -74,7 +74,7 @@ export default function ChatPage() {
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const isVoice   = activeChannelObj?.type === 'voice';
   const isText    = !isVoice && activeChannel !== '';
-  const showHeader = isText || isDMOpen;
+  const showHeader = isText || isDMOpen || isVoice;
   const membersVisible = showMembers; // always controllable, even from welcome screen
 
   // Voice channel hook — auto-joins on voice channel select

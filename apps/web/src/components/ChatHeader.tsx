@@ -1,4 +1,4 @@
-import { Bell, Hash, Moon, Monitor, PanelLeft, Pin, Search, Sun, Users, X } from 'lucide-react';
+import { Bell, Hash, Moon, Monitor, PanelLeft, Pin, Search, Sun, Users, Volume2, X } from 'lucide-react';
 import { useThemeStore }  from '../store/useThemeStore';
 import { useUIStore }     from '../store/useUIStore';
 import { useChatStore }   from '../store/useChatStore';
@@ -37,6 +37,7 @@ export default function ChatHeader({
   const isDMOpen         = !!activeDmConversation;
   const activeChannelObj = channels.find(c => c.id === activeChannel);
   const channelName      = activeChannelObj?.name ?? 'general';
+  const isVoice          = activeChannelObj?.type === 'voice';
 
   const activeDmConv = useDMStore(s =>
     s.conversations.find(c => c.id === activeDmConversation)
@@ -71,6 +72,17 @@ export default function ChatHeader({
                 <span className="text-[12px] text-text-muted truncate">
                   @{activeDmConv?.partner?.username}
                 </span>
+              </div>
+            </>
+          ) : isVoice ? (
+            <>
+              <Volume2 className="w-[18px] h-[18px] text-text-muted flex-shrink-0" />
+              <span className="text-[15px] font-semibold text-text-normal truncate">
+                {channelName}
+              </span>
+              <div className="flex items-center gap-1.5 ml-2">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-status-green live-dot" />
+                <span className="text-[12px] text-text-muted">voice</span>
               </div>
             </>
           ) : (
