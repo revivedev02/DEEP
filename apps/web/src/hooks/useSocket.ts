@@ -14,6 +14,11 @@ export function emitAvatarUpdate(avatarUrl: string) {
   socketInstance?.emit('avatar:update', { avatarUrl });
 }
 
+/** Raw socket accessor — used by voice/other subsystems that need direct emit/on */
+export function getSocketInstance(): Socket | null {
+  return socketInstance;
+}
+
 export function useSocket() {
   const token = useAuthStore((s) => s.token);
   const { addMessage, setOnline, setConnected } = useChatStore();

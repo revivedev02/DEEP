@@ -290,7 +290,7 @@ export default function DMPane({
                 <div key={msg.id}>
                   {dateLabel && <DateDivider label={dateLabel} />}
                   <MessageItem
-                    msg={msg}
+                    msg={msg as any}
                     isFirst={isFirst}
                     currentUserId={user?.id ?? ''}
                     isAdmin={user?.isAdmin ?? false}

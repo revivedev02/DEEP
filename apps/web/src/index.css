@@ -4,6 +4,7 @@
 @import './styles/modals.css';
 @import './styles/settings.css';
 @import './styles/animations.css';
+@import './styles/voice.css';
 
 @tailwind base;
 @tailwind components;

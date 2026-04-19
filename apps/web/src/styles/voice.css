@@ -1,0 +1,273 @@
+/* ── Voice Channel UI Styles ──────────────────────────────────────────────── */
+@layer components {
+
+  /* ── VoicePane — full pane when a voice channel is selected ─────────────── */
+  .voice-pane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 24px 20px 20px;
+    gap: 20px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .voice-pane-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+    align-self: flex-start;
+  }
+
+  .voice-pane-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--status-green, #23a55a);
+    align-self: flex-start;
+  }
+
+  /* ── Participant grid ────────────────────────────────────────────────────── */
+  .voice-participants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    width: 100%;
+  }
+
+  .voice-participant-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    transition: border-color 120ms ease, background 120ms ease;
+    position: relative;
+  }
+
+  .voice-participant-card.is-speaking {
+    border-color: var(--status-green, #23a55a);
+    background: rgba(35, 165, 90, 0.06);
+  }
+
+  /* Avatar wrapper — speaking ring */
+  .voice-avatar-ring {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .voice-avatar-ring::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  .voice-avatar-ring.is-speaking::after {
+    border-color: var(--status-green, #23a55a);
+    box-shadow: 0 0 0 2px rgba(35, 165, 90, 0.25);
+  }
+
+  .voice-participant-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-normal);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Muted overlay badge on avatar */
+  .voice-muted-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bg-canvas);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--bg-secondary);
+  }
+
+  /* ── Voice controls bar (mute / deafen / leave) ─────────────────────────── */
+  .voice-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid rgb(var(--separator-rgb) / 0.4);
+    width: 100%;
+    justify-content: center;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  .voice-control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: none;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, transform 100ms ease;
+    flex-shrink: 0;
+  }
+
+  .voice-control-btn:hover {
+    background: var(--bg-active);
+    color: var(--text-normal);
+    transform: scale(1.08);
+  }
+
+  .voice-control-btn.active {
+    background: rgba(var(--brand-rgb) / 0.18);
+    color: rgb(var(--brand-rgb));
+  }
+
+  .voice-control-btn.danger {
+    background: rgba(237, 66, 69, 0.12);
+    color: #ed4245;
+  }
+
+  .voice-control-btn.danger:hover {
+    background: #ed4245;
+    color: #ffffff;
+  }
+
+  .voice-control-btn.muted-active {
+    background: rgba(237, 66, 69, 0.12);
+    color: #ed4245;
+  }
+
+  /* ── VoiceBar — persistent sidebar bottom bar ───────────────────────────── */
+  .voice-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    gap: 6px;
+    border-top: 1px solid rgb(var(--separator-rgb) / 0.35);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+  }
+
+  .voice-bar-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .voice-bar-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--status-green, #23a55a);
+  }
+
+  .voice-bar-channel {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .voice-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 100ms ease, color 100ms ease;
+    flex-shrink: 0;
+  }
+
+  .voice-bar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-normal);
+  }
+
+  .voice-bar-btn.muted {
+    color: #ed4245;
+  }
+
+  /* ── Sidebar: voice channel participants list ────────────────────────────── */
+  .voice-channel-participant {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 12px 2px 28px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .voice-channel-participant.is-speaking {
+    color: var(--text-normal);
+  }
+
+  /* ── Status dot ──────────────────────────────────────────────────────────── */
+  .voice-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-green, #23a55a);
+    flex-shrink: 0;
+    animation: voice-pulse 2s ease infinite;
+  }
+
+  @keyframes voice-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+
+  /* ── Empty voice pane (before joining) ───────────────────────────────────── */
+  .voice-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .voice-empty-text {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+}

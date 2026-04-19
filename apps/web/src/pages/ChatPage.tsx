@@ -21,6 +21,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useValidateToken } from '@/hooks/useValidateToken';
 import { useServerData } from '@/hooks/useServerData';
 import { useDMSocket } from '@/hooks/useDMSocket';
+import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 import { scrollToMessage } from '@/components/messageUtils';
 import type { UploadedMedia } from '@/lib/uploadMedia';
 
@@ -75,10 +76,20 @@ export default function ChatPage() {
   const showHeader = isText || isDMOpen;
   const membersVisible = showMembers; // always controllable, even from welcome screen
 
+  // Voice channel hook — auto-joins on voice channel select
+  const { joinChannel: joinVoice, leaveChannel: leaveVoice } = useVoiceChannel();
+
   // Join channel socket room
   useEffect(() => {
     if (!isDMOpen && activeChannel) joinChannel(activeChannel);
   }, [activeChannel, isDMOpen]);
+
+  // Auto-join voice channel when selected
+  useEffect(() => {
+    if (isVoice && activeChannelObj) {
+      joinVoice(activeChannelObj.id, activeChannelObj.name);
+    }
+  }, [isVoice, activeChannelObj?.id]);
 
   // When a DM conversation is selected
   useEffect(() => {
@@ -191,7 +202,7 @@ export default function ChatPage() {
                 <WelcomePane />
               ) : isVoice ? (
                 <Suspense fallback={<div className="flex-1" />}>
-                  <VoicePane />
+                  <VoicePane channelId={activeChannel} channelName={activeChannelObj?.name ?? ''} />
                 </Suspense>
               ) : (
                 <MessagePane

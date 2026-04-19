@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, LogOut, Hash, Mic, Settings } from 'lucide-react';
+import { ChevronDown, Shield, LogOut, Hash, Mic, MicOff, Settings } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
+import { useVoiceStore } from '@/store/useVoiceStore';
 import { SkChannelSidebar } from '@/components/Skeleton';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import AccountSettingsModal from '@/components/AccountSettingsModal';
+import VoiceBar from '@/components/VoiceBar';
 
 // ── Channel row — Stoat pill style ────────────────────────────────────────────
 function ChannelItem({ channel, active, onSelect }: {
@@ -39,6 +41,8 @@ export default function ChannelSidebar() {
   const { user, logout } = useAuthStore();
   const { activeChannel, setActiveChannel } = useUIStore();
   const { serverName, iconUrl, channels, isLoading } = useServerStore();
+  const voiceChannelId    = useVoiceStore(s => s.channelId);
+  const voiceParticipants = useVoiceStore(s => s.participants);
 
   const [dropdownOpen, setDropdownOpen]       = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -110,14 +114,35 @@ export default function ChannelSidebar() {
               <>
                 <div className="mt-4" />
                 <SectionHeader label="Voice Channels" />
-                {voiceChannels.map(ch => (
-                  <ChannelItem key={ch.id} channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
-                ))}
+                {voiceChannels.map(ch => {
+                  const isThisChannel = voiceChannelId === ch.id;
+                  const participants = isThisChannel ? voiceParticipants : [];
+                  return (
+                    <div key={ch.id}>
+                      <ChannelItem channel={ch} active={activeChannel === ch.id} onSelect={() => setActiveChannel(ch.id)} />
+                      {participants.map(p => (
+                        <div
+                          key={p.userId}
+                          className={`voice-channel-participant ${p.isSpeaking && !p.isMuted ? 'is-speaking' : ''}`}
+                        >
+                          <LazyAvatar name={p.displayName} avatarUrl={p.avatarUrl} size={5} />
+                          {p.isMuted
+                            ? <MicOff className="w-2.5 h-2.5 text-red-400 flex-shrink-0" />
+                            : <Mic className="w-2.5 h-2.5 flex-shrink-0" />}
+                          <span className="truncate">{p.displayName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </>
             )}
           </>
         )}
       </div>
+
+      {/* ── Voice bar — persistent when connected ── */}
+      <VoiceBar />
 
       {/* ── User footer — clicking anywhere opens Account Settings ── */}
       <div

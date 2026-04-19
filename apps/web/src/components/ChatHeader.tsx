@@ -60,16 +60,16 @@ export default function ChatHeader({
           isDMOpen ? (
             <>
               <LazyAvatar
-                name={activeDmConv?.partner.displayName ?? '?'}
-                avatarUrl={activeDmConv?.partner.avatarUrl}
+                name={activeDmConv?.partner?.displayName ?? '?'}
+                avatarUrl={activeDmConv?.partner?.avatarUrl}
                 size={7}
               />
               <div className="flex flex-col leading-tight min-w-0">
                 <span className="text-sm font-semibold text-text-normal truncate">
-                  {activeDmConv?.partner.displayName ?? 'Unknown'}
+                  {activeDmConv?.partner?.displayName ?? 'Unknown'}
                 </span>
                 <span className="text-xs text-text-muted truncate">
-                  @{activeDmConv?.partner.username}
+                  @{activeDmConv?.partner?.username}
                 </span>
               </div>
             </>

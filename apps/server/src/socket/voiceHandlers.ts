@@ -180,8 +180,10 @@ export function setupVoiceHandlers(io: Server, socket: Socket) {
 
       if (!transport) return;
       await transport.connect({ dtlsParameters });
+      socket.emit('voice:transport-connected', { transportId });
     } catch (err) {
       console.error('[voice] voice:connect-transport error', err);
+      socket.emit('voice:transport-error', { message: 'connect failed' });
     }
   });
 
@@ -287,7 +289,8 @@ export function setupVoiceHandlers(io: Server, socket: Socket) {
   });
 
   // ── voice:speaking ─────────────────────────────────────────────────────────
-  // Throttled client-side to ~150ms, just relay to channel  socket.on('voice:speaking', ({ isSpeaking }: { isSpeaking: boolean }) => {
+  // Throttled client-side to ~150ms, just relay to channel
+  socket.on('voice:speaking', ({ isSpeaking }: { isSpeaking: boolean }) => {
     const peer = peers.get(socket.id);
     if (!peer) return;
     peer.isSpeaking = isSpeaking;
