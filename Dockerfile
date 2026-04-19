@@ -1,8 +1,11 @@
 FROM node:20-slim
 WORKDIR /app
 
-# Install system deps required by Prisma
-RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# System deps: openssl + ca-certs for Prisma; build tools for mediasoup native bindings
+RUN apt-get update -y && apt-get install -y \
+    openssl ca-certificates \
+    python3 make g++ libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm@9

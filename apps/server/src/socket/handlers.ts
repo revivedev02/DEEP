@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { z } from 'zod';
 import { messageInclude } from '../routes/messages.js';
 import { setupDMSocketHandlers } from './dmHandlers.js';
+import { setupVoiceHandlers }    from './voiceHandlers.js';
 import { destroyImage } from '../lib/cloudinary.js';
 
 const onlineUsers = new Map<string, Set<string>>();
@@ -49,6 +50,9 @@ export function setupSocketHandlers(io: Server, app: FastifyInstance) {
 
     // Wire DM socket handlers
     setupDMSocketHandlers(io, socket);
+
+    // Wire voice socket handlers (independent of chat)
+    setupVoiceHandlers(io, socket);
 
     // ── channel:join — move socket into channel-specific room ────────────────
     socket.on('channel:join', ({ channelId }: { channelId: string }) => {

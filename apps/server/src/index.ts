@@ -18,6 +18,7 @@ import { registerChannelRoutes } from './routes/channels.js';
 import { registerUploadRoutes } from './routes/upload.js';
 import { registerDMRoutes } from './routes/dm.js';
 import { setupSocketHandlers } from './socket/handlers.js';
+import { initMediasoup } from './lib/mediasoupManager.js';
 import { prisma } from './lib/prisma.js';
 import multipart from '@fastify/multipart';
 
@@ -169,6 +170,14 @@ try {
 
 // Attach io to app so route handlers can emit events
 (app as any).io = io;
+
+// Initialise mediasoup SFU worker (must run before sockets are wired)
+try {
+  await initMediasoup();
+  console.log('✅  mediasoup SFU worker ready');
+} catch (err) {
+  console.error('⚠️  mediasoup init failed — voice channels will not work', err);
+}
 
 setupSocketHandlers(io, app);
 
