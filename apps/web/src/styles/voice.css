@@ -45,8 +45,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 14px 10px;
+    gap: 10px;
+    padding: 18px 12px 14px;
     border-radius: 12px;
     background: var(--bg-secondary);
     border: 1px solid transparent;
@@ -82,15 +82,46 @@
     box-shadow: 0 0 0 2px rgba(35, 165, 90, 0.25);
   }
 
+  /* Name + icons row at the bottom of the card */
+  .voice-participant-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    max-width: 100%;
+  }
+
   .voice-participant-name {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-normal);
     text-align: center;
-    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* Mic / headphone icons beside the name */
+  .voice-participant-status-icons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .voice-status-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .voice-status-icon.active {
+    color: var(--text-muted);
+  }
+
+  .voice-status-icon.muted {
+    color: #ed4245;
   }
 
   /* Muted overlay badge on avatar */
