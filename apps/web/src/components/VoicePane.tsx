@@ -50,13 +50,6 @@ export default function VoicePane({ channelId, channelName }: Props) {
   return (
     <div className="voice-pane-discord">
 
-      {/* Connected pill — shown inside the card, below the external header */}
-      {inThisChannel && (
-        <div className="voice-pane-discord-connected" style={{ alignSelf: 'flex-start' }}>
-          <span className="voice-status-dot" style={{ width: 7, height: 7 }} />
-          Voice Connected · {count} {count === 1 ? 'member' : 'members'}
-        </div>
-      )}
 
       <div
         className="voice-tiles-area"

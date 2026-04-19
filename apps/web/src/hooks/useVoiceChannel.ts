@@ -21,6 +21,7 @@ import {
 } from 'livekit-client';
 import { useAuthStore }  from '@/store/useAuthStore';
 import { useVoiceStore } from '@/store/useVoiceStore';
+import { voiceSounds }   from '@/lib/voiceSounds';
 
 // ── Module-level singleton — survives React re-renders ───────────────────────
 let room: Room | null = null;
@@ -85,6 +86,9 @@ export function useVoiceChannel() {
 
       useVoiceStore.getState().setConnecting(false);
 
+      // Play join sound
+      voiceSounds.join();
+
       // 5. Add self to store
       if (user) {
         upsertFromParticipant(room.localParticipant);
@@ -106,10 +110,12 @@ export function useVoiceChannel() {
 
     room.on(RoomEvent.ParticipantConnected, (p: RemoteParticipant) => {
       upsertFromParticipant(p);
+      voiceSounds.join(); // another user joined
     });
 
     room.on(RoomEvent.ParticipantDisconnected, (p: RemoteParticipant) => {
       useVoiceStore.getState().removeParticipant(p.identity);
+      voiceSounds.leave(); // another user left
     });
 
     // Attach remote audio tracks to the DOM
@@ -159,6 +165,7 @@ export function useVoiceChannel() {
 
   // ── Leave ──────────────────────────────────────────────────────────────────
   const leaveChannel = useCallback(() => {
+    voiceSounds.leave();
     room?.disconnect();
     cleanupAudio();
     room = null;
@@ -170,6 +177,7 @@ export function useVoiceChannel() {
     await room?.localParticipant.setMicrophoneEnabled(!isMuted);
     useVoiceStore.getState().setMuted(isMuted);
     if (user?.id) useVoiceStore.getState().setParticipantMuted(user.id, isMuted);
+    isMuted ? voiceSounds.mute() : voiceSounds.unmute();
   }, [user?.id]);
 
   // ── Deafen / undeafen ─────────────────────────────────────────────────────
@@ -178,6 +186,7 @@ export function useVoiceChannel() {
       el.muted = isDeafened;
     });
     useVoiceStore.getState().setDeafened(isDeafened);
+    isDeafened ? voiceSounds.deafen() : voiceSounds.undeafen();
   }, []);
 
   return { joinChannel, leaveChannel, setMuted, setDeafened };
