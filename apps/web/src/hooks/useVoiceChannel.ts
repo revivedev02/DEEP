@@ -137,17 +137,32 @@ export function useVoiceChannel() {
       voiceSounds.leave(); // another user left
     });
 
-    // Attach remote audio tracks to the DOM
+    // Attach remote audio + screen-share tracks
     room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
-      if (track.kind === Track.Kind.Audio) {
+      if (track.kind === Track.Kind.Audio && track.source === Track.Source.Microphone) {
+        // Audio — append hidden <audio> element
         const el = track.attach() as HTMLAudioElement;
         el.setAttribute('data-lk-audio', participant.identity);
         el.style.display = 'none';
         document.body.appendChild(el);
+      } else if (
+        track.kind === Track.Kind.Video &&
+        track.source === Track.Source.ScreenShare
+      ) {
+        // Remote screen share started
+        const stream = new MediaStream([track.mediaStreamTrack]);
+        useVoiceStore.getState().setScreenShareStream(
+          stream,
+          participant.name ?? participant.identity,
+        );
       }
     });
 
     room.on(RoomEvent.TrackUnsubscribed, (track, _pub, participant) => {
+      if (track.kind === Track.Kind.Video && track.source === Track.Source.ScreenShare) {
+        // Remote screen share ended
+        useVoiceStore.getState().setScreenShareStream(null, null);
+      }
       track.detach();
       document.querySelector(`[data-lk-audio="${participant.identity}"]`)?.remove();
     });
@@ -208,5 +223,34 @@ export function useVoiceChannel() {
     isDeafened ? voiceSounds.deafen() : voiceSounds.undeafen();
   }, []);
 
-  return { joinChannel, leaveChannel, setMuted, setDeafened };
+  // ── Screen share ───────────────────────────────────────────────────────────
+  const startScreenShare = useCallback(async () => {
+    if (!room?.localParticipant) return;
+    try {
+      await room.localParticipant.setScreenShareEnabled(true, {
+        audio:       true,        // capture system audio if allowed
+        contentHint: 'detail',    // optimise for sharp text
+      });
+      // Build MediaStream from the local screen track
+      const pub = [...room.localParticipant.videoTrackPublications.values()]
+        .find(p => p.source === Track.Source.ScreenShare);
+      if (pub?.track) {
+        const stream = new MediaStream([pub.track.mediaStreamTrack]);
+        useVoiceStore.getState().setScreenShareStream(stream, user?.displayName ?? 'You');
+      }
+      useVoiceStore.getState().setScreenSharing(true);
+    } catch (err) {
+      console.error('[voice] screen share failed', err);
+      useVoiceStore.getState().setScreenSharing(false);
+    }
+  }, [user?.displayName]);
+
+  const stopScreenShare = useCallback(async () => {
+    if (!room?.localParticipant) return;
+    await room.localParticipant.setScreenShareEnabled(false);
+    useVoiceStore.getState().setScreenSharing(false);
+    useVoiceStore.getState().setScreenShareStream(null, null);
+  }, []);
+
+  return { joinChannel, leaveChannel, setMuted, setDeafened, startScreenShare, stopScreenShare };
 }

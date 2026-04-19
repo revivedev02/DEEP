@@ -24,6 +24,11 @@ interface VoiceStore {
   isDeafened:   boolean;
   isConnecting: boolean;
 
+  /** Screen sharing state */
+  isScreenSharing:    boolean;
+  screenShareStream:  MediaStream | null;   // video stream to render
+  screenShareOwner:   string | null;        // displayName of the sharer
+
   // ── Setters ────────────────────────────────────────────────────────────────
   setChannelId:    (id: string | null, name?: string | null) => void;
   setParticipants: (participants: VoiceParticipant[]) => void;
@@ -34,16 +39,21 @@ interface VoiceStore {
   setMuted:       (v: boolean) => void;
   setDeafened:    (v: boolean) => void;
   setConnecting:  (v: boolean) => void;
+  setScreenSharing:    (v: boolean) => void;
+  setScreenShareStream:(stream: MediaStream | null, owner: string | null) => void;
   reset:          () => void;
 }
 
 const defaults = {
-  channelId:    null,
-  channelName:  null,
-  participants: [],
-  isMuted:      false,
-  isDeafened:   false,
-  isConnecting: false,
+  channelId:         null,
+  channelName:       null,
+  participants:      [],
+  isMuted:           false,
+  isDeafened:        false,
+  isConnecting:      false,
+  isScreenSharing:   false,
+  screenShareStream: null,
+  screenShareOwner:  null,
 };
 
 export const useVoiceStore = create<VoiceStore>((set) => ({
@@ -85,6 +95,9 @@ export const useVoiceStore = create<VoiceStore>((set) => ({
   setMuted:      (isMuted)     => set({ isMuted }),
   setDeafened:   (isDeafened)  => set({ isDeafened }),
   setConnecting: (isConnecting) => set({ isConnecting }),
+  setScreenSharing:   (isScreenSharing)  => set({ isScreenSharing }),
+  setScreenShareStream: (screenShareStream, screenShareOwner) =>
+    set({ screenShareStream, screenShareOwner }),
 
-  reset: () => set(defaults),
+  reset: () => set({ ...defaults, screenShareStream: null }),
 }));

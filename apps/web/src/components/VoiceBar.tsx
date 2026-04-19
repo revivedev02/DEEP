@@ -3,13 +3,13 @@
  * Persistent rounded bar at the bottom of the Channel Sidebar.
  * Visible only when connected to a voice channel.
  */
-import { Mic, MicOff, Headphones, HeadphonesIcon, PhoneOff, Wifi } from 'lucide-react';
+import { Mic, MicOff, Headphones, HeadphonesIcon, PhoneOff, Wifi, Monitor, MonitorOff } from 'lucide-react';
 import { useVoiceStore }   from '@/store/useVoiceStore';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 
 export default function VoiceBar() {
-  const { channelId, channelName, isMuted, isDeafened } = useVoiceStore();
-  const { leaveChannel, setMuted, setDeafened }         = useVoiceChannel();
+  const { channelId, channelName, isMuted, isDeafened, isScreenSharing } = useVoiceStore();
+  const { leaveChannel, setMuted, setDeafened, startScreenShare, stopScreenShare } = useVoiceChannel();
 
   if (!channelId) return null;
 
@@ -23,6 +23,17 @@ export default function VoiceBar() {
         </div>
         <div className="voice-bar-channel">#{channelName ?? channelId}</div>
       </div>
+
+      {/* Screen share */}
+      <button
+        className={`voice-bar-btn ${isScreenSharing ? 'active-share' : ''}`}
+        onClick={() => isScreenSharing ? stopScreenShare() : startScreenShare()}
+        title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
+      >
+        {isScreenSharing
+          ? <MonitorOff className="icon-md" style={{ color: '#ed4245' }} />
+          : <Monitor    className="icon-md" />}
+      </button>
 
       {/* Mute */}
       <button

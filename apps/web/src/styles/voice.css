@@ -292,4 +292,114 @@
     font-size: 14px;
     color: var(--text-muted);
   }
+
+  /* ── Screen share layout ─────────────────────────────────────────────────── */
+
+  .voice-screenshare-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+  }
+
+  /* The large video area */
+  .voice-screenshare-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: #000;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .voice-screenshare-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;  /* letterbox — never crop shared content */
+    display: block;
+  }
+
+  /* Presenter label overlay — top-left */
+  .voice-screenshare-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    border-radius: 20px;
+    font-size: var(--ui-xs);
+    font-weight: 600;
+    color: #fff;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Stop sharing button inside label */
+  .voice-screenshare-stop-btn {
+    pointer-events: all;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #ed4245;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: var(--ui-xs);
+    font-weight: 600;
+    transition: background 120ms ease;
+  }
+  .voice-screenshare-stop-btn:hover {
+    background: #c03537;
+  }
+
+  /* Participant mini-strip at the bottom */
+  .voice-screenshare-participants {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0;
+    flex-shrink: 0;
+    min-height: 0;
+    flex-wrap: wrap;
+  }
+
+  /* Mini speaking tile */
+  .voice-tile-mini {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+  .voice-tile-mini.is-speaking {
+    border-color: #23a55a;
+    box-shadow: 0 0 0 3px rgba(35, 165, 90, 0.35);
+  }
+  .voice-tile-mini .voice-tile-muted-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ed4245;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--card-bg);
+    z-index: 2;
+  }
 }
