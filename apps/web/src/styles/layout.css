@@ -38,16 +38,16 @@
     align-items: center;
     gap: 8px;
     padding: 0 16px;
-    height: 52px;
-    min-height: 52px;
+    height: 56px;
+    min-height: 56px;
     flex-shrink: 0;
     border-bottom: 1px solid rgba(var(--separator-rgb) / 0.15);
   }
   .channel-header-name {
-    @apply text-base font-semibold text-text-normal;
+    @apply text-[15px] font-semibold text-text-normal;
   }
   .channel-header-topic {
-    @apply hidden md:flex items-center gap-1 text-sm text-text-muted
+    @apply hidden md:flex items-center gap-1 text-[13px] text-text-muted
            pl-3 ml-2 border-l border-separator truncate;
   }
 
@@ -66,8 +66,8 @@
     align-items: center;
     gap: 8px;
     padding: 0 12px;
-    height: 44px;
-    min-height: 44px;
+    height: 48px;
+    min-height: 48px;
     flex-shrink: 0;
   }
 
@@ -76,8 +76,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
     color: var(--text-muted);
     cursor: pointer;
@@ -106,7 +106,8 @@
   /* ── Sidebar section title ── */
   .sidebar-section-title {
     @apply flex items-center gap-1 px-3 mt-4 mb-1
-           text-xs font-semibold uppercase tracking-wider text-text-muted;
+           font-semibold uppercase tracking-wider text-text-muted;
+    font-size: 11.5px;
   }
 
   /* ── Channel item — filled pill ── */
@@ -115,9 +116,9 @@
     align-items: center;
     gap: 8px;
     margin: 1px 8px;
-    padding: 7px 10px;
+    padding: 8px 10px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text-muted);
     cursor: pointer;
     transition: background 120ms ease, color 120ms ease, transform 120ms ease;
@@ -134,7 +135,9 @@
     transform: translateX(0);  /* active items don’t shift */
   }
   .channel-item .channel-icon {
-    @apply w-4 h-4 flex-shrink-0;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
     opacity: 0.6;
   }
   .channel-item.active .channel-icon {
@@ -177,7 +180,7 @@
   }
   .member-section-title {
     padding: 4px 16px 6px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -186,9 +189,9 @@
   .member-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin: 1px 8px;
-    padding: 6px 8px;
+    padding: 7px 10px;
     border-radius: 8px;
     cursor: pointer;
     transition: background 100ms ease;
@@ -197,10 +200,11 @@
     background: var(--bg-hover);
   }
   .member-name {
-    @apply text-sm text-text-muted;
+    font-size: 13.5px;
+    color: var(--text-muted);
   }
   .member-item:hover .member-name {
-    @apply text-text-normal;
+    color: var(--text-normal);
   }
 
   /* ── Voice Coming Soon ── */
