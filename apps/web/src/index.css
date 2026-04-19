@@ -1,6 +1,3 @@
-/* ── Design tokens — import first so all sheets can use vars ── */
-@import './styles/tokens.css';
-
 /* ── Split component styles ─────────────────────────────────────────────── */
 @import './styles/layout.css';
 @import './styles/messages.css';
@@ -16,6 +13,43 @@
 /* ── Design tokens (themes) ─────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* UI sizing tokens — single source of truth for all non-message chrome */
+  :root {
+    /* Icon sizes */
+    --icon-xs:    12px;
+    --icon-sm:    16px;
+    --icon-md:    18px;
+    --icon-lg:    20px;
+    --icon-xl:    24px;
+
+    /* Icon button hit targets */
+    --btn-sm:     32px;
+    --btn-md:     36px;
+    --btn-lg:     40px;
+    --btn-voice:  34px;
+
+    /* UI text scale (sidebar, panels, headers — NOT message content) */
+    --ui-2xs:    11px;
+    --ui-xs:     12px;
+    --ui-sm:     13px;
+    --ui-md:     15px;
+    --ui-lg:     16px;
+    --ui-xl:     18px;
+
+    /* Component heights */
+    --header-h:    48px;
+    --ch-header-h: 56px;
+
+    /* Panel widths */
+    --sidebar-w:  240px;
+    --members-w:  220px;
+
+    /* Common spacing & radii */
+    --gap-layout:  8px;
+    --radius-item: 8px;
+    --radius-card: 10px;
+  }
 
   /* OLED dark — pure black */
   [data-theme="oled"] {
