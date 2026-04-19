@@ -53,7 +53,7 @@ export default function ChatHeader({
           className={`canvas-icon-btn flex-shrink-0 ${sidebarVisible ? 'active' : ''}`}
           title={sidebarVisible ? 'Hide channels' : 'Show channels'}
         >
-          <PanelLeft className="w-4 h-4" />
+          <PanelLeft className="w-5 h-5" />
         </button>
 
         {showHeader && (
@@ -65,23 +65,23 @@ export default function ChatHeader({
                 size={7}
               />
               <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-sm font-semibold text-text-normal truncate">
+                <span className="text-[14px] font-semibold text-text-normal truncate">
                   {activeDmConv?.partner?.displayName ?? 'Unknown'}
                 </span>
-                <span className="text-xs text-text-muted truncate">
+                <span className="text-[12px] text-text-muted truncate">
                   @{activeDmConv?.partner?.username}
                 </span>
               </div>
             </>
           ) : (
             <>
-              <Hash className="w-5 h-5 text-text-muted flex-shrink-0" />
-              <span className="text-base font-semibold text-text-normal truncate">
+              <Hash className="w-[18px] h-[18px] text-text-muted flex-shrink-0" />
+              <span className="text-[15px] font-semibold text-text-normal truncate">
                 {channelName}
               </span>
               <div className="flex items-center gap-1.5 ml-2">
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isConnected ? 'bg-status-green live-dot' : 'bg-text-muted'}`} />
-                <span className="text-xs text-text-muted">
+                <span className="text-[12px] text-text-muted">
                   {isConnected ? 'live' : 'offline'}
                 </span>
               </div>
@@ -95,21 +95,21 @@ export default function ChatHeader({
         {showHeader && (
           <>
             <button className="canvas-icon-btn" title="Notifications (coming soon)">
-              <Bell className="w-4 h-4" />
+              <Bell className="w-5 h-5" />
             </button>
             <button
               onClick={onTogglePinned}
               className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
               title="Pinned messages"
             >
-              <Pin className="w-4 h-4" />
+              <Pin className="w-5 h-5" />
             </button>
             <button
               onClick={onToggleSearch}
               className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
               title="Search messages"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-5 h-5" />
             </button>
           </>
         )}
@@ -119,9 +119,9 @@ export default function ChatHeader({
           className="canvas-icon-btn"
           title={`Theme: ${theme} — click to switch`}
         >
-          {theme === 'dark'   ? <Moon    className="w-4 h-4" />
-           : theme === 'light' ? <Sun     className="w-4 h-4" />
-           :                     <Monitor className="w-4 h-4" />}
+          {theme === 'dark'   ? <Moon    className="w-5 h-5" />
+           : theme === 'light' ? <Sun     className="w-5 h-5" />
+           :                     <Monitor className="w-5 h-5" />}
         </button>
 
         <button
@@ -129,7 +129,7 @@ export default function ChatHeader({
           className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
           title="Toggle members"
         >
-          <Users className="w-4 h-4" />
+          <Users className="w-5 h-5" />
         </button>
 
         {isDMOpen && (
@@ -138,7 +138,7 @@ export default function ChatHeader({
             className="canvas-icon-btn ml-1"
             title="Close DM"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         )}
       </div>

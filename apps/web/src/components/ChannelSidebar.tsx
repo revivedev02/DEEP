@@ -76,7 +76,7 @@ export default function ChannelSidebar() {
             ? <div className="skeleton flex-1 h-4 rounded" />
             : <span className="font-semibold text-[15px] text-text-normal truncate flex-1 text-left">{serverName}</span>
           }
-          <ChevronDown className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-5 h-5 text-text-muted flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {dropdownOpen && (
@@ -153,7 +153,7 @@ export default function ChannelSidebar() {
       >
         {/* Avatar — display only, no click */}
         <div className="flex-shrink-0">
-          <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={9} />
+          <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={8} />
         </div>
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-[14px] font-medium text-text-normal truncate transition-colors">
@@ -161,7 +161,7 @@ export default function ChannelSidebar() {
           </span>
           <span className="text-[12px] text-text-muted truncate">#{user?.username}</span>
         </div>
-        <Settings className="w-4 h-4 text-text-muted group-hover:text-text-normal transition-colors flex-shrink-0" />
+        <Settings className="w-5 h-5 text-text-muted group-hover:text-text-normal transition-colors flex-shrink-0" />
       </div>
 
       {showAccountModal && (
