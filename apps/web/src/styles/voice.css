@@ -187,13 +187,13 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--status-green, #23a55a);
   }
 
   .voice-bar-channel {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -204,8 +204,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     border-radius: 6px;
     border: none;
     background: none;
@@ -229,8 +229,8 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 2px 12px 2px 28px;
-    font-size: 12px;
+    padding: 3px 12px 3px 30px;
+    font-size: 13px;
     color: var(--text-muted);
   }
 

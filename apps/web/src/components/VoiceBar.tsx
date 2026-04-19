@@ -32,7 +32,9 @@ export default function VoiceBar() {
         onClick={() => setMuted(!isMuted)}
         title={isMuted ? 'Unmute' : 'Mute'}
       >
-        {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+        {isMuted
+          ? <MicOff className="w-[18px] h-[18px]" />
+          : <Mic    className="w-[18px] h-[18px]" />}
       </button>
 
       {/* Deafen */}
@@ -42,8 +44,8 @@ export default function VoiceBar() {
         title={isDeafened ? 'Undeafen' : 'Deafen'}
       >
         {isDeafened
-          ? <HeadphonesIcon className="w-3.5 h-3.5" />
-          : <Headphones className="w-3.5 h-3.5" />}
+          ? <HeadphonesIcon className="w-[18px] h-[18px]" />
+          : <Headphones     className="w-[18px] h-[18px]" />}
       </button>
 
       {/* Leave */}
@@ -53,7 +55,7 @@ export default function VoiceBar() {
         title="Disconnect from voice"
         style={{ color: '#ed4245' }}
       >
-        <PhoneOff className="w-3.5 h-3.5" />
+        <PhoneOff className="w-[18px] h-[18px]" />
       </button>
     </div>
   );
