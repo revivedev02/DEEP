@@ -50,7 +50,6 @@ export function ProfileCard() {
   };
 
   return (
-    // Backdrop — transparent clickable overlay to dismiss
     <div
       className="profile-card-backdrop"
       onClick={close}
@@ -62,7 +61,7 @@ export function ProfileCard() {
         style={{ top, left }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Banner — img element fills full width reliably, gradient fallback via CSS */}
+        {/* Banner — purely visual, no avatar overlap */}
         <div className="profile-card-banner">
           {user.avatarUrl && (
             <img
@@ -74,29 +73,24 @@ export function ProfileCard() {
           )}
         </div>
 
-
-        {/* Avatar — overlaps banner/body boundary */}
-        <div className="profile-card-avatar-ring">
-          <LazyAvatar
-            name={user.displayName}
-            avatarUrl={user.avatarUrl}
-            size={18}
-          />
-        </div>
-
         {/* Body */}
         <div className="profile-card-body">
-          {/* Name row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="profile-card-name">{user.displayName}</span>
-            {user.isAdmin && (
-              <span className="profile-card-admin-badge">
-                <ShieldCheck className="w-3 h-3" />
-                Admin
-              </span>
-            )}
+          {/* Avatar + name inline — like the account settings page */}
+          <div className="profile-card-identity">
+            <LazyAvatar name={user.displayName} avatarUrl={user.avatarUrl} size={11} />
+            <div className="min-w-0 flex flex-col gap-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="profile-card-name">{user.displayName}</span>
+                {user.isAdmin && (
+                  <span className="profile-card-admin-badge">
+                    <ShieldCheck className="w-3 h-3" />
+                    Admin
+                  </span>
+                )}
+              </div>
+              <span className="profile-card-username">@{user.username}</span>
+            </div>
           </div>
-          <span className="profile-card-username">@{user.username}</span>
 
           {/* Divider */}
           <div className="profile-card-divider" />
