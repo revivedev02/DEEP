@@ -128,9 +128,9 @@ export default function ChannelSidebar() {
                           <LazyAvatar name={p.displayName} avatarUrl={p.avatarUrl} size={5} />
                           <span className="truncate flex-1">{p.displayName}</span>
                           {p.isMuted
-                            ? <MicOff className="w-3 h-3 text-red-400 flex-shrink-0" />
-                            : <Mic    className="w-3 h-3 text-text-muted flex-shrink-0" />}
-                          <Headphones className="w-3 h-3 text-text-muted flex-shrink-0 opacity-50" />
+                            ? <MicOff className="w-4 h-4 text-red-400 flex-shrink-0" />
+                            : <Mic    className="w-4 h-4 text-text-muted flex-shrink-0" />}
+                          <Headphones className="w-4 h-4 text-text-muted flex-shrink-0 opacity-50" />
                         </div>
                       ))}
                     </div>

@@ -191,8 +191,10 @@
     align-items: center;
     padding: 8px 10px;
     gap: 6px;
-    border-top: 1px solid rgb(var(--separator-rgb) / 0.35);
-    background: var(--bg-primary);
+    margin: 0 8px 6px;
+    border-radius: 10px;
+    border: 1px solid rgb(var(--separator-rgb) / 0.3);
+    background: var(--bg-secondary);
     flex-shrink: 0;
   }
 

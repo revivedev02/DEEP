@@ -2,9 +2,8 @@
  * VoiceBar.tsx
  * Persistent bar at the bottom of the Channel Sidebar.
  * Visible only when connected to a voice channel.
- * Shows: connection status + channel name + quick mute/deafen/leave buttons.
  */
-import { Mic, MicOff, Headphones, HeadphonesIcon, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, Headphones, HeadphonesIcon, PhoneOff, Wifi } from 'lucide-react';
 import { useVoiceStore }   from '@/store/useVoiceStore';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
 
@@ -12,7 +11,6 @@ export default function VoiceBar() {
   const { channelId, channelName, isMuted, isDeafened } = useVoiceStore();
   const { leaveChannel, setMuted, setDeafened }         = useVoiceChannel();
 
-  // Only render when connected to a channel
   if (!channelId) return null;
 
   return (
@@ -20,7 +18,7 @@ export default function VoiceBar() {
       {/* Status info */}
       <div className="voice-bar-info">
         <div className="voice-bar-status">
-          <span className="voice-status-dot" />
+          <Wifi className="w-3.5 h-3.5 flex-shrink-0" />
           Voice Connected
         </div>
         <div className="voice-bar-channel">#{channelName ?? channelId}</div>
