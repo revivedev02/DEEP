@@ -36,28 +36,28 @@
     color-scheme: dark;
   }
 
-  /* Charcoal — pure greyscale, clean and strong
+  /* Charcoal — mid-dark grey, clearly distinct from OLED
      :root:not([data-theme]) = fallback before JS loads */
   :root:not([data-theme]),
   [data-theme="dark"] {
-    --bg-canvas:    #111111;   /* palette: #111111 — darkest, page chrome        */
-    --bg-primary:   #1c1c1c;   /* sidebar, panels — step above canvas             */
-    --bg-secondary: #222222;   /* secondary panels, inputs                        */
-    --bg-tertiary:  #181818;   /* recessed areas, insets                          */
-    --bg-floating:  #333333;   /* palette: #333333 — dropdowns, tooltips, modals  */
-    --bg-hover:     rgba(255,255,255,0.07);
-    --bg-active:    rgba(255,255,255,0.12);
-    --bg-modifier:  rgba(255,255,255,0.04);
-    --card-bg:      #1e1e1e;   /* message area card                               */
+    --bg-canvas:    #1a1a1a;   /* clearly grey — OLED is #000, this is #1a */
+    --bg-primary:   #242424;   /* sidebar, panels                           */
+    --bg-secondary: #2a2a2a;   /* secondary panels, inputs                  */
+    --bg-tertiary:  #202020;   /* recessed areas                            */
+    --bg-floating:  #383838;   /* dropdowns, tooltips — near top of palette */
+    --bg-hover:     rgba(255,255,255,0.08);
+    --bg-active:    rgba(255,255,255,0.13);
+    --bg-modifier:  rgba(255,255,255,0.05);
+    --card-bg:      #272727;   /* message area — vs OLED #131313, obvious diff */
     --card-radius:  12px;
-    --text-normal:  #e4e4e4;   /* primary readable text                           */
-    --text-muted:   #999999;   /* palette: #999999 — secondary / muted            */
+    --text-normal:  #e8e8e8;
+    --text-muted:   #999999;   /* palette: #999999                          */
     --brand-rgb:        100 121 242;
     --brand-hover-rgb:  88 101 242;
     --brand-active-rgb: 71 82 196;
-    --separator-rgb:    85 85 85;  /* palette: #555555 — borders, dividers        */
-    --shadow-elevation: 0 4px 24px rgba(0,0,0,0.55);
-    --shadow-low:       0 1px 0 rgba(0,0,0,0.45);
+    --separator-rgb:    85 85 85;  /* palette: #555555                      */
+    --shadow-elevation: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.35);
     color-scheme: dark;
   }
 
