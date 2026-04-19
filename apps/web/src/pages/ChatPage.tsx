@@ -78,20 +78,18 @@ export default function ChatPage() {
   const membersVisible = showMembers; // always controllable, even from welcome screen
 
   // Voice channel hook — auto-joins on voice channel select
-  const { joinChannel: joinVoice, leaveChannel: leaveVoice } = useVoiceChannel();
+  const { joinChannel: joinVoice } = useVoiceChannel();
 
   // Join channel socket room (for chat messages)
   useEffect(() => {
     if (!isDMOpen && activeChannel) joinChannel(activeChannel);
   }, [activeChannel, isDMOpen]);
 
-  // Auto-join voice channel when selected; leave if switching away from voice
-  const voiceChannelId = useVoiceStore(s => s.channelId);
+  // Auto-join voice when a voice channel is selected.
+  // Navigating away (to text/DM) does NOT disconnect — user must leave via VoiceBar.
   useEffect(() => {
     if (isVoice && activeChannelObj) {
       joinVoice(activeChannelObj.id, activeChannelObj.name);
-    } else if (!isVoice && voiceChannelId) {
-      leaveVoice();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVoice, activeChannelObj?.id]);
