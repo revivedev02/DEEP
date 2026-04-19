@@ -22,6 +22,7 @@ import { useValidateToken } from '@/hooks/useValidateToken';
 import { useServerData } from '@/hooks/useServerData';
 import { useDMSocket } from '@/hooks/useDMSocket';
 import { useVoiceChannel } from '@/hooks/useVoiceChannel';
+import { useVoiceStore }   from '@/store/useVoiceStore';
 import { scrollToMessage } from '@/components/messageUtils';
 import type { UploadedMedia } from '@/lib/uploadMedia';
 
@@ -79,16 +80,20 @@ export default function ChatPage() {
   // Voice channel hook — auto-joins on voice channel select
   const { joinChannel: joinVoice, leaveChannel: leaveVoice } = useVoiceChannel();
 
-  // Join channel socket room
+  // Join channel socket room (for chat messages)
   useEffect(() => {
     if (!isDMOpen && activeChannel) joinChannel(activeChannel);
   }, [activeChannel, isDMOpen]);
 
-  // Auto-join voice channel when selected
+  // Auto-join voice channel when selected; leave if switching away from voice
+  const voiceChannelId = useVoiceStore(s => s.channelId);
   useEffect(() => {
     if (isVoice && activeChannelObj) {
       joinVoice(activeChannelObj.id, activeChannelObj.name);
+    } else if (!isVoice && voiceChannelId) {
+      leaveVoice();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVoice, activeChannelObj?.id]);
 
   // When a DM conversation is selected
