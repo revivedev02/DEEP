@@ -2,12 +2,13 @@ import { useEffect, useRef } from 'react';
 import { useProfileCardStore } from '@/store/useProfileCardStore';
 import { useDMStore }          from '@/store/useDMStore';
 import { useUIStore }          from '@/store/useUIStore';
+import { useAuthStore }        from '@/store/useAuthStore';
 import { LazyAvatar }          from '@/components/LazyAvatar';
 import { MessageSquare, ShieldCheck } from 'lucide-react';
 
 const CARD_W  = 220;
-const CARD_H  = 250; // approximate, used for edge clamping
-const OFFSET  = 12;  // gap from avatar
+const CARD_H  = 250;
+const OFFSET  = 12;
 
 export function ProfileCard() {
   const { visible, user, rect, close } = useProfileCardStore();
@@ -23,30 +24,41 @@ export function ProfileCard() {
 
   if (!visible || !user || !rect) return null;
 
-  // ── Position: prefer right of avatar, flip left if too close to edge ──
+  // ── Position ──
   const spaceRight = window.innerWidth - rect.right;
   const goLeft     = spaceRight < CARD_W + OFFSET + 16;
-
-  let left = goLeft
-    ? rect.left - CARD_W - OFFSET
-    : rect.right + OFFSET;
-
-  // Clamp vertically so card doesn't fall off screen
-  let top = rect.top;
-  if (top + CARD_H > window.innerHeight - 16) {
-    top = window.innerHeight - CARD_H - 16;
-  }
+  let left = goLeft ? rect.left - CARD_W - OFFSET : rect.right + OFFSET;
+  let top  = rect.top;
+  if (top + CARD_H > window.innerHeight - 16) top = window.innerHeight - CARD_H - 16;
   if (top < 8) top = 8;
 
-  // ── Message button: open existing DM if found ──
-  const handleMessage = () => {
+  // ── Message button: find existing DM or create one, then open it ──
+  const handleMessage = async () => {
     close();
-    const conv = useDMStore.getState().conversations.find(
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+
+    // Check if conversation already exists locally
+    const existing = useDMStore.getState().conversations.find(
       (c) => c.partner?.id === user.id
     );
-    if (conv) {
-      useUIStore.getState().setActiveDmConversation(conv.id);
+    if (existing) {
+      useUIStore.getState().setActiveDmConversation(existing.id);
+      return;
     }
+
+    // Create new conversation via API
+    try {
+      const res = await fetch('/api/dm/conversations', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: user.id }),
+      });
+      if (!res.ok) return;
+      const conv = await res.json();
+      useDMStore.getState().upsertConversation(conv);
+      useUIStore.getState().setActiveDmConversation(conv.id);
+    } catch { /* silent fail */ }
   };
 
   return (
