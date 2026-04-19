@@ -5,11 +5,11 @@ import { destroyImage } from '../lib/cloudinary.js';
 // Shared include for message queries — always pull replyTo, user, and reactions
 export const messageInclude = {
   user: {
-    select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true },
+    select: { id: true, displayName: true, username: true, avatarUrl: true, bannerUrl: true, isAdmin: true },
   },
   replyTo: {
     include: {
-      user: { select: { id: true, displayName: true, username: true, avatarUrl: true, isAdmin: true } },
+      user: { select: { id: true, displayName: true, username: true, avatarUrl: true, bannerUrl: true, isAdmin: true } },
     },
   },
   reactions: {

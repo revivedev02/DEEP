@@ -5,6 +5,7 @@ export interface ProfileUser {
   displayName: string;
   username:    string;
   avatarUrl:   string | null;
+  bannerUrl:   string | null;
   isAdmin:     boolean;
 }
 

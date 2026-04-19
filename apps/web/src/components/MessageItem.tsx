@@ -323,6 +323,7 @@ export const MessageItem = memo(function MessageItem({
               useProfileCardStore.getState().open(
                 { id: msg.user.id, displayName: msg.user.displayName,
                   username: msg.user.username, avatarUrl: msg.user.avatarUrl ?? null,
+                  bannerUrl: (msg.user as any).bannerUrl ?? null,
                   isAdmin: msg.user.isAdmin },
                 (e.currentTarget as HTMLElement).getBoundingClientRect()
               );

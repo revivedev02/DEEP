@@ -11,6 +11,7 @@ export async function registerMemberRoutes(app: FastifyInstance) {
         displayName: true,
         username:    true,
         avatarUrl:   true,
+        bannerUrl:   true,
         isAdmin:     true,
         createdAt:   true,
       },

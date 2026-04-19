@@ -28,7 +28,9 @@ function MemberRow({ m, isOnline, isMe, onDMClick }: {
           e.stopPropagation();
           useProfileCardStore.getState().open(
             { id: m.id, displayName: m.displayName, username: m.username,
-              avatarUrl: m.avatarUrl ?? null, isAdmin: m.isAdmin },
+              avatarUrl: m.avatarUrl ?? null,
+              bannerUrl: (m as any).bannerUrl ?? null,
+              isAdmin: m.isAdmin },
             e.currentTarget.getBoundingClientRect()
           );
         }}
