@@ -4,7 +4,7 @@ import { useUIStore }     from '../store/useUIStore';
 import { useChatStore }   from '../store/useChatStore';
 import { useDMStore }     from '../store/useDMStore';
 import { useServerStore } from '../store/useServerStore';
-import { LazyAvatar }        from './LazyAvatar';
+import { LazyAvatar }     from './LazyAvatar';
 
 interface ChatHeaderProps {
   showHeader:      boolean;
@@ -48,13 +48,12 @@ export default function ChatHeader({
       {/* Left: sidebar toggle + channel/DM identity */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
 
-        {/* Sidebar toggle — always visible so user can reopen it */}
         <button
           onClick={onToggleSidebar}
           className={`canvas-icon-btn flex-shrink-0 ${sidebarVisible ? 'active' : ''}`}
           title={sidebarVisible ? 'Hide channels' : 'Show channels'}
         >
-          <PanelLeft className="w-5 h-5" />
+          <PanelLeft className="icon-lg" />
         </button>
 
         {showHeader && (
@@ -66,34 +65,38 @@ export default function ChatHeader({
                 size={7}
               />
               <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-[14px] font-semibold text-text-normal truncate">
+                <span className="font-semibold text-text-normal truncate"
+                      style={{ fontSize: 'var(--ui-md)' }}>
                   {activeDmConv?.partner?.displayName ?? 'Unknown'}
                 </span>
-                <span className="text-[12px] text-text-muted truncate">
+                <span className="text-text-muted truncate"
+                      style={{ fontSize: 'var(--ui-xs)' }}>
                   @{activeDmConv?.partner?.username}
                 </span>
               </div>
             </>
           ) : isVoice ? (
             <>
-              <Volume2 className="w-[18px] h-[18px] text-text-muted flex-shrink-0" />
-              <span className="text-[15px] font-semibold text-text-normal truncate">
+              <Volume2 className="icon-md text-text-muted" />
+              <span className="font-semibold text-text-normal truncate"
+                    style={{ fontSize: 'var(--ui-md)' }}>
                 {channelName}
               </span>
               <div className="flex items-center gap-1.5 ml-2">
                 <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-status-green live-dot" />
-                <span className="text-[12px] text-text-muted">voice</span>
+                <span className="text-text-muted" style={{ fontSize: 'var(--ui-xs)' }}>voice</span>
               </div>
             </>
           ) : (
             <>
-              <Hash className="w-[18px] h-[18px] text-text-muted flex-shrink-0" />
-              <span className="text-[15px] font-semibold text-text-normal truncate">
+              <Hash className="icon-md text-text-muted" />
+              <span className="font-semibold text-text-normal truncate"
+                    style={{ fontSize: 'var(--ui-md)' }}>
                 {channelName}
               </span>
               <div className="flex items-center gap-1.5 ml-2">
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isConnected ? 'bg-status-green live-dot' : 'bg-text-muted'}`} />
-                <span className="text-[12px] text-text-muted">
+                <span className="text-text-muted" style={{ fontSize: 'var(--ui-xs)' }}>
                   {isConnected ? 'live' : 'offline'}
                 </span>
               </div>
@@ -107,21 +110,21 @@ export default function ChatHeader({
         {showHeader && (
           <>
             <button className="canvas-icon-btn" title="Notifications (coming soon)">
-              <Bell className="w-5 h-5" />
+              <Bell className="icon-lg" />
             </button>
             <button
               onClick={onTogglePinned}
               className={`canvas-icon-btn ${showPinned ? 'active' : ''}`}
               title="Pinned messages"
             >
-              <Pin className="w-5 h-5" />
+              <Pin className="icon-lg" />
             </button>
             <button
               onClick={onToggleSearch}
               className={`canvas-icon-btn ${showSearch ? 'active' : ''}`}
               title="Search messages"
             >
-              <Search className="w-5 h-5" />
+              <Search className="icon-lg" />
             </button>
           </>
         )}
@@ -131,9 +134,9 @@ export default function ChatHeader({
           className="canvas-icon-btn"
           title={`Theme: ${theme} — click to switch`}
         >
-          {theme === 'dark'   ? <Moon    className="w-5 h-5" />
-           : theme === 'light' ? <Sun     className="w-5 h-5" />
-           :                     <Monitor className="w-5 h-5" />}
+          {theme === 'dark'   ? <Moon    className="icon-lg" />
+           : theme === 'light' ? <Sun     className="icon-lg" />
+           :                     <Monitor className="icon-lg" />}
         </button>
 
         <button
@@ -141,7 +144,7 @@ export default function ChatHeader({
           className={`canvas-icon-btn ${membersVisible ? 'active' : ''}`}
           title="Toggle members"
         >
-          <Users className="w-5 h-5" />
+          <Users className="icon-lg" />
         </button>
 
         {isDMOpen && (
@@ -150,7 +153,7 @@ export default function ChatHeader({
             className="canvas-icon-btn ml-1"
             title="Close DM"
           >
-            <X className="w-5 h-5" />
+            <X className="icon-lg" />
           </button>
         )}
       </div>

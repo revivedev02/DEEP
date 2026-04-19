@@ -74,9 +74,10 @@ export default function ChannelSidebar() {
           {/* Server name */}
           {isLoading
             ? <div className="skeleton flex-1 h-4 rounded" />
-            : <span className="font-semibold text-[15px] text-text-normal truncate flex-1 text-left">{serverName}</span>
+            : <span className="font-semibold text-text-normal truncate flex-1 text-left"
+                    style={{ fontSize: 'var(--ui-md)' }}>{serverName}</span>
           }
-          <ChevronDown className={`w-5 h-5 text-text-muted flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`icon-lg text-text-muted flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {dropdownOpen && (
@@ -86,13 +87,13 @@ export default function ChannelSidebar() {
               {isAdmin && (
                 <>
                   <button className="dropdown-item" onClick={() => { navigate('/admin'); setDropdownOpen(false); }}>
-                    <Shield className="w-4 h-4" /> Admin Panel
+                    <Shield className="icon-sm" /> Admin Panel
                   </button>
                   <div className="dropdown-divider" />
                 </>
               )}
               <button className="dropdown-item text-status-red" onClick={() => { logout(); navigate('/login'); }}>
-                <LogOut className="w-4 h-4" /> Log Out
+                <LogOut className="icon-sm" /> Log Out
               </button>
             </div>
           </>
@@ -128,9 +129,9 @@ export default function ChannelSidebar() {
                           <LazyAvatar name={p.displayName} avatarUrl={p.avatarUrl} size={5} />
                           <span className="truncate flex-1">{p.displayName}</span>
                           {p.isMuted
-                            ? <MicOff className="w-4 h-4 text-red-400 flex-shrink-0" />
-                            : <Mic    className="w-4 h-4 text-text-muted flex-shrink-0" />}
-                          <Headphones className="w-4 h-4 text-text-muted flex-shrink-0 opacity-50" />
+                            ? <MicOff className="icon-sm text-red-400" />
+                            : <Mic    className="icon-sm text-text-muted" />}
+                          <Headphones className="icon-sm text-text-muted opacity-50" />
                         </div>
                       ))}
                     </div>
@@ -157,12 +158,12 @@ export default function ChannelSidebar() {
           <LazyAvatar name={user?.displayName ?? '?'} avatarUrl={user?.avatarUrl} size={8} />
         </div>
         <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-[14px] font-medium text-text-normal truncate transition-colors">
+          <span className="text-ui-md font-medium text-text-normal truncate transition-colors">
             {user?.displayName}
           </span>
-          <span className="text-[12px] text-text-muted truncate">#{user?.username}</span>
+          <span className="text-ui-sm text-text-muted truncate">#{user?.username}</span>
         </div>
-        <Settings className="w-5 h-5 text-text-muted group-hover:text-text-normal transition-colors flex-shrink-0" />
+        <Settings className="icon-md text-text-muted group-hover:text-text-normal transition-colors flex-shrink-0" />
       </div>
 
       {showAccountModal && (

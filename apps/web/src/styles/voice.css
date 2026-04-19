@@ -7,7 +7,7 @@
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    padding: 12px 12px 12px;
+    padding: 12px;
     gap: 10px;
   }
 
@@ -19,7 +19,7 @@
   }
 
   .voice-pane-discord-title {
-    font-size: 16px;
+    font-size: var(--ui-lg);
     font-weight: 700;
     color: var(--text-normal);
     flex: 1;
@@ -29,7 +29,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 12px;
+    font-size: var(--ui-xs);
     font-weight: 600;
     color: var(--status-green, #23a55a);
   }
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-card);
     background: var(--bg-secondary);
     border: 2px solid transparent;
     transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -119,7 +119,7 @@
   }
 
   .voice-tile-name {
-    font-size: 14px;
+    font-size: var(--ui-sm);
     font-weight: 600;
     color: var(--text-normal);
     overflow: hidden;
@@ -141,7 +141,7 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     background: var(--bg-secondary);
     border: 1px solid rgb(var(--separator-rgb) / 0.4);
     width: 100%;
@@ -153,9 +153,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: var(--btn-lg);
+    height: var(--btn-lg);
+    border-radius: var(--radius-item);
     border: none;
     background: var(--bg-hover);
     color: var(--text-muted);
@@ -192,7 +192,7 @@
     padding: 8px 10px;
     gap: 6px;
     margin: 0 8px 6px;
-    border-radius: 10px;
+    border-radius: var(--radius-card);
     border: 1px solid rgb(var(--separator-rgb) / 0.3);
     background: var(--bg-secondary);
     flex-shrink: 0;
@@ -210,13 +210,13 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 13px;
+    font-size: var(--ui-sm);
     font-weight: 600;
     color: var(--status-green, #23a55a);
   }
 
   .voice-bar-channel {
-    font-size: 12px;
+    font-size: var(--ui-xs);
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -227,9 +227,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 6px;
+    width: var(--btn-voice);
+    height: var(--btn-voice);
+    border-radius: var(--radius-item);
     border: none;
     background: none;
     color: var(--text-muted);
@@ -253,7 +253,7 @@
     align-items: center;
     gap: 6px;
     padding: 3px 12px 3px 30px;
-    font-size: 13px;
+    font-size: var(--ui-sm);
     color: var(--text-muted);
   }
 

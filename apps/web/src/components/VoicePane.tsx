@@ -60,7 +60,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
       >
         {count === 0 ? (
           <div className="voice-empty">
-            <Mic className="w-10 h-10 text-text-muted opacity-40" />
+            <Mic className="icon-xl text-text-muted opacity-40" />
             <span className="voice-empty-text">
               {isConnecting ? 'Connecting…' : 'No one is here yet.'}
             </span>
@@ -86,7 +86,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
                   {/* Muted badge — only indicator needed */}
                   {p.isMuted && (
                     <div className="voice-tile-muted-badge">
-                      <MicOff className="w-3 h-3" />
+                      <MicOff className="icon-xs" />
                     </div>
                   )}
                 </div>
@@ -104,7 +104,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
             onClick={() => setMuted(!isMuted)}
             title={isMuted ? 'Unmute' : 'Mute'}
           >
-            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            {isMuted ? <MicOff className="icon-lg" /> : <Mic className="icon-lg" />}
           </button>
 
           <button
@@ -113,8 +113,8 @@ export default function VoicePane({ channelId, channelName }: Props) {
             title={isDeafened ? 'Undeafen' : 'Deafen'}
           >
             {isDeafened
-              ? <HeadphonesIcon className="w-5 h-5" />
-              : <Headphones     className="w-5 h-5" />}
+              ? <HeadphonesIcon className="icon-lg" />
+              : <Headphones     className="icon-lg" />}
           </button>
 
           <button className="voice-control-btn danger" onClick={leaveChannel} title="Leave">
@@ -131,7 +131,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
           className="profile-card-msg-btn w-full justify-center mt-auto"
           onClick={() => joinChannel(channelId, channelName)}
         >
-          <Mic className="w-4 h-4" /> Join Voice
+          <Mic className="icon-md" /> Join Voice
         </button>
       )}
     </div>

@@ -1,3 +1,6 @@
+/* ── Design tokens — import first so all sheets can use vars ── */
+@import './styles/tokens.css';
+
 /* ── Split component styles ─────────────────────────────────────────────── */
 @import './styles/layout.css';
 @import './styles/messages.css';

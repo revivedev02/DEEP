@@ -1,6 +1,6 @@
 /**
  * VoiceBar.tsx
- * Persistent bar at the bottom of the Channel Sidebar.
+ * Persistent rounded bar at the bottom of the Channel Sidebar.
  * Visible only when connected to a voice channel.
  */
 import { Mic, MicOff, Headphones, HeadphonesIcon, PhoneOff, Wifi } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function VoiceBar() {
       {/* Status info */}
       <div className="voice-bar-info">
         <div className="voice-bar-status">
-          <Wifi className="w-3.5 h-3.5 flex-shrink-0" />
+          <Wifi className="icon-sm flex-shrink-0" />
           Voice Connected
         </div>
         <div className="voice-bar-channel">#{channelName ?? channelId}</div>
@@ -31,8 +31,8 @@ export default function VoiceBar() {
         title={isMuted ? 'Unmute' : 'Mute'}
       >
         {isMuted
-          ? <MicOff className="w-[18px] h-[18px]" />
-          : <Mic    className="w-[18px] h-[18px]" />}
+          ? <MicOff className="icon-md" />
+          : <Mic    className="icon-md" />}
       </button>
 
       {/* Deafen */}
@@ -42,8 +42,8 @@ export default function VoiceBar() {
         title={isDeafened ? 'Undeafen' : 'Deafen'}
       >
         {isDeafened
-          ? <HeadphonesIcon className="w-[18px] h-[18px]" />
-          : <Headphones     className="w-[18px] h-[18px]" />}
+          ? <HeadphonesIcon className="icon-md" />
+          : <Headphones     className="icon-md" />}
       </button>
 
       {/* Leave */}
@@ -53,7 +53,7 @@ export default function VoiceBar() {
         title="Disconnect from voice"
         style={{ color: '#ed4245' }}
       >
-        <PhoneOff className="w-[18px] h-[18px]" />
+        <PhoneOff className="icon-md" />
       </button>
     </div>
   );

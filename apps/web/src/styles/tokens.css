@@ -1,0 +1,47 @@
+/**
+ * tokens.css — Single source of truth for all UI sizing
+ *
+ * To scale the entire UI chrome (sidebar, headers, icons, panels)
+ * adjust values here ONLY. Message text is untouched by these tokens.
+ *
+ * Usage in CSS  → font-size: var(--ui-md);  width: var(--icon-md);
+ * Usage in JSX  → className="icon-md"  or  className="icon-lg text-text-muted"
+ */
+
+:root {
+
+  /* ── Icon sizes ─────────────────────────────────────────────────────────── */
+  --icon-xs:    12px;   /* tiny badge / indicator                             */
+  --icon-sm:    16px;   /* secondary inline (participant status)              */
+  --icon-md:    18px;   /* sidebar channel icons, VoiceBar controls           */
+  --icon-lg:    20px;   /* header toolbar buttons                             */
+  --icon-xl:    24px;   /* large empty-state / feature icons                  */
+
+  /* ── Icon button hit targets ────────────────────────────────────────────── */
+  --btn-sm:     32px;   /* compact                                            */
+  --btn-md:     36px;   /* standard icon button (toolbar, canvas)             */
+  --btn-lg:     40px;   /* voice control buttons                              */
+  --btn-voice:  34px;   /* voice-bar quick-action buttons                     */
+
+  /* ── UI text scale (sidebar, panels, headers) ───────────────────────────── */
+  /* ⚠  These tokens must NEVER apply to message content / chat text          */
+  --ui-2xs:    11px;    /* section label caps (CHANNELS, MEMBERS)             */
+  --ui-xs:     12px;    /* timestamps, status labels, muted captions          */
+  --ui-sm:     13px;    /* member names, sidebar username, voice participant  */
+  --ui-md:     15px;    /* channel names, nav items                           */
+  --ui-lg:     16px;    /* panel titles, channel header                       */
+  --ui-xl:     18px;    /* large headings                                     */
+
+  /* ── Component heights ──────────────────────────────────────────────────── */
+  --header-h:    48px;  /* canvas header (above the card, outside)            */
+  --ch-header-h: 56px;  /* channel header (top of card, below canvas header)  */
+
+  /* ── Panel widths ───────────────────────────────────────────────────────── */
+  --sidebar-w:  240px;
+  --members-w:  220px;
+
+  /* ── Common radii & gaps ────────────────────────────────────────────────── */
+  --radius-item: 8px;   /* channel items, member items                        */
+  --radius-card: 10px;  /* voice tiles, VoiceBar                              */
+  --gap-layout:  8px;   /* root layout gap + padding                          */
+}
