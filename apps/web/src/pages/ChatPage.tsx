@@ -1,12 +1,15 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, lazy, Suspense } from 'react';
 import ChatHeader from '@/components/ChatHeader';
 import ChannelSidebar from '@/components/ChannelSidebar';
 import MessagePane from '@/components/MessagePane';
-import VoicePane from '@/components/VoicePane';
 import MembersPanel from '@/components/MembersPanel';
 import DMPane from '@/components/DMPane';
 import WelcomePane from '@/components/WelcomePane';
-import { SearchBar } from '@/components/SearchBar';
+// Lazy-loaded — only bundled/evaluated when first rendered
+const VoicePane = lazy(() => import('@/components/VoicePane'));
+const SearchBar = lazy(() =>
+  import('@/components/SearchBar').then(m => ({ default: m.SearchBar }))
+);
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore } from '@/store/useServerStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -153,18 +156,20 @@ export default function ChatPage() {
           {/* Chat card — search overlay is scoped inside here */}
           <div className="chat-card" style={{ position: 'relative' }}>
 
-            {/* Search bar — floats over the card only */}
+            {/* Search bar — floats over the card only. Lazily loaded on first open */}
             {showSearch && showHeader && (
               <div
                 style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }}
                 className={isSearchClosing ? 'animate-slide-up-out' : 'animate-slide-down'}
               >
-                <SearchBar
-                  messages={searchMessages as any}
-                  currentUserId={user?.id ?? ''}
-                  onClose={closeSearch}
-                  onJump={scrollToMessage}
-                />
+                <Suspense fallback={null}>
+                  <SearchBar
+                    messages={searchMessages as any}
+                    currentUserId={user?.id ?? ''}
+                    onClose={closeSearch}
+                    onJump={scrollToMessage}
+                  />
+                </Suspense>
               </div>
             )}
 
@@ -183,7 +188,9 @@ export default function ChatPage() {
               ) : activeChannel === '' ? (
                 <WelcomePane />
               ) : isVoice ? (
-                <VoicePane />
+                <Suspense fallback={<div className="flex-1" />}>
+                  <VoicePane />
+                </Suspense>
               ) : (
                 <MessagePane
                   onSendMessage={handleSendMessage}

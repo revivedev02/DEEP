@@ -25,14 +25,13 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Heavy vendor libs in their own chunks — cached separately
-          'vendor-react':  ['react', 'react-dom', 'react-router-dom'],
-          'vendor-socket': ['socket.io-client'],
+          'vendor-react':   ['react', 'react-dom', 'react-router-dom'],
+          'vendor-socket':  ['socket.io-client'],
           'vendor-zustand': ['zustand'],
-          'emoji-mart':    ['@emoji-mart/react', '@emoji-mart/data'],
         },
       },
     },
-    // Increase limit since emoji-mart is large but lazy
+    // Warn above 500KB
     chunkSizeWarningLimit: 500,
     // Use terser for better minification
     minify: 'terser',
