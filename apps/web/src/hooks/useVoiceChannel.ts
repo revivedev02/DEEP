@@ -15,6 +15,7 @@ import {
   Room,
   RoomEvent,
   Track,
+  AudioPresets,
   type Participant,
   type RemoteParticipant,
   type TrackPublication,
@@ -66,10 +67,28 @@ export function useVoiceChannel() {
       if (!res.ok) throw new Error('Token fetch failed');
       const { token, wsUrl } = await res.json();
 
-      // 2. Create room with adaptive stream + dynacast (audio-only, but future-proof)
+      // 2. Create room with optimised audio settings
       room = new Room({
         adaptiveStream: true,
         dynacast:       true,
+
+        // ── Audio capture (browser MediaStream constraints) ──────────────────
+        audioCaptureDefaults: {
+          echoCancellation:  true,   // remove speaker bleed-back
+          noiseSuppression:  true,   // browser built-in noise gate
+          autoGainControl:   true,   // normalise volume across participants
+          voiceIsolation:    true,   // Chrome 116+ ML voice isolation
+          sampleRate:        48_000, // max quality input
+          channelCount:      1,      // mono — required for dtx/red
+        },
+
+        // ── Publish defaults (Opus codec tuning) ─────────────────────────────
+        publishDefaults: {
+          audioPreset:       AudioPresets.speech, // 24 kbps Opus — clear voice
+          dtx:               true,   // silence suppression: no packets when quiet
+          red:               true,   // redundant audio for packet-loss recovery
+          stopMicTrackOnMute: false, // keep indicator alive; only mute stream
+        },
       });
 
       // 3. Wire all events before connecting
