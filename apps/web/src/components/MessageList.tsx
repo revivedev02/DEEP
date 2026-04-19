@@ -95,6 +95,13 @@ export function MessageList({
     const prevCount = prevMsgCountRef.current;
     const delta     = messages.length - prevCount;
 
+    // Empty channel — skeleton may have scrolled us down; reset to top
+    if (messages.length === 0) {
+      scroll.scrollTop = 0;
+      prevMsgCountRef.current = 0;
+      return;
+    }
+
     if (prevCount === 0 && delta > 0) {
       // Channel just opened — jump to very bottom after DOM paints
       requestAnimationFrame(() => {
@@ -102,10 +109,6 @@ export function MessageList({
       });
     } else if (delta === 1) {
       const lastMsg = messages[messages.length - 1];
-      // Scroll to bottom if:
-      //  a) message is pending (media optimistic) — user's own upload
-      //  b) message userId matches current user — user's own text message
-      //     (text messages have no pending flag; they arrive via socket like others)
       const isOwnMessage = !!lastMsg?.pending || lastMsg?.userId === currentUserIdRef.current;
       if (isOwnMessage) {
         requestAnimationFrame(() => {

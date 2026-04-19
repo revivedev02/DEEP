@@ -7,13 +7,13 @@ export function useScrollToBottom<T extends HTMLElement>(deps: unknown[]) {
   useEffect(() => {
     if (!ref.current) return;
     const el = ref.current;
-    // Scroll to bottom if:
-    // 1. User is near the bottom (within 300px) — for new incoming messages
-    // 2. scrollTop is still 0 but element has content — this catches timing where
-    //    the MessageList rAF hasn't fired yet but the hook fires first
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const overflow          = el.scrollHeight - el.clientHeight;
+    const distanceFromBottom = overflow - el.scrollTop;
     const nearBottom = distanceFromBottom < 300;
-    const isAtTop = el.scrollTop === 0 && el.scrollHeight > el.clientHeight;
+    // Only fire the isAtTop heuristic if there's real content (>50px overflow).
+    // Prevents skeleton inflation from triggering a spurious scroll-to-bottom
+    // on channels that finish loading with 0 messages.
+    const isAtTop = el.scrollTop === 0 && overflow > 50;
 
     if (nearBottom || isAtTop) {
       el.scrollTop = el.scrollHeight;
