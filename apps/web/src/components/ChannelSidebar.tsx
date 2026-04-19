@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, LogOut, Hash, Mic, MicOff, Settings } from 'lucide-react';
+import { ChevronDown, Shield, LogOut, Hash, Mic, MicOff, Headphones, Settings } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useServerStore, type Channel } from '@/store/useServerStore';
@@ -126,10 +126,11 @@ export default function ChannelSidebar() {
                           className={`voice-channel-participant ${p.isSpeaking && !p.isMuted ? 'is-speaking' : ''}`}
                         >
                           <LazyAvatar name={p.displayName} avatarUrl={p.avatarUrl} size={5} />
+                          <span className="truncate flex-1">{p.displayName}</span>
                           {p.isMuted
-                            ? <MicOff className="w-2.5 h-2.5 text-red-400 flex-shrink-0" />
-                            : <Mic className="w-2.5 h-2.5 flex-shrink-0" />}
-                          <span className="truncate">{p.displayName}</span>
+                            ? <MicOff className="w-3 h-3 text-red-400 flex-shrink-0" />
+                            : <Mic    className="w-3 h-3 text-text-muted flex-shrink-0" />}
+                          <Headphones className="w-3 h-3 text-text-muted flex-shrink-0 opacity-50" />
                         </div>
                       ))}
                     </div>
