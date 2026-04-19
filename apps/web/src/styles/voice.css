@@ -1,145 +1,141 @@
 /* ── Voice Channel UI Styles ──────────────────────────────────────────────── */
 @layer components {
 
-  /* ── VoicePane — full pane when a voice channel is selected ─────────────── */
-  .voice-pane {
+  /* ── Discord-style Voice Pane ───────────────────────────────────────────── */
+  .voice-pane-discord {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 24px 20px 20px;
-    gap: 20px;
     height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
+    padding: 12px 12px 12px;
+    gap: 10px;
   }
 
-  .voice-pane-header {
+  .voice-pane-discord-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-normal);
-    align-self: flex-start;
-  }
-
-  .voice-pane-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--status-green, #23a55a);
-    align-self: flex-start;
-  }
-
-  /* ── Participant grid ────────────────────────────────────────────────────── */
-  .voice-participants-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 12px;
-    width: 100%;
-  }
-
-  .voice-participant-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 18px 12px 14px;
-    border-radius: 12px;
-    background: var(--bg-secondary);
-    border: 1px solid transparent;
-    transition: border-color 120ms ease, background 120ms ease;
-    position: relative;
-  }
-
-  .voice-participant-card.is-speaking {
-    border-color: var(--status-green, #23a55a);
-    background: rgba(35, 165, 90, 0.06);
-  }
-
-  /* Avatar wrapper — speaking ring */
-  .voice-avatar-ring {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    position: relative;
     flex-shrink: 0;
   }
 
-  .voice-avatar-ring::after {
+  .voice-pane-discord-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-normal);
+    flex: 1;
+  }
+
+  .voice-pane-discord-connected {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--status-green, #23a55a);
+  }
+
+  /* ── Tile grid — fills all available space ────────────────────────────── */
+  .voice-tiles-area {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    gap: 8px;
+  }
+
+  /* ── Individual tile ─────────────────────────────────────────────────── */
+  .voice-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    position: relative;
+    overflow: hidden;
+    padding: 16px 12px;
+    min-height: 0;
+  }
+
+  .voice-tile:hover {
+    background: var(--bg-modifier);
+  }
+
+  .voice-tile.is-speaking {
+    border-color: #23a55a;
+    box-shadow: 0 0 0 3px rgba(35, 165, 90, 0.18);
+  }
+
+  /* ── Avatar container (exact px via inline style) ────────────────────── */
+  .voice-tile-avatar {
+    position: relative;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: visible; /* allow badge to overflow */
+  }
+
+  /* Force LazyAvatar to fill the container */
+  .voice-tile-avatar > :first-child {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50%;
+  }
+
+  /* Speaking ring around avatar */
+  .voice-tile.is-speaking .voice-tile-avatar::after {
     content: '';
     position: absolute;
-    inset: -3px;
+    inset: -4px;
     border-radius: 50%;
-    border: 2.5px solid transparent;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
+    border: 3px solid #23a55a;
+    box-shadow: 0 0 8px rgba(35, 165, 90, 0.4);
+    pointer-events: none;
   }
 
-  .voice-avatar-ring.is-speaking::after {
-    border-color: var(--status-green, #23a55a);
-    box-shadow: 0 0 0 2px rgba(35, 165, 90, 0.25);
-  }
-
-  /* Name + icons row at the bottom of the card */
-  .voice-participant-footer {
+  /* Muted badge — bottom-right of avatar */
+  .voice-tile-muted-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ed4245;
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 2px solid var(--bg-secondary);
+  }
+
+  /* ── Name + mic icon row ─────────────────────────────────────────────── */
+  .voice-tile-footer {
+    display: flex;
+    align-items: center;
     gap: 5px;
     max-width: 100%;
   }
 
-  .voice-participant-name {
+  .voice-tile-name {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-normal);
-    text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
   }
 
-  /* Mic / headphone icons beside the name */
-  .voice-participant-status-icons {
+  .voice-tile-icons {
     display: flex;
     align-items: center;
     gap: 2px;
     flex-shrink: 0;
   }
 
-  .voice-status-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-  }
-
-  .voice-status-icon.active {
-    color: var(--text-muted);
-  }
-
-  .voice-status-icon.muted {
-    color: #ed4245;
-  }
-
-  /* Muted overlay badge on avatar */
-  .voice-muted-badge {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--bg-canvas);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1.5px solid var(--bg-secondary);
-  }
-
-  /* ── Voice controls bar (mute / deafen / leave) ─────────────────────────── */
+  /* ── Controls bar ──────────────────────────────────────────────────────── */
   .voice-controls {
     display: flex;
     align-items: center;
@@ -150,7 +146,6 @@
     border: 1px solid rgb(var(--separator-rgb) / 0.4);
     width: 100%;
     justify-content: center;
-    margin-top: auto;
     flex-shrink: 0;
   }
 
@@ -158,8 +153,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     border: none;
     background: var(--bg-hover);
@@ -175,11 +170,6 @@
     transform: scale(1.08);
   }
 
-  .voice-control-btn.active {
-    background: rgba(var(--brand-rgb) / 0.18);
-    color: rgb(var(--brand-rgb));
-  }
-
   .voice-control-btn.danger {
     background: rgba(237, 66, 69, 0.12);
     color: #ed4245;
@@ -187,7 +177,7 @@
 
   .voice-control-btn.danger:hover {
     background: #ed4245;
-    color: #ffffff;
+    color: #fff;
   }
 
   .voice-control-btn.muted-active {
@@ -284,21 +274,20 @@
     50%       { opacity: 0.5; }
   }
 
-  /* ── Empty voice pane (before joining) ───────────────────────────────────── */
+  /* ── Empty state in tile area ──────────────────────────────────────────── */
   .voice-empty {
+    grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 20px;
-    background: var(--bg-secondary);
-    border-radius: 10px;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-muted);
     text-align: center;
-    width: 100%;
   }
 
   .voice-empty-text {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-muted);
   }
 }
