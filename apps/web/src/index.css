@@ -61,26 +61,26 @@
     color-scheme: dark;
   }
 
-  /* Light — clean white on neutral grey canvas */
+  /* Light — Discord-accurate: sharp contrast, pure white chat, darker sidebar */
   [data-theme="light"] {
-    --bg-canvas:    #ebebeb;
-    --bg-primary:   #ffffff;
-    --bg-secondary: #f5f5f5;
-    --bg-tertiary:  #ededed;
-    --bg-floating:  #ffffff;
-    --bg-hover:     rgba(0,0,0,0.05);
-    --bg-active:    rgba(0,0,0,0.09);
-    --bg-modifier:  rgba(0,0,0,0.04);
-    --card-bg:      #ffffff;
-    --card-radius:  12px;
-    --text-normal:  #1a1a1a;
-    --text-muted:   #6b6b6b;
+    --bg-canvas:    #f2f3f5;   /* page chrome                                  */
+    --bg-primary:   #e3e5e8;   /* sidebar — darker than canvas for separation  */
+    --bg-secondary: #f7f7f8;   /* inputs, secondary panels                     */
+    --bg-tertiary:  #edeef0;   /* insets, recesses                             */
+    --bg-floating:  #ffffff;   /* dropdowns, tooltips, modals                  */
+    --bg-hover:     rgba(0,0,0,0.05);   /* ≈ #f2f3f5 on white                 */
+    --bg-active:    rgba(0,0,0,0.09);   /* ≈ #e0e3e7 on white                 */
+    --bg-modifier:  rgba(0,0,0,0.03);
+    --card-bg:      #ffffff;   /* chat area — pure white                       */
+    --card-radius:  8px;       /* less rounded — Discord-style, not card-like  */
+    --text-normal:  #1f2328;   /* strong readable dark                         */
+    --text-muted:   #6b6f76;   /* clear distinction from normal                */
     --brand-rgb:        88 101 242;
     --brand-hover-rgb:  71 82 196;
     --brand-active-rgb: 60 69 165;
-    --separator-rgb:    200 200 200;
-    --shadow-elevation: none;
-    --shadow-low:       0 1px 0 rgba(0,0,0,0.08);
+    --separator-rgb:    220 221 225;
+    --shadow-elevation: 0 2px 8px rgba(0,0,0,0.10);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.06);
     color-scheme: light;
   }
 
