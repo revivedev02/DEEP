@@ -2,16 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Smile, Paperclip, Send, AtSign, X, Image, Film } from 'lucide-react';
 import { LazyAvatar } from '@/components/LazyAvatar';
 import { useMembersStore } from '@/store/useMembersStore';
-import { useThemeStore } from '@/store/useThemeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useChatStore, type ChatMessage } from '@/store/useChatStore';
 import { useDMStore, type DMMessage } from '@/store/useDMStore';
 import { uploadMedia, validateMediaFile } from '@/lib/uploadMedia';
 import type { UploadedMedia } from '@/lib/uploadMedia';
-// @ts-ignore — emoji-mart has no bundled types for the React wrapper
-import EmojiPicker from '@emoji-mart/react';
-import emojiData from '@emoji-mart/data';
+import { EmojiPanel } from '@/components/EmojiPanel';
 
 interface MessageInputProps {
   onSend:        (content: string, media?: UploadedMedia) => void;
@@ -232,18 +229,18 @@ export function MessageInput({ onSend, channelName, isDM, onTyping, onCancelRepl
     return () => document.removeEventListener('mousedown', handler);
   }, [showEmoji]);
 
-  const insertEmoji = (emoji: { native: string }) => {
+  const insertEmoji = (emoji: string) => {
     const ta = textareaRef.current;
-    if (!ta) { setValue(v => v + emoji.native); return; }
+    if (!ta) { setValue(v => v + emoji); return; }
     const start  = ta.selectionStart;
     const end    = ta.selectionEnd;
     const before = value.slice(0, start);
     const after  = value.slice(end);
-    const newVal = before + emoji.native + after;
+    const newVal = before + emoji + after;
     setValue(newVal);
     setTimeout(() => {
       ta.focus();
-      const pos = start + emoji.native.length;
+      const pos = start + emoji.length;
       ta.setSelectionRange(pos, pos);
       ta.style.height = 'auto';
       ta.style.height = `${ta.scrollHeight}px`;
@@ -286,18 +283,10 @@ export function MessageInput({ onSend, channelName, isDM, onTyping, onCancelRepl
         </div>
       )}
 
-      {/* Emoji picker */}
+      {/* Emoji panel */}
       {showEmoji && (
-        <div ref={emojiRef} className="absolute bottom-full right-4 mb-2 z-50 shadow-elevation-high rounded-xl overflow-hidden">
-          <EmojiPicker
-            data={emojiData}
-            onEmojiSelect={insertEmoji}
-            theme={useThemeStore.getState().theme === 'light' ? 'light' : 'dark'}
-            previewPosition="none"
-            skinTonePosition="none"
-            maxFrequentRows={2}
-            set="native"
-          />
+        <div ref={emojiRef} className="absolute bottom-full right-4 mb-2 z-50">
+          <EmojiPanel onInsert={(e) => { insertEmoji(e); setShowEmoji(false); }} />
         </div>
       )}
 

@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
     "@pdl/types": "workspace:*",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
