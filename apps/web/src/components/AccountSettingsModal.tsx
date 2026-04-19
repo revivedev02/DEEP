@@ -358,7 +358,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
                 <section>
                   <h2 className="settings-section-label">Theme</h2>
                   <div className="flex items-center gap-4 flex-wrap">
-                    {(['oled', 'dark', 'light'] as const).map(t => (
+                    {(['oled', 'dark', 'light', 'ember'] as const).map(t => (
                       <ThemeSwatch key={t} name={t} />
                     ))}
                   </div>
@@ -394,9 +394,9 @@ function ThemeSwatch({ name }: { name: Theme }) {
   const { theme, setTheme } = useThemeStore();
   const active = theme === name;
 
-  const bg:    Record<Theme, string> = { oled: '#000000', dark: '#1b1f2e', light: '#d8dee9' };
-  const card:  Record<Theme, string> = { oled: '#131313', dark: '#222639', light: '#ffffff' };
-  const label: Record<Theme, string> = { oled: 'OLED Black', dark: 'Navy', light: 'Light' };
+  const bg:    Record<Theme, string> = { oled: '#000000', dark: '#1b1f2e', light: '#d8dee9', ember: '#121110' };
+  const card:  Record<Theme, string> = { oled: '#131313', dark: '#222639', light: '#ffffff', ember: '#1a1714' };
+  const label: Record<Theme, string> = { oled: 'OLED Black', dark: 'Navy', light: 'Light', ember: 'Ember' };
 
   return (
     <button

@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Theme = 'dark' | 'light' | 'oled';
+export type Theme = 'dark' | 'light' | 'oled' | 'ember';
 
-const THEME_ORDER: Theme[] = ['dark', 'light', 'oled'];
+const THEME_ORDER: Theme[] = ['dark', 'light', 'oled', 'ember'];
 
 interface ThemeState {
   theme: Theme;

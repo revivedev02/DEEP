@@ -1,4 +1,4 @@
-import { Bell, Hash, Moon, Monitor, PanelLeft, Pin, Search, Sun, Users, Volume2, X } from 'lucide-react';
+import { Bell, Flame, Hash, Moon, Monitor, PanelLeft, Pin, Search, Sun, Users, Volume2, X } from 'lucide-react';
 import { useThemeStore }  from '../store/useThemeStore';
 import { useUIStore }     from '../store/useUIStore';
 import { useChatStore }   from '../store/useChatStore';
@@ -134,8 +134,9 @@ export default function ChatHeader({
           className="canvas-icon-btn"
           title={`Theme: ${theme} — click to switch`}
         >
-          {theme === 'dark'   ? <Moon    className="icon-lg" />
+          {theme === 'dark'  ? <Moon    className="icon-lg" />
            : theme === 'light' ? <Sun     className="icon-lg" />
+           : theme === 'ember' ? <Flame   className="icon-lg" style={{ color: 'rgb(210 120 56)' }} />
            :                     <Monitor className="icon-lg" />}
         </button>
 

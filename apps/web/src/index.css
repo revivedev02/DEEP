@@ -74,6 +74,41 @@
     color-scheme: dark;
   }
 
+  /* ── Ember — warm dark luxury theme ──────────────────────────────────────
+   *
+   *  Philosophy: ultra-dark espresso-brown base with amber warmth.
+   *  Every surface has a warm undertone — no cold greys, no pure blacks.
+   *  Premium editorial feel: think aged leather, candlelight, whisky amber.
+   *
+   *  Canvas  #121110  ← near-black, warm (not cold pure-black like OLED)
+   *  Sidebar #1c1a17  ← dark roasted espresso
+   *  Chat    #1a1714  ← warm midnight brown
+   *  Accent  D27838   ← amber-terracotta (rgb 210 120 56)
+   *  Text    #f2e6d9  ← warm cream (not harsh pure-white)
+   *  Muted   #8a7d6c  ← latte brown
+   * ─────────────────────────────────────────────────────────────────────── */
+  [data-theme="ember"] {
+    --bg-canvas:    #121110;   /* near-black warm — distinct from OLED #000       */
+    --bg-primary:   #1c1a17;   /* sidebar — dark espresso                         */
+    --bg-secondary: #24201a;   /* inputs, secondary panels                        */
+    --bg-tertiary:  #18160d;   /* recessed areas                                  */
+    --bg-floating:  #2d2820;   /* dropdowns, tooltips, modals                     */
+    --bg-hover:     rgba(210, 120, 56, 0.08);   /* amber-tinted hover             */
+    --bg-active:    rgba(210, 120, 56, 0.14);   /* amber-tinted active            */
+    --bg-modifier:  rgba(210, 120, 56, 0.04);
+    --card-bg:      #1a1714;   /* chat area — warm mahogany dark                  */
+    --card-radius:  10px;
+    --text-normal:  #f2e6d9;   /* warm cream — easier on eyes than pure white     */
+    --text-muted:   #8a7d6c;   /* latte — warm mid-grey, never cold               */
+    --brand-rgb:        210 120 56;   /* amber-terracotta                          */
+    --brand-hover-rgb:  228 140 72;
+    --brand-active-rgb: 185 100 40;
+    --separator-rgb:    62 52 38;     /* warm dark separator                       */
+    --shadow-elevation: 0 4px 24px rgba(0,0,0,0.6);
+    --shadow-low:       0 1px 0 rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+
   /* Dark — Discord-accurate dark theme */
   :root:not([data-theme]),
   [data-theme="dark"] {
