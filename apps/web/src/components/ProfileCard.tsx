@@ -5,7 +5,7 @@ import { useUIStore }          from '@/store/useUIStore';
 import { LazyAvatar }          from '@/components/LazyAvatar';
 import { MessageSquare, ShieldCheck } from 'lucide-react';
 
-const CARD_W  = 268;
+const CARD_W  = 220;
 const CARD_H  = 250; // approximate, used for edge clamping
 const OFFSET  = 12;  // gap from avatar
 

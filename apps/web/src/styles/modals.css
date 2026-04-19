@@ -128,7 +128,7 @@
   }
   .profile-card {
     position: fixed;
-    width: 268px;
+    width: 220px;
     background: var(--bg-floating);
     border-radius: 12px;
     overflow: hidden;
