@@ -80,7 +80,7 @@ export default function VoicePane({ channelId, channelName }: Props) {
                 key={p.userId}
                 className={`voice-tile ${speaking ? 'is-speaking' : ''}`}
               >
-                {/* Avatar */}
+                {/* Avatar only — speaking ring handled by CSS */}
                 <div
                   className="voice-tile-avatar"
                   style={{ width: avPx, height: avPx }}
@@ -90,24 +90,12 @@ export default function VoicePane({ channelId, channelName }: Props) {
                     avatarUrl={p.avatarUrl}
                     size={Math.round(avPx / 4)}
                   />
-                  {/* Muted badge */}
+                  {/* Muted badge — only indicator needed */}
                   {p.isMuted && (
                     <div className="voice-tile-muted-badge">
                       <MicOff className="w-3 h-3" />
                     </div>
                   )}
-                </div>
-
-                {/* Name + status icons */}
-                <div className="voice-tile-footer">
-                  <span className="voice-tile-name">{p.displayName}</span>
-                  <div className="voice-tile-icons">
-                    {p.isMuted
-                      ? <MicOff className="w-3.5 h-3.5 text-red-400" />
-                      : speaking
-                        ? <Mic className="w-3.5 h-3.5 text-green-400" />
-                        : <Mic className="w-3.5 h-3.5 text-text-muted" />}
-                  </div>
                 </div>
               </div>
             );
