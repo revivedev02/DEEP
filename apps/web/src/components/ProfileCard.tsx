@@ -62,8 +62,16 @@ export function ProfileCard() {
         style={{ top, left }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Gradient banner */}
-        <div className="profile-card-banner" />
+        {/* Banner — avatar used as blurred bg if available, brand gradient fallback */}
+        <div
+          className="profile-card-banner"
+          style={user.avatarUrl ? {
+            backgroundImage: `url(${user.avatarUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+            filter: 'brightness(0.55) saturate(1.3)',
+          } : undefined}
+        />
 
         {/* Avatar — overlaps banner/body boundary */}
         <div className="profile-card-avatar-ring">

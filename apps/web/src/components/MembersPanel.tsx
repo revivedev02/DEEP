@@ -6,6 +6,7 @@ import { useMembersStore, type MemberEntry } from '@/store/useMembersStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useDMStore } from '@/store/useDMStore';
 import { LazyAvatar } from '@/components/LazyAvatar';
+import { useProfileCardStore } from '@/store/useProfileCardStore';
 
 // ── Member row ────────────────────────────────────────────────────────────────
 function MemberRow({ m, isOnline, isMe, onDMClick }: {
@@ -20,7 +21,18 @@ function MemberRow({ m, isOnline, isMe, onDMClick }: {
       onClick={() => !isMe && onDMClick(m)}
       title={isMe ? 'That\'s you!' : `Message ${m.displayName}`}
     >
-      <div className="relative flex-shrink-0">
+      {/* Avatar — click opens profile card, doesn't trigger row DM click */}
+      <div
+        className="relative flex-shrink-0 avatar-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          useProfileCardStore.getState().open(
+            { id: m.id, displayName: m.displayName, username: m.username,
+              avatarUrl: m.avatarUrl ?? null, isAdmin: m.isAdmin },
+            e.currentTarget.getBoundingClientRect()
+          );
+        }}
+      >
         <LazyAvatar name={m.displayName} avatarUrl={m.avatarUrl} size={8} />
         <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary
           ${isOnline || isMe ? 'bg-status-green' : 'bg-text-muted'}`}
