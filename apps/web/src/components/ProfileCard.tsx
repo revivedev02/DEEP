@@ -5,17 +5,6 @@ import { useUIStore }          from '@/store/useUIStore';
 import { LazyAvatar }          from '@/components/LazyAvatar';
 import { MessageSquare, ShieldCheck } from 'lucide-react';
 
-/** Deterministic banner gradient from a display name — unique per user, always consistent. */
-function nameToGradient(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) {
-    h = name.charCodeAt(i) + ((h << 5) - h);
-  }
-  const hue  = Math.abs(h) % 360;
-  const hue2 = (hue + 45) % 360;
-  return `linear-gradient(135deg, hsl(${hue},55%,30%) 0%, hsl(${hue2},60%,22%) 100%)`;
-}
-
 const CARD_W  = 268;
 const CARD_H  = 250; // approximate, used for edge clamping
 const OFFSET  = 12;  // gap from avatar
@@ -73,11 +62,17 @@ export function ProfileCard() {
         style={{ top, left }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Banner — unique gradient per user, derived from display name */}
-        <div
-          className="profile-card-banner"
-          style={{ background: nameToGradient(user.displayName) }}
-        />
+        {/* Banner — img element fills full width reliably, gradient fallback via CSS */}
+        <div className="profile-card-banner">
+          {user.avatarUrl && (
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className="profile-card-banner-img"
+              draggable={false}
+            />
+          )}
+        </div>
 
 
         {/* Avatar — overlaps banner/body boundary */}

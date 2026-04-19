@@ -139,11 +139,23 @@
   /* Brand-colour gradient banner at top */
   .profile-card-banner {
     height: 60px;
+    position: relative;
+    overflow: hidden;
     background: linear-gradient(
       135deg,
       rgb(var(--brand-rgb) / 0.8) 0%,
       rgb(var(--brand-active-rgb) / 0.9) 100%
     );
+  }
+  .profile-card-banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    filter: brightness(0.8);
   }
   /* Avatar sits half on banner, half on body */
   .profile-card-avatar-ring {
