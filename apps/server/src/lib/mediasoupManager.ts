@@ -55,11 +55,15 @@ export async function resolveAnnouncedIp(): Promise<string> {
 
 // ── Initialise worker on server startup ─────────────────────────────────────
 export async function initMediasoup(): Promise<void> {
-  await resolveAnnouncedIp();
+  // Fetch TURN credentials from Metered.ca API in parallel with IP resolution
+  await Promise.all([
+    resolveAnnouncedIp(),
+    fetchTurnCredentials(),
+  ]);
 
   worker = await mediasoup.createWorker({
     logLevel:   'warn',
-    rtcMinPort: 10000,   // UDP/TCP port range mediasoup will use
+    rtcMinPort: 10000,
     rtcMaxPort: 10100,
   });
 
@@ -95,16 +99,32 @@ export function destroyRouter(channelId: string): void {
   }
 }
 
-// ── TURN ice servers passed to clients ──────────────────────────────────────
-export function getTurnIceServers() {
-  const u = process.env.TURN_USERNAME   ?? '';
-  const c = process.env.TURN_CREDENTIAL ?? '';
-  return [
-    { urls: 'stun:stun.relay.metered.ca:80' },
-    { urls: `turn:global.relay.metered.ca:80`,  username: u, credential: c },
-    { urls: `turn:global.relay.metered.ca:443`, username: u, credential: c },
-    { urls: `turns:global.relay.metered.ca:443?transport=tcp`, username: u, credential: c },
-  ];
+// ── TURN ice servers — fetched from Metered.ca REST API at startup ───────────
+let cachedIceServers: object[] = [];
+
+export async function fetchTurnCredentials(): Promise<void> {
+  const apiKey = process.env.METERED_API_KEY;
+  const domain = process.env.METERED_DOMAIN ?? 'deepv1.metered.live';
+
+  if (!apiKey) {
+    console.warn('[mediasoup] METERED_API_KEY not set — TURN relay disabled (direct only)');
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `https://${domain}/api/v1/turn/credentials?apiKey=${apiKey}`,
+      { signal: AbortSignal.timeout(6000) },
+    );
+    cachedIceServers = await res.json();
+    console.log(`[mediasoup] TURN credentials fetched — ${cachedIceServers.length} servers from ${domain}`);
+  } catch (err) {
+    console.error('[mediasoup] Failed to fetch TURN credentials', err);
+  }
+}
+
+export function getTurnIceServers(): object[] {
+  return cachedIceServers;
 }
 
 // ── WebRtcTransport factory ─────────────────────────────────────────────────
