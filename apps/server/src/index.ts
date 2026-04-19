@@ -17,8 +17,8 @@ import { registerSettingsRoutes } from './routes/settings.js';
 import { registerChannelRoutes } from './routes/channels.js';
 import { registerUploadRoutes } from './routes/upload.js';
 import { registerDMRoutes } from './routes/dm.js';
+import { registerVoiceRoutes } from './routes/voice.js';
 import { setupSocketHandlers } from './socket/handlers.js';
-import { initMediasoup } from './lib/mediasoupManager.js';
 import { prisma } from './lib/prisma.js';
 import multipart from '@fastify/multipart';
 
@@ -96,6 +96,7 @@ await registerSettingsRoutes(app);
 await registerChannelRoutes(app);
 await registerUploadRoutes(app);
 await registerDMRoutes(app);
+await registerVoiceRoutes(app);
 
 // SPA fallback (prod)
 if (IS_PROD) {
@@ -171,13 +172,7 @@ try {
 // Attach io to app so route handlers can emit events
 (app as any).io = io;
 
-// Initialise mediasoup SFU worker (must run before sockets are wired)
-try {
-  await initMediasoup();
-  console.log('✅  mediasoup SFU worker ready');
-} catch (err) {
-  console.error('⚠️  mediasoup init failed — voice channels will not work', err);
-}
+console.log('✅  LiveKit voice ready — wsUrl:', process.env.LIVEKIT_URL ?? '(env not set)');
 
 setupSocketHandlers(io, app);
 
