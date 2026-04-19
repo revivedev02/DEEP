@@ -80,7 +80,7 @@ export default function ChatHeader({
                 {channelName}
               </span>
               <div className="flex items-center gap-1.5 ml-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-status-green' : 'bg-text-muted'}`} />
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isConnected ? 'bg-status-green live-dot' : 'bg-text-muted'}`} />
                 <span className="text-xs text-text-muted">
                   {isConnected ? 'live' : 'offline'}
                 </span>

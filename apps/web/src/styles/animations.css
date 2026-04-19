@@ -2,7 +2,13 @@
 @layer utilities {
   /* ── Scrollbar utilities ── */
   .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.14);
+    border-radius: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.24);
+  }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -156,4 +162,25 @@
 @keyframes welcome-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* ── Message entrance — fires once on component mount ── */
+@keyframes msg-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Reaction pill pop-in spring ── */
+@keyframes reaction-pop {
+  from { opacity: 0; transform: scale(0.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Live connection indicator pulse ── */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+.live-dot {
+  animation: live-pulse 2.5s ease-in-out infinite;
 }

@@ -81,17 +81,26 @@
     border-radius: 8px;
     color: var(--text-muted);
     cursor: pointer;
-    transition: color 120ms ease, background 120ms ease;
+    transition: color 120ms ease, background 120ms ease,
+                transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
     border: none;
     background: none;
   }
   .canvas-icon-btn:hover {
     color: var(--text-normal);
     background: var(--bg-hover);
+    transform: scale(1.12);
+  }
+  .canvas-icon-btn:active {
+    transform: scale(0.88);
+    transition-duration: 60ms;
   }
   .canvas-icon-btn.active {
     color: var(--text-normal);
     background: rgba(var(--brand-rgb) / 0.15);
+  }
+  .canvas-icon-btn.active:hover {
+    transform: scale(1.12);
   }
 
   /* ── Sidebar section title ── */
@@ -111,16 +120,18 @@
     font-size: 14px;
     color: var(--text-muted);
     cursor: pointer;
-    transition: background 120ms ease, color 120ms ease;
+    transition: background 120ms ease, color 120ms ease, transform 120ms ease;
   }
   .channel-item:hover {
     background: var(--bg-hover);
     color: var(--text-normal);
+    transform: translateX(2px);
   }
   .channel-item.active {
     background: rgba(var(--brand-rgb) / 0.15);
     color: var(--text-normal);
     font-weight: 500;
+    transform: translateX(0);  /* active items don’t shift */
   }
   .channel-item .channel-icon {
     @apply w-4 h-4 flex-shrink-0;
