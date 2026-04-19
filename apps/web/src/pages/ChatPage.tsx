@@ -5,6 +5,7 @@ import MessagePane from '@/components/MessagePane';
 import MembersPanel from '@/components/MembersPanel';
 import DMPane from '@/components/DMPane';
 import WelcomePane from '@/components/WelcomePane';
+import { ProfileCard } from '@/components/ProfileCard';
 // Lazy-loaded — only bundled/evaluated when first rendered
 const VoicePane = lazy(() => import('@/components/VoicePane'));
 const SearchBar = lazy(() =>
@@ -120,7 +121,8 @@ export default function ChatPage() {
   }, [token, activeDmConversation]);
 
   return (
-    <div className="layout-root">
+    <>
+      <div className="layout-root">
 
       {/* ── Channel Sidebar — animated width, smooth collapse ── */}
       <div
@@ -220,5 +222,9 @@ export default function ChatPage() {
 
       </div>
     </div>
+
+    {/* Profile card — fixed overlay, renders outside layout flow */}
+    <ProfileCard />
+    </>
   );
 }

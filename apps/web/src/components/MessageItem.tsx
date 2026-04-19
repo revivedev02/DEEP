@@ -1,8 +1,9 @@
-import { memo, useState, useRef, useEffect } from 'react';
+import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { Pin, Reply, Pencil, Copy, Trash2, SmilePlus } from 'lucide-react';
-import { LazyAvatar } from '@/components/LazyAvatar';
-import { MediaLightbox } from '@/components/MediaLightbox';
-import { useMembersStore } from '@/store/useMembersStore';
+import { LazyAvatar }            from '@/components/LazyAvatar';
+import { MediaLightbox }         from '@/components/MediaLightbox';
+import { useMembersStore }       from '@/store/useMembersStore';
+import { useProfileCardStore }   from '@/store/useProfileCardStore';
 import type { ChatMessage, RawReaction } from '@/store/useChatStore';
 import { formatTimestamp, shortTime, scrollToMessage } from './messageUtils';
 
@@ -315,7 +316,20 @@ export const MessageItem = memo(function MessageItem({
       <div id={`msg-${msg.id}`} className={`message-group with-avatar group ${msg.pinned ? 'border-l-2 border-brand/40 pl-3' : ''}`}>
         {msg.replyTo && <ReplyPreview replyTo={msg.replyTo} />}
         <div className="flex items-start gap-4">
-          <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
+          <button
+            className="avatar-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              useProfileCardStore.getState().open(
+                { id: msg.user.id, displayName: msg.user.displayName,
+                  username: msg.user.username, avatarUrl: msg.user.avatarUrl ?? null,
+                  isAdmin: msg.user.isAdmin },
+                (e.currentTarget as HTMLElement).getBoundingClientRect()
+              );
+            }}
+          >
+            <LazyAvatar name={msg.user.displayName} avatarUrl={msg.user.avatarUrl} size={10} />
+          </button>
           <div className="message-body flex-1 min-w-0">
             <div className="message-header">
               <span className={`message-author ${msg.user.isAdmin ? 'admin' : ''}`}>
