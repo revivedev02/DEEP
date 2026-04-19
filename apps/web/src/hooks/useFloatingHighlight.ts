@@ -37,5 +37,13 @@ export function useFloatingHighlight(contentRef: React.RefObject<HTMLDivElement>
     if (highlightRef.current) highlightRef.current.style.opacity = '0';
   }, []);
 
-  return { highlightRef, onMouseOver, onMouseLeave };
+  const resetHighlight = useCallback(() => {
+    lastTarget.current = null;
+    if (highlightRef.current) {
+      highlightRef.current.style.opacity = '0';
+      highlightRef.current.style.height  = '0';
+    }
+  }, []);
+
+  return { highlightRef, onMouseOver, onMouseLeave, resetHighlight };
 }

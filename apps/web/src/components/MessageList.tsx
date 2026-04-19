@@ -60,7 +60,7 @@ export function MessageList({
   const currentUserIdRef   = useRef(currentUserId);
   currentUserIdRef.current = currentUserId;
 
-  const { highlightRef, onMouseOver, onMouseLeave } = useFloatingHighlight(contentRef);
+  const { highlightRef, onMouseOver, onMouseLeave, resetHighlight } = useFloatingHighlight(contentRef);
 
   // ── ResizeObserver: re-scroll whenever content height grows ────────────────
   // This catches: image loads (height unknown until img onLoad), reaction bars
@@ -94,6 +94,9 @@ export function MessageList({
     if (!scroll) return;
     const prevCount = prevMsgCountRef.current;
     const delta     = messages.length - prevCount;
+
+    // Message deleted — clear ghost highlight immediately
+    if (delta < 0) resetHighlight();
 
     // Empty channel — skeleton may have scrolled us down; reset to top
     if (messages.length === 0) {
