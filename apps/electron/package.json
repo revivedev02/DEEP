@@ -10,7 +10,7 @@
     "build:win":  "pnpm prebuild && tsc && electron-builder --win",
     "build:mac":  "pnpm prebuild && tsc && electron-builder --mac",
     "build:linux":"pnpm prebuild && tsc && electron-builder --linux",
-    "prebuild":   "node scripts/create-bitmaps.cjs"
+    "prebuild":   "node scripts/create-bitmaps.cjs && node scripts/create-ico.cjs"
   },
   "dependencies": {
     "electron-updater": "^6.3.9"

@@ -38,20 +38,10 @@ jobs:
           NODE_ENV: production
         run: pnpm build
 
-      # ── Generate installer bitmaps ────────────────────────────────────────────
-      - name: Create installer bitmaps
+      # ── Generate installer bitmaps + ICO ──────────────────────────────────
+      - name: Generate installer assets
         working-directory: apps/electron
-        run: node scripts/create-bitmaps.cjs
-
-      # ── Generate ICO (Windows only) ──────────────────────────────────────────
-      - name: Install png2icons (Windows)
-        if: matrix.os == 'windows-latest'
-        run: npm install -g png2icons
-
-      - name: Convert PNG to ICO (Windows)
-        if: matrix.os == 'windows-latest'
-        working-directory: apps/electron
-        run: png2icons assets/icon.png assets/icon -icns -ico
+        run: node scripts/create-bitmaps.cjs && node scripts/create-ico.cjs
 
       # ── Build Electron app ───────────────────────────────────────────────────
       - name: Build Electron (Windows)
