@@ -32,7 +32,7 @@ import path from 'path';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 const isDev       = !app.isPackaged;
-const BACKEND_URL = process.env.DEEP_BACKEND_URL ?? 'https://deep-production.up.railway.app';
+const BACKEND_URL = process.env.DEEP_BACKEND_URL || 'https://deep-production-ac13.up.railway.app';
 const LOAD_URL    = isDev ? 'http://localhost:5173' : BACKEND_URL;
 
 // ── Singletons ───────────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ app.whenReady().then(() => {
       const url = new URL(details.url);
       const allowed =
         url.hostname === 'localhost' ||
-        url.hostname.endsWith('.railway.app') ||
+        url.hostname === 'deep-production-ac13.up.railway.app' ||
         url.hostname.endsWith('.cloudinary.com') ||
         url.hostname.endsWith('.livekit.cloud') ||
         details.url.startsWith('devtools://') ||
