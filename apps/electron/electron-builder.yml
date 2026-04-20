@@ -11,9 +11,10 @@ files:
   - assets/**/*
 
 publish:
-  - provider: github
-    owner:    revivedev02
-    repo:     DEEP
+  - provider:     github
+    owner:        revivedev02
+    repo:         DEEP
+    releaseType:  release    # publish immediately, not as a draft
 
 # ── Windows ───────────────────────────────────────────────────────────────────
 win:
