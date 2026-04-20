@@ -1,31 +1,9 @@
-; custom.nsh — DEEP Installer NSIS Theme
-; Pure color theming via NSIS SetCtlColors API.
-; No external bitmap artwork — all colors are defined here.
+; DEEP Installer — custom.nsh
 ;
-; Palette:
-;   Background   #121110  (ember dark)
-;   Text         #F2E6D9  (warm cream)
-;   Brand        #D27838  (amber)
-
-; ── Apply dark theme to the installer window ──────────────────────────────────
-; Called on each page's show event via MUI2 callback hooks.
-
-!macro customWelcomePage
-  ; Make the parent dialog dark
-  SetCtlColors $HWNDPARENT "F2E6D9" "121110"
-!macroend
-
-!macro customInstallPage
-  SetCtlColors $HWNDPARENT "F2E6D9" "121110"
-!macroend
-
-!macro customFinishPage
-  SetCtlColors $HWNDPARENT "F2E6D9" "121110"
-!macroend
-
-; ── Window title ──────────────────────────────────────────────────────────────
-; electron-builder sets this from productName automatically.
-; This hook lets us append a tagline.
-!macro customHeader
-  !system "echo Building DEEP installer..."
-!macroend
+; Visual theming is handled via:
+;   installer/header.bmp  (150×57  — espresso gradient with amber accent strip)
+;   installer/sidebar.bmp (164×314 — solid ember dark)
+;
+; These are generated programmatically by scripts/create-bitmaps.cjs before build.
+; No additional NSIS theming is required — keep this file minimal to avoid
+; macro/scope errors in makensis.exe.
