@@ -17,13 +17,13 @@ publish:
 
 # ── Windows ───────────────────────────────────────────────────────────────────
 win:
-  icon:         assets/icons/win/icon.ico
-  artifactName: DEEP-Setup.exe   # Stable name — URL never breaks on version bump
+  icon:   assets/icons/win/icon.ico
   target:
     - target: nsis
       arch: [x64]
 
 nsis:
+  artifactName:                       DEEP-Setup.exe
   oneClick:                           false
   perMachine:                         false
   allowToChangeInstallationDirectory: true
