@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X, Camera, Check, Copy, User, ChevronRight,
-  Loader2, Shield, Palette, ImageIcon,
+  Loader2, Shield, Palette, ImageIcon, Monitor, Download,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LazyAvatar } from '@/components/LazyAvatar';
@@ -12,7 +12,7 @@ import BannerUploadModal from '@/components/BannerUploadModal';
    Types
 ───────────────────────────────────────────────────────── */
 interface Props { onClose: () => void; }
-type Tab = 'account' | 'appearance';
+type Tab = 'account' | 'appearance' | 'desktop';
 
 /* ─────────────────────────────────────────────────────────
    Sidebar nav item
@@ -135,6 +135,7 @@ export default function AccountSettingsModal({ onClose }: Props) {
             <div className="flex flex-col gap-0.5">
               <NavItem active={tab === 'account'}    icon={User}    label="My Account"  onClick={() => setTab('account')} />
               <NavItem active={tab === 'appearance'} icon={Palette} label="Appearance"  onClick={() => setTab('appearance')} />
+              <NavItem active={tab === 'desktop'}    icon={Monitor} label="Desktop App" onClick={() => setTab('desktop')} />
             </div>
           </div>
 
@@ -367,6 +368,9 @@ export default function AccountSettingsModal({ onClose }: Props) {
               </div>
             )}
 
+            {/* ═══ DESKTOP APP TAB ═══ */}
+            {tab === 'desktop' && <DesktopAppSection />}
+
           </div>
         </main>
       </div>
@@ -411,5 +415,131 @@ function ThemeSwatch({ name }: { name: Theme }) {
       <span className="text-xs font-medium text-text-muted">{label[name]}</span>
       {active && <div className="w-1.5 h-1.5 rounded-full bg-brand" />}
     </button>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   Desktop App download section
+───────────────────────────────────────────────────────── */
+const RELEASES_BASE = 'https://github.com/revivedev02/DEEP/releases/latest/download';
+
+const PLATFORMS = [
+  {
+    id:       'windows',
+    label:    'Windows',
+    desc:     'Windows 10 / 11 (64-bit)',
+    fileName: 'DEEP-Setup.exe',
+    icon:     '⊞',
+  },
+  {
+    id:       'macos',
+    label:    'macOS',
+    desc:     'macOS 12 Monterey or later',
+    fileName: 'DEEP.dmg',
+    icon:     '',
+  },
+  {
+    id:       'linux',
+    label:    'Linux',
+    desc:     'Ubuntu / Debian (.deb)',
+    fileName: 'DEEP.AppImage',
+    icon:     '🐧',
+  },
+] as const;
+
+function detectPlatform(): 'windows' | 'macos' | 'linux' | null {
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('win'))    return 'windows';
+  if (ua.includes('mac'))    return 'macos';
+  if (ua.includes('linux'))  return 'linux';
+  return null;
+}
+
+function DesktopAppSection() {
+  const platform        = detectPlatform();
+  const alreadyElectron = !!(window as any).deepAPI?.isElectron;
+
+  const primary   = PLATFORMS.find(p => p.id === platform) ?? PLATFORMS[0];
+  const secondary = PLATFORMS.filter(p => p.id !== primary.id);
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="settings-page-title">Desktop App</h1>
+        <p className="settings-page-subtitle">
+          Download DEEP as a native desktop application — faster, with system tray and notifications.
+        </p>
+      </div>
+
+      {/* Already in Electron banner */}
+      {alreadyElectron && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium"
+          style={{ background: 'rgb(var(--brand-rgb)/0.12)', color: 'rgb(var(--brand-rgb))' }}
+        >
+          <Monitor className="w-4 h-4 flex-shrink-0" />
+          You're already using the DEEP desktop app. Updates install automatically.
+        </div>
+      )}
+
+      {/* Primary platform (auto-detected) */}
+      <section>
+        <h2 className="settings-section-label">Recommended for your system</h2>
+        <div
+          className="flex items-center justify-between p-4 rounded-xl border"
+          style={{ background: 'var(--bg-secondary)', borderColor: 'rgb(var(--separator-rgb)/0.6)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{primary.icon}</span>
+            <div>
+              <p className="font-semibold text-text-normal">{primary.label}</p>
+              <p className="text-xs text-text-muted">{primary.desc}</p>
+            </div>
+          </div>
+          <a
+            href={`${RELEASES_BASE}/${primary.fileName}`}
+            className="settings-btn-primary flex items-center gap-2 no-underline"
+            download
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </a>
+        </div>
+      </section>
+
+      {/* Other platforms */}
+      <section>
+        <h2 className="settings-section-label">Other platforms</h2>
+        <div className="flex flex-col gap-2">
+          {secondary.map(p => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between px-4 py-3 rounded-xl"
+              style={{ background: 'var(--bg-secondary)' }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-lg">{p.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-text-normal">{p.label}</p>
+                  <p className="text-xs text-text-muted">{p.desc}</p>
+                </div>
+              </div>
+              <a
+                href={`${RELEASES_BASE}/${p.fileName}`}
+                className="settings-btn-secondary flex items-center gap-1.5 no-underline"
+                download
+              >
+                <Download className="w-3.5 h-3.5" /> Download
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Notes */}
+      <p className="settings-hint">
+        The desktop app auto-updates silently in the background. Close minimises to the system tray — DEEP stays connected.
+      </p>
+    </div>
   );
 }

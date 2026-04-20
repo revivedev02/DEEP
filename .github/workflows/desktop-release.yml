@@ -1,0 +1,89 @@
+name: Build Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'        # Trigger on version tags: v1.0.0, v1.2.3, etc.
+
+permissions:
+  contents: write       # Required to create GitHub Releases + upload assets
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── Node + pnpm ─────────────────────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Build web app first ──────────────────────────────────────────────────
+      - name: Build web app
+        working-directory: apps/web
+        env:
+          NODE_ENV: production
+        run: pnpm build
+
+      # ── Generate installer bitmaps ────────────────────────────────────────────
+      - name: Create installer bitmaps
+        working-directory: apps/electron
+        run: node scripts/create-bitmaps.cjs
+
+      # ── Generate ICO (Windows only) ──────────────────────────────────────────
+      - name: Install png2icons (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm install -g png2icons
+
+      - name: Convert PNG to ICO (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: apps/electron
+        run: png2icons assets/icon.png assets/icon -icns -ico
+
+      # ── Build Electron app ───────────────────────────────────────────────────
+      - name: Build Electron (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: apps/electron
+        env:
+          GH_TOKEN:          ${{ secrets.GH_TOKEN }}
+          DEEP_BACKEND_URL:  ${{ secrets.DEEP_BACKEND_URL }}
+        run: pnpm build:win
+
+      - name: Build Electron (macOS)
+        if: matrix.os == 'macos-latest'
+        working-directory: apps/electron
+        env:
+          GH_TOKEN:          ${{ secrets.GH_TOKEN }}
+          DEEP_BACKEND_URL:  ${{ secrets.DEEP_BACKEND_URL }}
+        run: pnpm build:mac
+
+      - name: Build Electron (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: apps/electron
+        env:
+          GH_TOKEN:          ${{ secrets.GH_TOKEN }}
+          DEEP_BACKEND_URL:  ${{ secrets.DEEP_BACKEND_URL }}
+        run: pnpm build:linux
+
+      # ── Upload to GitHub Release ──────────────────────────────────────────────
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apps/electron/release/**/*.{exe,dmg,AppImage,deb}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

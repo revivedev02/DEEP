@@ -43,8 +43,13 @@ export default function ChatHeader({
     s.conversations.find(c => c.id === activeDmConversation)
   );
 
+  const isElectron = typeof window !== 'undefined' && !!(window as any).deepAPI?.isElectron;
+
   return (
-    <div className="canvas-header">
+    <div
+      className="canvas-header"
+      style={isElectron ? { WebkitAppRegion: 'drag' } as React.CSSProperties : undefined}
+    >
       {/* Left: sidebar toggle + channel/DM identity */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
 
@@ -153,9 +158,40 @@ export default function ChatHeader({
             onClick={() => useUIStore.getState().setActiveDmConversation(null)}
             className="canvas-icon-btn ml-1"
             title="Close DM"
+            style={isElectron ? { WebkitAppRegion: 'no-drag' } as React.CSSProperties : undefined}
           >
             <X className="icon-lg" />
           </button>
+        )}
+
+        {/* ── Electron window controls (frameless mode) ──────────────────── */}
+        {isElectron && (
+          <div
+            className="electron-wincontrols"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            <button
+              className="wc-btn wc-minimize"
+              onClick={() => (window as any).deepAPI.minimize()}
+              title="Minimize"
+            >
+              <span aria-hidden>─</span>
+            </button>
+            <button
+              className="wc-btn wc-maximize"
+              onClick={() => (window as any).deepAPI.maximize()}
+              title="Maximize / Restore"
+            >
+              <span aria-hidden>▢</span>
+            </button>
+            <button
+              className="wc-btn wc-close"
+              onClick={() => (window as any).deepAPI.close()}
+              title="Close (minimises to tray)"
+            >
+              <span aria-hidden>✕</span>
+            </button>
+          </div>
         )}
       </div>
     </div>
